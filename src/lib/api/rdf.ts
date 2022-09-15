@@ -59,9 +59,9 @@ export async function fetch_properties(uri: string) {
 	console.log(`SELECT DISTINCT ?s ?p WHERE { ?s ?p <${uri}> .}GROUP BY ?p`);
 	const stream = await fetcher.fetchBindings(
 		'https://dbpedia.org/sparql',
-		/* `SELECT DISTINCT ?s ?p WHERE { ?s ?p <${uri}> .}GROUP BY ?p` */
-
-		`SELECT DISTINCT ?p  ?o WHERE {
+		// removed ?o for now, it has yet to be implemented.
+		// Alternatively keeping it like this will increase fetch time.
+		`SELECT DISTINCT ?p WHERE {
 			{
 			  ?o ?p <${uri}> .
 			} UNION{
