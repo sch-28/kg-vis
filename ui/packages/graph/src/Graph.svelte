@@ -13,7 +13,9 @@
 
 	const dispatch = createEventDispatcher<{ change: undefined }>();
 
-	$: value, dispatch("change"), create_graph();
+	$: value, dispatch("change");
+
+	$: if(value.length > 0 ) create_graph()
 
 	const graph = new Graph();
 	let simulation: d3.Simulation<SimNode, SimLink>;
@@ -134,7 +136,8 @@
 	}
 
 	function create_graph() {
-		svg = d3.select("svg");
+		const s = document.querySelector("gradio-app")?.shadowRoot?.querySelector("svg")
+		svg = d3.select(s);
 
 		// TODO. used to color the circles
 		const color = d3.scaleOrdinal(d3.schemeCategory10);
@@ -287,3 +290,4 @@
 		font-size: 10px;
 	}
 </style>
+
