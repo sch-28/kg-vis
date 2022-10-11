@@ -2,6 +2,7 @@ import type { SimulationLinkDatum, SimulationNodeDatum } from "d3";
 
 export interface Node {
 	// termType: string;
+	type: "literal" | "uri";
 	value: string;
 }
 
@@ -78,9 +79,9 @@ export class Graph {
 	d3_nodes: SimNode[];
 	d3_links: SimLink[];
 
-	constructor() {
+	constructor(start:string) {
 		//TODO DYNAMIC STARTING POINT
-		this.nodes = [new Graph_Node("http://dbpedia.org/resource/COVID-19")];
+		this.nodes = [new Graph_Node(start)];
 		this.d3_links = [];
 		this.d3_nodes = [];
 		this.update_d3();
@@ -145,7 +146,7 @@ export class Graph {
 			for (let property of Object.keys(node.properties)) {
 				for (let connection of node.properties[property]) {
 					//TODO FIXME
-					if (!this.get_d3_node(connection) || connection == "test") continue;
+					if (!this.get_d3_node(connection) || connection == "TODO") continue;
 
 					const link = new SimLink(
 						property,

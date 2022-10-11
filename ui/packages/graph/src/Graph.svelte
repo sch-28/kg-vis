@@ -1,11 +1,14 @@
 <script lang="ts">
 	import { onMount } from "svelte";
 	import * as d3 from "d3";
-	// import PropertySelect from "./ui/property_select.svelte";
+	import PropertySelect from "./PropertySelect.svelte";
 	import { Graph, SimNode, type SimLink, type Triple } from "./types/rdf.types";
-	import type { ForceLink } from "d3";
+	import { ForceLink, ForceManyBody } from "d3";
+	import { fetch_data, fetch_properties } from "./api";
 
 	import { createEventDispatcher } from "svelte";
+	import { get } from "svelte/store";
+	import { xlink_attr } from "svelte/internal";
 
 	export let elem_id: string = "";
 	export let value: string;
@@ -15,39 +18,36 @@
 
 	$: value, dispatch("change");
 
-	$: if(value.length > 0 ) create_graph()
-
-	const graph = new Graph();
-	let simulation: d3.Simulation<SimNode, SimLink>;
-	let svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any>;
-
-	async function fetch_data(event: CustomEvent<any>) {
-		const uri = event.detail.node;
-		const property = event.detail.property;
-
-		const result = await fetch(
-			`/api/data/${encodeURIComponent(uri)}/${encodeURIComponent(property)}`
-		);
-		const result_json = await result.json();
-
-		if (result.ok) {
-			graph.add_triple(result_json);
-			update_nodes();
-			update_links();
-			simulation.alpha(1).restart().tick();
-		} else {
-			throw new Error("Not Implemented");
+	$: {
+		if (value.length > 0) {
+			create_graph(value);
 		}
 	}
 
-	async function fetch_properties(uri: string) {
-		const result = await fetch(`/api/properties/${encodeURIComponent(uri)}`);
-		const data = (await result.json()) as Triple[];
+	let graph: Graph;
+	let simulation: d3.Simulation<SimNode, SimLink>;
+	let svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any>;
+
+	async function get_data(event: CustomEvent<any>) {
+		const uri = event.detail.node;
+		const property = event.detail.property;
+
+		const result = await fetch_data(uri, property);
+		graph.add_triple(result);
+		update_nodes();
+		update_links();
+		simulation.alpha(1).restart().tick();
+	}
+
+	async function get_properties(uri: string) {
+		const result = await fetch_properties(uri);
+		return result as Triple[];
+		/* const data = (await result.json()) as Triple[];
 		if (result.ok) {
 			return data;
 		} else {
 			throw new Error("Not Implemented");
-		}
+		} */
 	}
 
 	let selected_properties: string[] = [];
@@ -56,9 +56,9 @@
 	async function node_click(uri: string) {
 		const node = graph.get_node(uri)!;
 
-		const triples = await fetch_properties(uri);
+		const triples = await get_properties(uri);
 		graph.add_triple(triples);
-
+		//console.log(graph);
 		selected_properties = node.property_labels;
 		selected_node = uri;
 	}
@@ -135,8 +135,15 @@
 			.on("end", dragended);
 	}
 
-	function create_graph() {
-		const s = document.querySelector("gradio-app")?.shadowRoot?.querySelector("svg")
+	function create_graph(starting_point: string) {
+		graph = new Graph(starting_point);
+
+		let s = document
+			.querySelector("gradio-app")
+			?.shadowRoot?.querySelector("svg");
+		if (!s) s = document.querySelector("svg");
+		s.innerHTML = "";
+
 		svg = d3.select(s);
 
 		// TODO. used to color the circles
@@ -157,6 +164,9 @@
 				d3.forceCenter(+svg.attr("width") / 2, +svg.attr("height") / 2)
 			)
 			.force("bounds", boxingForce);
+
+		simulation.force<ForceManyBody<SimNode>>("charge").strength(-50);
+		simulation.force<ForceLink<SimNode, SimLink>>("link").distance(100);
 
 		function boxingForce() {
 			const width = +svg.attr("width");
@@ -266,12 +276,12 @@
 </script>
 
 <main>
-	<svg width="960" height="600" bind:this={svg_element} />
-	<!-- 	<PropertySelect
+	<svg width="600" height="600" bind:this={svg_element} />
+	<PropertySelect
 		bind:properties={selected_properties}
 		bind:node={selected_node}
-		on:property_clicked={fetch_data}
-	/> -->
+		on:property_clicked={get_data}
+	/>
 </main>
 
 <style>
@@ -290,4 +300,3 @@
 		font-size: 10px;
 	}
 </style>
-
