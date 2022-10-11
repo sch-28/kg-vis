@@ -1,4 +1,4 @@
-import type { SimulationLinkDatum, SimulationNodeDatum } from 'd3';
+import type { SimulationLinkDatum, SimulationNodeDatum } from "d3";
 
 export interface Node {
 	// termType: string;
@@ -49,7 +49,6 @@ export class SimLink implements SimLink {
 	}
 }
 
-
 export class Graph_Node {
 	value: string;
 	properties: { [property: string]: string[] };
@@ -81,7 +80,7 @@ export class Graph {
 
 	constructor() {
 		//TODO DYNAMIC STARTING POINT
-		this.nodes = [new Graph_Node('http://dbpedia.org/resource/COVID-19')];
+		this.nodes = [new Graph_Node("http://dbpedia.org/resource/COVID-19")];
 		this.d3_links = [];
 		this.d3_nodes = [];
 		this.update_d3();
@@ -124,9 +123,13 @@ export class Graph {
 
 	update_d3() {
 		//TODO REMOVE REMOVED LINKS
-		this.d3_nodes = this.d3_nodes.filter((n) => this.nodes.find((nn) => nn.value == n.value));
+		this.d3_nodes = this.d3_nodes.filter((n) =>
+			this.nodes.find((nn) => nn.value == n.value)
+		);
 
-		const new_nodes = this.nodes.filter((n) => !this.d3_nodes.find((nn) => nn.value == n.value));
+		const new_nodes = this.nodes.filter(
+			(n) => !this.d3_nodes.find((nn) => nn.value == n.value)
+		);
 
 		for (let node of new_nodes) {
 			const new_node = new SimNode(node.value);
@@ -142,14 +145,18 @@ export class Graph {
 			for (let property of Object.keys(node.properties)) {
 				for (let connection of node.properties[property]) {
 					//TODO FIXME
-					if (!this.get_d3_node(connection) || connection == 'test') continue;
+					if (!this.get_d3_node(connection) || connection == "test") continue;
 
 					const link = new SimLink(
 						property,
 						this.get_d3_node(node.value)!,
 						this.get_d3_node(connection)!
 					);
-					if (this.d3_links.find((l) => l.source == link.source && l.target == link.target)) {
+					if (
+						this.d3_links.find(
+							(l) => l.source == link.source && l.target == link.target
+						)
+					) {
 					} else {
 						this.d3_links.push(link);
 					}

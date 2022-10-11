@@ -15,7 +15,6 @@
 
 	$: value, dispatch("change"), create_graph();
 
-
 	const graph = new Graph();
 	let simulation: d3.Simulation<SimNode, SimLink>;
 	let svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any>;
@@ -225,7 +224,7 @@
 		drag_handler(nodes as unknown as d3.Selection<Element, unknown, any, any>);
 
 		function ticked() {
-			if(svg.selectAll<d3.BaseType, SimNode>(".nodes g").size() == 0) return;
+			if (svg.selectAll<d3.BaseType, SimNode>(".nodes g").size() == 0) return;
 			/* line_labels.attr('transform', (d) => {
 				return (
 					'translate(' +
@@ -250,7 +249,7 @@
 		}
 	}
 
-	let svg_element:SVGElement;
+	let svg_element: SVGElement;
 
 	/* $: {
 		if (svg_element) {
@@ -258,7 +257,7 @@
 		}
 	} */
 
-/* 	onMount(async () => {
+	/* 	onMount(async () => {
 		console
 	}); */
 </script>
