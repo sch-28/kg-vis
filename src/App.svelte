@@ -2,13 +2,6 @@
 	import Graph from "./lib/Graph.svelte";
 </script>
 
-<main>
+<main class="w-full h-full">
 	<Graph />
 </main>
-
-<style>
-	main {
-		height: 80vh;
-		width: 80vw;
-	}
-</style>
