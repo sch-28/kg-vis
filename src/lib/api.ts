@@ -56,7 +56,7 @@ export async function fetch_data(subject: URI, property: URI, nodes: URI[]) {
 	const results: {
 		uri: URI;
 		label: string;
-		relations: { subject: Node; property: Node; object: Node; propLabel: string }[];
+		relations: { subject: Node; property: Node; object: Node; propLabel: Node }[];
 	}[] = [];
 
 	for (let i = 0; i < result.length; i += Math.floor(RATE_LIMIT / 2)) {
@@ -64,7 +64,7 @@ export async function fetch_data(subject: URI, property: URI, nodes: URI[]) {
 
 		const requests: { uri: URI; label: Promise<string>; relations: any }[] = [];
 		new_nodes.forEach((node) =>
-			requests.push({ uri: node, label: fetch_label(node), relations: fetch_relations(node, nodes) })
+			requests.push({ uri: node, label: fetch_label(node), relations: fetch_relations(node, [...nodes, ...new_nodes]) })
 		);
 		// results.push(...(await Promise.all(requests.map(r => [r.label, r.relations]))));
 		for (let i = 0; i < requests.length; i++) {
@@ -101,8 +101,11 @@ export async function fetch_label(subject: URI) {
 export async function fetch_relations(subject: URI, other_nodes: URI[]) {
 	let relations = ``;
 
-	other_nodes.forEach((node) => {
+	for (let i = 0; i < other_nodes.length; i++) {
+		const node = other_nodes[i];
+
 		relations += `
+		{
 			VALUES ?object {
 				<${node}>
 			}
@@ -114,9 +117,13 @@ export async function fetch_relations(subject: URI, other_nodes: URI[]) {
 			} UNION{
 				?subject ?property ?object .
 			}
-			
+		}
 			`;
-	});
+
+		if (i + 1 < other_nodes.length) {
+			relations += "UNION";
+		}
+	}
 
 	const result = await SPARQL_query(
 		`SELECT DISTINCT ?object ?property ?propLabel ?subject WHERE

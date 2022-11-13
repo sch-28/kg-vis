@@ -147,7 +147,13 @@ export class Graph {
 	}
 
 	create_edge(source: URI, uri: URI, target: URI, label: string) {
-		if (this.edges.find((edge) => edge.from == source && edge.uri == uri && edge.to == target)) {
+		if (
+			this.edges.find(
+				(edge) =>
+					(edge.from == source && edge.uri == uri && edge.to == target) ||
+					(edge.to == source && edge.uri == uri && edge.from == target)
+			)
+		) {
 			return false;
 		}
 		const edge = new Edge(source, uri, target, label);
