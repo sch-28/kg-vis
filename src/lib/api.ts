@@ -1,3 +1,5 @@
+import type { Property, URI } from "./types";
+
 export interface Triple {
 	s: Node;
 	p: Node;
@@ -11,7 +13,7 @@ export interface Node {
 	label: string;
 }
 
-const endpoint = "http://query.wikidata.org/sparql";
+const endpoint = "https://query.wikidata.org/sparql";
 
 async function SPARQL_query(body: string) {
 	/* const result = await fetch(endpoint, {
@@ -64,31 +66,95 @@ export async function fetch_data(uri: string, property: string) {
 	});
 }
 
-export async function fetch_properties(uri: string) {
+export async function fetch_label(subject: URI) {
 	const result = await SPARQL_query(
-		// removed ?o for now, it has yet to be implemented.
-		// Alternatively keeping it like this will increase fetch time.
+		`
+		PREFIX wikibase: <http://wikiba.se/ontology#>
+		SELECT DISTINCT ?subjectLabel WHERE {
+          VALUES ?subject {
+    		<${subject}>
+  			}
+
+ 		
+    	SERVICE wikibase:label { bd:serviceParam wikibase:language "en" }.	
+		}
+			`
+	);
+	if (result.length > 0) {
+		return result[0].subjectLabel.value;
+	}
+
+	throw new Error("Unable to fetch label: " + result);
+}
+
+export async function fetch_property(subject: URI, property: URI):Promise<Property> {
+	const result = await SPARQL_query(
+		`
+		PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+		PREFIX wd: <http://www.wikidata.org/entity/>
+		SELECT DISTINCT ?propLabel (COUNT(?outObject) AS ?outCount) (COUNT(?inObject) AS ?inCount)    WHERE {
+		{
+			SELECT DISTINCT ?outObject WHERE {
+			<${subject}> <${property}> ?outObject.
+			}
+			LIMIT 101
+		}
+		UNION
+		{
+			SELECT DISTINCT ?inObject WHERE {
+			?inObject <${property}> <${subject}>.
+			}
+			LIMIT 101
+		}
+		OPTIONAL {
+			?prop wikibase:directClaim <${property}> .
+			}
+		SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
+		} GROUP BY ?propLabel `
+	);
+
+	if (result.length > 0) {
+		const res = result[0];
+		return {
+			label: res.propLabel?.value,
+			uri: property,
+			out_count: +res.outCount.value,
+			in_count: +res.inCount.value,
+		};
+	}
+
+	throw new Error("Unable to fetch Property: " + result);
+}
+
+export async function fetch_properties(subject: URI) {
+	const result = await SPARQL_query(
 		`
 		PREFIX wikibase: <http://wikiba.se/ontology#>
 		PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-		SELECT DISTINCT ?p ?o ?propLabel ?oLabel ?label WHERE {
+		SELECT DISTINCT ?property  WHERE {
 			{
-			  ?o ?p <${uri}> .
+			  ?o ?property <${subject}> .
 			} UNION{
-				<${uri}> ?p ?o
+				<${subject}> ?property ?o
 			}
-			SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
-			?prop wikibase:directClaim ?p .
-			<${uri}> rdfs:label ?label .
-			FILTER (lang(?label) = 'en')
+			?claim wikibase:directClaim ?property.
 			}`
 	);
-	return result.map((c: any) => {
-		const data = {
-			s: { value: uri, type: "uri", label: c.label.value },
-			p: { value: c.p.value, type: c.p.type, label: c.propLabel.value },
-			o: { value: c.o.value, type: c.o.type, label: c.oLabel.value },
-		};
-		return data;
+
+	const results: Property[] = [];
+	for (let i = 0; i < result.length; i += 5) {
+		const properties = result.slice(i, i + 5).map((c) => c.property.value);
+
+		const requests = [];
+		properties.forEach((prop) => requests.push(fetch_property(subject, prop)));
+		results.push(...(await Promise.all(requests)) as Property[]);
+	}
+
+	return results;
+}
+
+async function timeout(ms: number) {
+	return new Promise((resolve) => {
+		setTimeout(resolve, ms);
 	});
 }

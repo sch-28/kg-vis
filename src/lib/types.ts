@@ -1,5 +1,5 @@
 import { DataSet } from "vis-data";
-import { fetch_data, fetch_properties } from "./api";
+import { fetch_data, fetch_label, fetch_properties } from "./api";
 
 export type URI = string;
 
@@ -7,6 +7,19 @@ export type Properties = {
 	[id: string]: { label: string; uri: string }[];
 };
 
+export class Property {
+	label: string | undefined;
+	uri: URI;
+	in_count: number;
+	out_count: number;
+
+	constructor(uri: URI, in_count: number, out_count: number, label?: string) {
+		this.label = label;
+		this.uri = uri;
+		this.in_count = in_count;
+		this.out_count = out_count;
+	}
+}
 export class Node {
 	id: URI;
 	label: string;
@@ -14,6 +27,7 @@ export class Node {
 	is_fetched: boolean;
 	x: number;
 	y: number;
+	properties: Property[];
 
 	constructor(uri: URI, label: string, visible = false, position: { x: number; y: number } = { x: 0, y: 0 }) {
 		this.id = uri;
@@ -143,7 +157,7 @@ export class Graph {
 	}
 
 	async load_properties(uri: URI) {
-		const triples = await fetch_properties(uri);
+		/* const triples = await fetch_properties(uri);
 		if (triples.length > 0) {
 			const node = this.find_or_create_node(uri, triples[0].s.label, true);
 			node.is_fetched = true;
@@ -151,7 +165,19 @@ export class Graph {
 		for (let triple of triples) {
 			this.find_or_create_node(triple.o.value, triple.o.label);
 			this.create_edge(uri, triple.p.value, triple.o.value, triple.p.label);
+		} */
+
+		const properties = await fetch_properties(uri);
+		if (properties.length > 0) {
+			const node = this.find_or_create_node(uri, uri, true);
+			node.is_fetched = true;
+			node.properties = properties;
 		}
+	}
+
+	async load(uri: URI) {
+		const label = await fetch_label(uri);
+		this.find_or_create_node(uri, label, true);
 	}
 
 	async get_properties(uri: URI) {
@@ -160,8 +186,7 @@ export class Graph {
 			await this.load_properties(node.id);
 		}
 
-		const property_edges = this.edges.filter((edge) => edge.from == uri || edge.to == uri);
-
+		/* const property_edges = this.edges.filter((edge) => edge.from == uri);
 		const properties: Properties = {};
 
 		for (let edge of property_edges) {
@@ -170,12 +195,12 @@ export class Graph {
 			} else {
 				properties[edge.uri].push({ label: edge.label, uri: edge.uri });
 			}
-		}
+		} */
 
 		/* const properties = property_edges.map((p) => {
 			return { label: p.label, uri: p.uri };
 		}); */
-		return properties;
+		return node.properties;
 	}
 
 	async load_data(

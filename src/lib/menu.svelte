@@ -1,11 +1,11 @@
 <script lang="ts">
 	import { createEventDispatcher } from "svelte";
-	import type { Properties, URI } from "./types";
+	import type { Properties, Property, URI } from "./types";
 	import { Badge, Button } from "flowbite-svelte";
 
 	const dispatch = createEventDispatcher();
 
-	export let properties: Properties = {};
+	export let properties: Property[] = [];
 	export let node: URI = "";
 	export let menu_position = { x: 0, y: 0 };
 
@@ -22,22 +22,18 @@
 {#if node.length > 0}
 	<div class="wrapper" bind:this={wrapper}>
 		<div class="properties">
-			{#if Object.keys(properties).length > 0}
-				{#each Object.keys(properties) as id}
+			{#if properties.length > 0}
+				{#each properties as property}
 					<!-- <button on:click={() => dispatch("property_clicked", { uri: node, property: id })}
 						>{properties[id].length}x {properties[id][0].label}</button
 					> -->
 					<Button
 						color="primary"
-						on:click={() => dispatch("property_clicked", { uri: node, property: id })}
+						on:click={() => dispatch("property_clicked", { uri: node, property: property })}
 						btnClass="flex"
 					>
-						<span>{properties[id][0].label}</span>
-						<Badge
-							rounded
-							class="ml-auto w-5 h-5"
-							>{properties[id].length}</Badge
-						>
+						<span>{property.label ?? property.uri}</span>
+						<Badge rounded class="ml-auto w-5 h-5 bg-white">{property.in_count + property.out_count}</Badge>
 					</Button>
 				{/each}
 			{:else}
@@ -58,8 +54,8 @@
 	.properties {
 		overflow-y: scroll;
 		max-height: 200px;
-		width: 400px;
-		max-width: 400px;
+		width: 350px;
+		max-width: 350px;
 		height: 200px;
 		display: flex;
 		flex-direction: column;

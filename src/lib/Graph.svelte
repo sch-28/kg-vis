@@ -4,27 +4,26 @@
 	import * as vis from "vis-network";
 	import { fetch_properties } from "./api";
 	import Menu from "./menu.svelte";
-	import { Graph, type Properties, type URI } from "./types";
-
+	import { Graph, Property, type Properties, type URI } from "./types";
 	let container: HTMLElement;
 
 	let graph: Graph;
 	let network: Network;
 
 	let selected_node: URI;
-	let properties: Properties;
+	let properties: Property[];
 	let menu_position = { x: 0, y: 0 };
 
 	let last_click = { x: 0, y: 0 };
 
 	onMount(() => {
-		create_graph("http://www.wikidata.org/entity/Q42442324");
+		create_graph("http://www.wikidata.org/entity/Q84263196");
 	});
 
 	async function create_graph(starting_point: string) {
 		graph = new Graph();
 
-		await graph.load_properties(starting_point);
+		await graph.load(starting_point);
 		graph.update_data();
 
 		const options: Options = {
@@ -46,7 +45,7 @@
 			physics: {
 				solver: "forceAtlas2Based",
 				maxVelocity: 5,
-				minVelocity: 0.05,
+				minVelocity: 0.08,
 				barnesHut: {
 					springLength: 175,
 				},
@@ -84,7 +83,7 @@
 			menu_position.x += canvas_position.x;
 			menu_position.y += canvas_position.y;
 
-			properties = {};
+			properties = [];
 			graph.get_properties(selected_node).then((result) => {
 				properties = result;
 			});
@@ -102,8 +101,10 @@
 	}
 </script>
 
-<div class="graph_container" bind:this={container} />
-
+<div class="flex flex-col justify-center w-full h-full">
+	<h1>KG Visualizer</h1>
+	<div class="graph_container" bind:this={container} />
+</div>
 <Menu {menu_position} node={selected_node} {properties} on:property_clicked={property_clicked} />
 
 <style>
