@@ -211,15 +211,27 @@ export class Graph {
 			y: number;
 		} = { x: 0, y: 0 }
 	) {
-		const triples = await fetch_data(uri, property);
+		const new_nodes = await fetch_data(
+			uri,
+			property,
+			this.nodes.map((n) => n.id)
+		);
 
-		for (let triple of triples) {
-			const node = this.find_or_create_node(triple.o.value, triple.o.label, true, position);
+		for (let new_node of new_nodes) {
+			const node = this.find_or_create_node(new_node.uri, new_node.label, true, position);
 			node.x = position.x;
 			node.y = position.y;
 			node.visible = true;
 
-			this.create_edge(uri, property, triple.o.value, triple.p.label);
+			//this.create_edge(uri, property, new_node.uri, "");
+			for (let relation of new_node.relations) {
+				this.create_edge(
+					relation.subject.value,
+					relation.property.value,
+					relation.object.value,
+					relation.propLabel.value
+				);
+			}
 		}
 
 		this.update_data();

@@ -1,16 +1,17 @@
 import type { Property, URI } from "./types";
 
+const RATE_LIMIT = 5;
+
 export interface Triple {
-	s: Node;
-	p: Node;
-	o: Node;
+	subject: Node;
+	property: Node;
+	object: Node;
 }
 
 export interface Node {
 	// termType: string;
 	type: "literal" | "uri";
 	value: string;
-	label: string;
 }
 
 const endpoint = "https://query.wikidata.org/sparql";
@@ -39,31 +40,41 @@ async function SPARQL_query(body: string) {
 	return triples;
 }
 
-export async function fetch_data(uri: string, property: string) {
+export async function fetch_data(subject: URI, property: URI, nodes: URI[]) {
 	const result = await SPARQL_query(
 		`PREFIX wikibase: <http://wikiba.se/ontology#>
 		PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-		SELECT DISTINCT ?o ?propLabel ?oLabel ?label WHERE {
+		SELECT DISTINCT ?object  WHERE {
 			{
-			  ?o <${property}> <${uri}> .
+			  ?object <${property}> <${subject}> .
 			} UNION{
-				<${uri}> <${property}> ?o
+				<${subject}> <${property}> ?object
 			}
-			SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
-			?prop wikibase:directClaim <${property}> .
-			<${uri}> rdfs:label ?label .
-			FILTER (lang(?label) = 'en')
 			}`
 	);
 
-	return result.map((c) => {
-		const data = {
-			s: { value: uri, type: "uri", label: c.label.value },
-			p: { value: property, type: "uri", label: c.propLabel.value },
-			o: { value: c.o.value, type: c.o.type, label: c.oLabel.value },
-		};
-		return data;
-	});
+	const results: {
+		uri: URI;
+		label: string;
+		relations: { subject: Node; property: Node; object: Node; propLabel: string }[];
+	}[] = [];
+
+	for (let i = 0; i < result.length; i += Math.floor(RATE_LIMIT / 2)) {
+		const new_nodes = result.slice(i, i + Math.floor(RATE_LIMIT / 2)).map((c) => c.object.value);
+
+		const requests: { uri: URI; label: Promise<string>; relations: any }[] = [];
+		new_nodes.forEach((node) =>
+			requests.push({ uri: node, label: fetch_label(node), relations: fetch_relations(node, nodes) })
+		);
+		// results.push(...(await Promise.all(requests.map(r => [r.label, r.relations]))));
+		for (let i = 0; i < requests.length; i++) {
+			const request = requests[i];
+			const r = await Promise.all([request.label, request.relations]);
+			results.push({ uri: request.uri, label: r[0], relations: r[1] });
+		}
+	}
+
+	return results;
 }
 
 export async function fetch_label(subject: URI) {
@@ -87,7 +98,40 @@ export async function fetch_label(subject: URI) {
 	throw new Error("Unable to fetch label: " + result);
 }
 
-export async function fetch_property(subject: URI, property: URI):Promise<Property> {
+export async function fetch_relations(subject: URI, other_nodes: URI[]) {
+	let relations = ``;
+
+	other_nodes.forEach((node) => {
+		relations += `
+			VALUES ?object {
+				<${node}>
+			}
+			VALUES ?subject {
+				<${subject}>
+			}
+			{	
+				?object ?property ?subject .
+			} UNION{
+				?subject ?property ?object .
+			}
+			
+			`;
+	});
+
+	const result = await SPARQL_query(
+		`SELECT DISTINCT ?object ?property ?propLabel ?subject WHERE
+		{
+			${relations}
+			?claim wikibase:directClaim ?property.
+			?prop wikibase:directClaim ?property .
+			SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
+		}`
+	);
+
+	return result as { subject: Node; property: Node; object: Node; propLabel: Node }[];
+}
+
+export async function fetch_property(subject: URI, property: URI): Promise<Property> {
 	const result = await SPARQL_query(
 		`
 		PREFIX wdt: <http://www.wikidata.org/prop/direct/>
@@ -142,12 +186,12 @@ export async function fetch_properties(subject: URI) {
 	);
 
 	const results: Property[] = [];
-	for (let i = 0; i < result.length; i += 5) {
-		const properties = result.slice(i, i + 5).map((c) => c.property.value);
+	for (let i = 0; i < result.length; i += RATE_LIMIT) {
+		const properties = result.slice(i, i + RATE_LIMIT).map((c) => c.property.value);
 
 		const requests = [];
 		properties.forEach((prop) => requests.push(fetch_property(subject, prop)));
-		results.push(...(await Promise.all(requests)) as Property[]);
+		results.push(...((await Promise.all(requests)) as Property[]));
 	}
 
 	return results;

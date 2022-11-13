@@ -92,12 +92,13 @@
 		}
 	}
 
-	async function property_clicked(event: CustomEvent<{ uri: URI; property: URI }>) {
+	async function property_clicked(event: CustomEvent<{ uri: URI; property: Property }>) {
 		const uri = event.detail.uri;
 		const property = event.detail.property;
 		selected_node = "";
 
-		await graph.load_data(uri, property, last_click);
+
+		await graph.load_data(uri, property.uri, last_click);
 	}
 </script>
 
