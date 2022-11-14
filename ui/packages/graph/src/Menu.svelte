@@ -43,6 +43,12 @@
 				<div class="m-auto w-4/5">
 					<h2 class="mb-2">Loading...</h2>
 					<!-- <div progress={progress.toString()} /> -->
+					<div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+						<div
+							class="bg-blue-600 h-2.5 rounded-full"
+							style="width: {progress.toString()}%"
+						/>
+					</div>
 				</div>
 			{/if}
 		</div>
