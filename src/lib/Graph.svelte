@@ -41,6 +41,7 @@
 				font: {
 					strokeWidth: 0,
 					color: "white",
+					background: "#242424",
 				},
 				labelHighlightBold: false,
 			},
