@@ -16,8 +16,10 @@
 
 	let last_click = { x: 0, y: 0 };
 
+	let progress = 0;
+
 	onMount(() => {
-		create_graph("http://www.wikidata.org/entity/Q84263196");
+		create_graph("http://www.wikidata.org/entity/Q42442324");
 	});
 
 	async function create_graph(starting_point: string) {
@@ -76,6 +78,7 @@
 
 	function show_related_menu(event: Click_Event) {
 		if (network.getSelectedNodes().length > 0) {
+			progress = 0;
 			selected_node = event.nodes[0];
 			menu_position = event.pointer.DOM;
 			last_click = event.pointer.canvas;
@@ -84,7 +87,7 @@
 			menu_position.y += canvas_position.y;
 
 			properties = [];
-			graph.get_properties(selected_node).then((result) => {
+			graph.get_properties(selected_node, set_progress).then((result) => {
 				properties = result;
 			});
 		} else {
@@ -97,8 +100,11 @@
 		const property = event.detail.property;
 		selected_node = "";
 
-
 		await graph.load_data(uri, property.uri, last_click);
+	}
+
+	function set_progress(new_progress) {
+		progress = new_progress;
 	}
 </script>
 
@@ -106,7 +112,7 @@
 	<h1>KG Visualizer</h1>
 	<div class="graph_container" bind:this={container} />
 </div>
-<Menu {menu_position} node={selected_node} {properties} on:property_clicked={property_clicked} />
+<Menu {menu_position} node={selected_node} {properties} on:property_clicked={property_clicked} {progress} />
 
 <style>
 	.graph_container {

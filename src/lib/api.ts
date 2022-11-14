@@ -1,6 +1,7 @@
 import type { Property, URI } from "./types";
 
 const RATE_LIMIT = 5;
+const SIZE_LIMIT = 100;
 
 export interface Triple {
 	subject: Node;
@@ -64,7 +65,11 @@ export async function fetch_data(subject: URI, property: URI, nodes: URI[]) {
 
 		const requests: { uri: URI; label: Promise<string>; relations: any }[] = [];
 		new_nodes.forEach((node) =>
-			requests.push({ uri: node, label: fetch_label(node), relations: fetch_relations(node, [...nodes, ...new_nodes]) })
+			requests.push({
+				uri: node,
+				label: fetch_label(node),
+				relations: fetch_relations(node, [...nodes, ...new_nodes]),
+			})
 		);
 		// results.push(...(await Promise.all(requests.map(r => [r.label, r.relations]))));
 		for (let i = 0; i < requests.length; i++) {
@@ -148,14 +153,14 @@ export async function fetch_property(subject: URI, property: URI): Promise<Prope
 			SELECT DISTINCT ?outObject WHERE {
 			<${subject}> <${property}> ?outObject.
 			}
-			LIMIT 101
+			LIMIT ${SIZE_LIMIT}
 		}
 		UNION
 		{
 			SELECT DISTINCT ?inObject WHERE {
 			?inObject <${property}> <${subject}>.
 			}
-			LIMIT 101
+			LIMIT ${SIZE_LIMIT}
 		}
 		OPTIONAL {
 			?prop wikibase:directClaim <${property}> .
@@ -177,7 +182,7 @@ export async function fetch_property(subject: URI, property: URI): Promise<Prope
 	throw new Error("Unable to fetch Property: " + result);
 }
 
-export async function fetch_properties(subject: URI) {
+export async function fetch_properties(subject: URI, progress_function?: Function) {
 	const result = await SPARQL_query(
 		`
 		PREFIX wikibase: <http://wikiba.se/ontology#>
@@ -199,6 +204,7 @@ export async function fetch_properties(subject: URI) {
 		const requests = [];
 		properties.forEach((prop) => requests.push(fetch_property(subject, prop)));
 		results.push(...((await Promise.all(requests)) as Property[]));
+		progress_function(Math.floor((i / result.length) * 100));
 	}
 
 	return results;

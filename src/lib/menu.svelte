@@ -1,13 +1,14 @@
 <script lang="ts">
 	import { createEventDispatcher } from "svelte";
 	import type { Properties, Property, URI } from "./types";
-	import { Badge, Button } from "flowbite-svelte";
+	import { Badge, Button, Progressbar } from "flowbite-svelte";
 
 	const dispatch = createEventDispatcher();
 
 	export let properties: Property[] = [];
 	export let node: URI = "";
 	export let menu_position = { x: 0, y: 0 };
+	export let progress = 0;
 
 	let wrapper: HTMLElement;
 
@@ -37,7 +38,10 @@
 					</Button>
 				{/each}
 			{:else}
-				LOADING
+				<div class="m-auto w-4/5">
+					<h2 class="mb-2">Loading...</h2>
+					<Progressbar progress={progress.toString()} />
+				</div>
 			{/if}
 		</div>
 	</div>
@@ -52,7 +56,7 @@
 	}
 
 	.properties {
-		overflow-y: scroll;
+		overflow-y: auto;
 		max-height: 200px;
 		width: 350px;
 		max-width: 350px;

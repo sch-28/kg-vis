@@ -162,7 +162,7 @@ export class Graph {
 		return true;
 	}
 
-	async load_properties(uri: URI) {
+	async load_properties(uri: URI, progress_function?: Function) {
 		/* const triples = await fetch_properties(uri);
 		if (triples.length > 0) {
 			const node = this.find_or_create_node(uri, triples[0].s.label, true);
@@ -173,7 +173,7 @@ export class Graph {
 			this.create_edge(uri, triple.p.value, triple.o.value, triple.p.label);
 		} */
 
-		const properties = await fetch_properties(uri);
+		const properties = await fetch_properties(uri, progress_function);
 		if (properties.length > 0) {
 			const node = this.find_or_create_node(uri, uri, true);
 			node.is_fetched = true;
@@ -186,10 +186,10 @@ export class Graph {
 		this.find_or_create_node(uri, label, true);
 	}
 
-	async get_properties(uri: URI) {
+	async get_properties(uri: URI, progress_function?: Function) {
 		const node = this.find_or_create_node(uri, "", true);
 		if (!node.is_fetched) {
-			await this.load_properties(node.id);
+			await this.load_properties(node.id, progress_function);
 		}
 
 		/* const property_edges = this.edges.filter((edge) => edge.from == uri);
