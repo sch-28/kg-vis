@@ -15,7 +15,7 @@ export interface Node {
 	value: string;
 }
 
-const endpoint = "https://query.wikidata.org/sparql";
+const endpoint = "http://query.wikidata.org/sparql";
 
 async function SPARQL_query(body: string) {
 	/* const result = await fetch(endpoint, {
@@ -51,7 +51,7 @@ export async function fetch_data(subject: URI, property: URI, nodes: URI[]) {
 			} UNION{
 				<${subject}> <${property}> ?object
 			}
-			}`
+			} LIMIT ${SIZE_LIMIT}`
 	);
 
 	const results: {
@@ -104,36 +104,27 @@ export async function fetch_label(subject: URI) {
 }
 
 export async function fetch_relations(subject: URI, other_nodes: URI[]) {
-	let relations = ``;
+	let relations = `VALUES ?object {\n`;
 
 	for (let i = 0; i < other_nodes.length; i++) {
 		const node = other_nodes[i];
 
-		relations += `
+		relations += `<${node}>\n`;
+	}
+	relations += "}";
+
+	const result = await SPARQL_query(
+		`SELECT DISTINCT ?object ?property ?propLabel ?subject WHERE
 		{
-			VALUES ?object {
-				<${node}>
-			}
 			VALUES ?subject {
 				<${subject}>
 			}
+			${relations}
 			{	
 				?object ?property ?subject .
 			} UNION{
 				?subject ?property ?object .
 			}
-		}
-			`;
-
-		if (i + 1 < other_nodes.length) {
-			relations += "UNION";
-		}
-	}
-
-	const result = await SPARQL_query(
-		`SELECT DISTINCT ?object ?property ?propLabel ?subject WHERE
-		{
-			${relations}
 			?claim wikibase:directClaim ?property.
 			?prop wikibase:directClaim ?property .
 			SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
