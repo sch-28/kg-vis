@@ -1,7 +1,7 @@
 import type { Property, URI } from "./types";
 
-const RATE_LIMIT = 5;
-const SIZE_LIMIT = 100;
+const RATE_LIMIT = 20;
+const SIZE_LIMIT = 200;
 
 export interface Triple {
 	subject: Node;
@@ -15,22 +15,26 @@ export interface Node {
 	value: string;
 }
 
-const endpoint = "http://query.wikidata.org/sparql";
+const endpoint = "https://skynet.coypu.org/wikidata/";
+//const endpoint = "https://query.wikidata.org/sparql";
 
 async function SPARQL_query(body: string) {
-	/* const result = await fetch(endpoint, {
+
+	var urlencoded = new URLSearchParams();
+	urlencoded.append("query", body);
+
+	const result = await fetch(endpoint, {
 		method: "POST",
 		headers: { "Content-Type": "application/x-www-form-urlencoded" },
-		body: `query=${body}`,
-		mode: "no-cors",
-	}); */
-	const content = `?query=${encodeURIComponent(body)}`;
+		body: urlencoded,
+	});
+	/* const content = `?query=${encodeURIComponent(body)}`;
 	const result = await fetch(endpoint + content, {
 		method: "GET",
 		headers: {
 			Accept: "application/sparql-results+json",
 		},
-	});
+	}); */
 	const json = await result.json();
 
 	const triples = [];
@@ -60,39 +64,77 @@ export async function fetch_data(subject: URI, property: URI, nodes: URI[]) {
 		relations: { subject: Node; property: Node; object: Node; propLabel: Node }[];
 	}[] = [];
 
-	for (let i = 0; i < result.length; i += Math.floor(RATE_LIMIT / 2)) {
-		const new_nodes = result.slice(i, i + Math.floor(RATE_LIMIT / 2)).map((c) => c.object.value);
+	const all_new_nodes = result.map((c) => c.object.value);
 
-		const requests: { uri: URI; label: Promise<string>; relations: any }[] = [];
+	for (let i = 0; i < result.length; i += RATE_LIMIT) {
+		const new_nodes = result.slice(i, i + RATE_LIMIT).map((c) => c.object.value);
+		
+
+		const requests: { uri: URI; relations: any }[] = [];
 		new_nodes.forEach((node) =>
 			requests.push({
 				uri: node,
-				label: fetch_label(node),
-				relations: fetch_relations(node, [...nodes, ...new_nodes]),
+				relations: fetch_relations(node, [...nodes, ...all_new_nodes]),
 			})
 		);
 		// results.push(...(await Promise.all(requests.map(r => [r.label, r.relations]))));
 		for (let i = 0; i < requests.length; i++) {
 			const request = requests[i];
-			const r = await Promise.all([request.label, request.relations]);
-			results.push({ uri: request.uri, label: r[0], relations: r[1] });
+			const r = await request.relations;
+			results.push({ uri: request.uri, relations: r, label: "" });
 		}
+	}
+
+	const labels = await fetch_labels(results.map((r) => r.uri));
+
+	for (let node of results) {
+		node.label = labels.find((l) => l.uri == node.uri)?.label ?? "";
 	}
 
 	return results;
 }
 
+export async function fetch_labels(subjects: URI[]) {
+	const result = await SPARQL_query(
+		`
+		PREFIX bd: <http://www.bigdata.com/rdf#>
+		PREFIX wikibase: <http://wikiba.se/ontology#>
+		PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+		SELECT DISTINCT ?subject ?subjectLabel  WHERE {
+          VALUES ?subject {
+    		${subjects.map((s) => `<${s}>`).join("\n")}
+  			}
+
+ 		
+			  ?subject rdfs:label ?subjectLabel 
+			  FILTER (lang(?subjectLabel) = 'en')
+		}
+			`
+	);
+	if (result.length > 0) {
+		return result.map((r) => {
+			return { uri: r.subject.value, label: r.subjectLabel.value };
+		});
+	}
+
+	throw new Error("Unable to fetch label: " + result);
+}
+
 export async function fetch_label(subject: URI) {
 	const result = await SPARQL_query(
 		`
+		PREFIX bd: <http://www.bigdata.com/rdf#>
 		PREFIX wikibase: <http://wikiba.se/ontology#>
+		PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 		SELECT DISTINCT ?subjectLabel WHERE {
           VALUES ?subject {
     		<${subject}>
   			}
 
  		
-    	SERVICE wikibase:label { bd:serviceParam wikibase:language "en" }.	
+		?subject rdfs:label ?subjectLabel 
+		FILTER (lang(?subjectLabel) = 'en')
+		
 		}
 			`
 	);
@@ -114,7 +156,11 @@ export async function fetch_relations(subject: URI, other_nodes: URI[]) {
 	relations += "}";
 
 	const result = await SPARQL_query(
-		`SELECT DISTINCT ?object ?property ?propLabel ?subject WHERE
+		`
+		PREFIX bd: <http://www.bigdata.com/rdf#>
+		PREFIX wikibase: <http://wikiba.se/ontology#>
+		PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+		SELECT DISTINCT ?object ?property ?propLabel ?subject WHERE
 		{
 			VALUES ?subject {
 				<${subject}>
@@ -127,7 +173,9 @@ export async function fetch_relations(subject: URI, other_nodes: URI[]) {
 			}
 			?claim wikibase:directClaim ?property.
 			?prop wikibase:directClaim ?property .
-			SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
+			?prop rdfs:label ?propLabel 
+			FILTER (lang(?propLabel) = 'en')
+			
 		}`
 	);
 
@@ -137,7 +185,10 @@ export async function fetch_relations(subject: URI, other_nodes: URI[]) {
 export async function fetch_property(subject: URI, property: URI): Promise<Property> {
 	const result = await SPARQL_query(
 		`
+		PREFIX wikibase: <http://wikiba.se/ontology#>
+		PREFIX bd: <http://www.bigdata.com/rdf#>
 		PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+		PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 		PREFIX wd: <http://www.wikidata.org/entity/>
 		SELECT DISTINCT ?propLabel (COUNT(?outObject) AS ?outCount) (COUNT(?inObject) AS ?inCount)    WHERE {
 		{
@@ -156,7 +207,8 @@ export async function fetch_property(subject: URI, property: URI): Promise<Prope
 		OPTIONAL {
 			?prop wikibase:directClaim <${property}> .
 			}
-		SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
+		?prop rdfs:label ?propLabel 
+		FILTER (lang(?propLabel) = 'en')
 		} GROUP BY ?propLabel `
 	);
 
