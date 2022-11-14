@@ -1,14 +1,23 @@
 <script lang="ts">
 	import { onMount } from "svelte";
-	import * as d3 from "d3";
-	import PropertySelect from "./PropertySelect.svelte";
-	import { Graph, SimNode, type SimLink, type Triple } from "./types/rdf.types";
-	import { ForceLink, ForceManyBody } from "d3";
-	import { fetch_data, fetch_properties } from "./api";
-
+	import type { Network, Options } from "vis-network";
+	import * as vis from "vis-network";
+	import Menu from "./Menu.svelte";
+	import { Graph, Property, type Properties, type URI } from "./types";
 	import { createEventDispatcher } from "svelte";
-	import { get } from "svelte/store";
-	import { xlink_attr } from "svelte/internal";
+
+	let container: HTMLElement;
+
+	let graph: Graph;
+	let network: Network;
+
+	let selected_node: URI;
+	let properties: Property[];
+	let menu_position = { x: 0, y: 0 };
+
+	let last_click = { x: 0, y: 0 };
+
+	let progress = 0;
 
 	export let elem_id: string = "";
 	export let value: string;
@@ -24,279 +33,117 @@
 		}
 	}
 
-	let graph: Graph;
-	let simulation: d3.Simulation<SimNode, SimLink>;
-	let svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any>;
-
-	async function get_data(event: CustomEvent<any>) {
-		const uri = event.detail.node;
-		const property = event.detail.property;
-
-		const result = await fetch_data(uri, property);
-		graph.add_triple(result);
-		update_nodes();
-		update_links();
-		simulation.alpha(1).restart().tick();
-	}
-
-	async function get_properties(uri: string) {
-		const result = await fetch_properties(uri);
-		return result as Triple[];
-		/* const data = (await result.json()) as Triple[];
-		if (result.ok) {
-			return data;
-		} else {
-			throw new Error("Not Implemented");
-		} */
-	}
-
-	let selected_properties: string[] = [];
-	let selected_node = "";
-
-	async function node_click(uri: string) {
-		const node = graph.get_node(uri)!;
-
-		const triples = await get_properties(uri);
-		graph.add_triple(triples);
-		//console.log(graph);
-		selected_properties = node.property_labels;
-		selected_node = uri;
-	}
-
-	function update_nodes() {
-		simulation.nodes(graph.d3_nodes);
-		const node_elements = svg
-			.select(".nodes")
-			.selectAll("g")
-			//.data(simulation.nodes(), (datum, index) => datum.value)
-			.data(simulation.nodes())
-			.enter()
-			.append("g")
-			.attr("id", (d) => d.value)
-			.on("click", (d, x) => node_click(x.value));
-
-		// create nodes
-
-		const circles = node_elements.append("circle").attr("r", 5).attr("fill", 1);
-
-		// create node - labels
-		const texts = node_elements
-			.append("text")
-			.text(function (d) {
-				return d.value;
-			})
-			.attr("fill", "white")
-			.attr("x", 6)
-			.attr("y", 10);
-
-		drag_handler(
-			node_elements as unknown as d3.Selection<Element, unknown, any, any>
-		);
-	}
-
-	function update_links() {
-		const force = simulation.force("link") as ForceLink<SimNode, SimLink>;
-
-		force.links(graph.d3_links);
-
-		svg
-			.select(".links")
-			.selectAll("line")
-			.data(graph.d3_links)
-			.enter()
-			.append("line")
-			.attr("stroke-width", 1);
-	}
-
-	let drag_handler: d3.DragBehavior<Element, unknown, unknown>;
-
-	function create_drag(sim: d3.Simulation<SimNode, SimLink>) {
-		function dragstarted(event: any, d: any) {
-			if (!event.active) sim.alphaTarget(0.3).restart();
-			d.fx = d.x;
-			d.fy = d.y;
-		}
-
-		function dragged(event: any, d: any) {
-			d.fx = event.x;
-			d.fy = event.y;
-		}
-
-		function dragended(event: any, d: any) {
-			if (!event.active) sim.alphaTarget(0);
-			d.fx = null;
-			d.fy = null;
-		}
-
-		return d3
-			.drag()
-			.on("start", dragstarted)
-			.on("drag", dragged)
-			.on("end", dragended);
-	}
-
-	function create_graph(starting_point: string) {
-		graph = new Graph(starting_point);
-
-		let s = document
-			.querySelector("gradio-app")
-			?.shadowRoot?.querySelector("svg");
-		if (!s) s = document.querySelector("svg");
-		s.innerHTML = "";
-
-		svg = d3.select(s);
-
-		// TODO. used to color the circles
-		const color = d3.scaleOrdinal(d3.schemeCategory10);
-
-		simulation = d3.forceSimulation<SimNode, SimLink>();
-		simulation.nodes(graph.d3_nodes);
-		simulation.on("tick", ticked);
-
-		simulation
-			.force(
-				"link",
-				d3.forceLink<SimNode, SimLink>(graph.d3_links).id((d) => d.value)
-			)
-			.force("charge", d3.forceManyBody())
-			.force(
-				"center",
-				d3.forceCenter(+svg.attr("width") / 2, +svg.attr("height") / 2)
-			)
-			.force("bounds", boxingForce);
-
-		simulation.force<ForceManyBody<SimNode>>("charge").strength(-50);
-		simulation.force<ForceLink<SimNode, SimLink>>("link").distance(100);
-
-		function boxingForce() {
-			const width = +svg.attr("width");
-			const height = +svg.attr("height");
-
-			for (let node of graph.d3_nodes) {
-				if (node.x! < 0) node.x = 0;
-				if (node.x! > width) node.x = width;
-
-				if (node.y! < 0) node.y = 0;
-				if (node.y! > height) node.y = height;
-			}
-		}
-
-		// create nodes
-		const nodes = svg
-			.append("g")
-			.attr("class", "nodes")
-			.selectAll("g")
-			.data(graph.d3_nodes)
-			.enter()
-			.append("g")
-			.attr("id", (d) => d.value)
-			.on("click", (d, x) => node_click(x.value));
-
-		const circles = nodes.append("circle").attr("r", 5).attr("fill", 1);
-		/* 
-
-		// create node - rects
-		const rects = nodes
-			.append('rect')
-			.attr('height', '30')
-			.attr('width', '300')
-			.attr('fill', 1)
-			.on('click', (d, x) => node_click(x.value)); */
-
-		// create node - labels
-		const texts = nodes
-			.append("text")
-			.text(function (d) {
-				return d.value;
-			})
-			.attr("fill", "white")
-			.attr("x", 6)
-			.attr("y", 10);
-
-		// create links
-		svg
-			.append("g")
-			.attr("class", "links")
-			.selectAll("line")
-			.data(graph.d3_links)
-			.enter()
-			.append("line")
-			.attr("stroke-width", 1);
-
-		// create link - labels
-		const line_labels = svg
-			.append("g")
-			.attr("class", "link_text")
-			.selectAll("line")
-			.data(graph.d3_links)
-			.enter()
-			.append("text")
-			.text("hi");
-
-		drag_handler = create_drag(simulation);
-		drag_handler(nodes as unknown as d3.Selection<Element, unknown, any, any>);
-
-		function ticked() {
-			if (svg.selectAll<d3.BaseType, SimNode>(".nodes g").size() == 0) return;
-			/* line_labels.attr('transform', (d) => {
-				return (
-					'translate(' +
-					(d.source.x! + (d.target.x! - d.source.x!) / 2) +
-					',' +
-					(d.source.y! + (d.target.y! - d.source.y!) / 2) +
-					')'
-				);
-			}); */
-			svg
-				.selectAll<d3.BaseType, SimLink>(".links line")
-				.attr("x1", (d) => (d.source as SimNode).x!)
-				.attr("y1", (d) => (d.source as SimNode).y!)
-				.attr("x2", (d) => (d.target as SimNode).x!)
-				.attr("y2", (d) => (d.target as SimNode).y!);
-
-			svg
-				.selectAll<d3.BaseType, SimNode>(".nodes g")
-				.attr("transform", function (d) {
-					return "translate(" + d.x + "," + d.y + ")";
-				});
-		}
-	}
-
-	let svg_element: SVGElement;
-
-	/* $: {
-		if (svg_element) {
-			create_graph();
-		}
-	} */
-
-	/* 	onMount(async () => {
-		console
+	/* onMount(() => {
+		create_graph("http://www.wikidata.org/entity/Q42442324");
 	}); */
+
+	async function create_graph(starting_point: string) {
+		graph = new Graph();
+
+		await graph.load(starting_point);
+		graph.update_data();
+
+		const options: Options = {
+			nodes: {
+				color: "#6a7e9d",
+				shape: "dot",
+				font: {
+					color: "white"
+				},
+				chosen: false
+			},
+			edges: {
+				font: {
+					strokeWidth: 0,
+					color: "white",
+					background: "#0b0f19",
+				},
+				labelHighlightBold: false
+			},
+			physics: {
+				solver: "forceAtlas2Based",
+				maxVelocity: 5,
+				minVelocity: 0.08,
+				barnesHut: {
+					springLength: 175
+				},
+				timestep: 0.4
+			}
+		};
+		network = new vis.Network(container, graph.data, options);
+
+		network.on("click", show_related_menu);
+		network.on("oncontext", show_menu);
+	}
+
+	interface Click_Event {
+		edges: [];
+		event: any;
+		items: [];
+		nodes: URI[];
+		pointer: {
+			DOM: { x: number; y: number };
+			canvas: { x: number; y: number };
+		};
+	}
+
+	function show_menu(params: Click_Event) {
+		params.event.preventDefault();
+		console.log(event);
+	}
+
+	function show_related_menu(event: Click_Event) {
+		if (network.getSelectedNodes().length > 0) {
+			progress = 0;
+			selected_node = event.nodes[0];
+			menu_position = event.pointer.DOM;
+			last_click = event.pointer.canvas;
+			/* const canvas_position = container.getBoundingClientRect();
+			menu_position.x += canvas_position.x;
+			menu_position.y += canvas_position.y; */
+
+			properties = [];
+			graph.get_properties(selected_node, set_progress).then((result) => {
+				properties = result;
+			});
+		} else {
+			selected_node = "";
+		}
+	}
+
+	async function property_clicked(
+		event: CustomEvent<{ uri: URI; property: Property }>
+	) {
+		const uri = event.detail.uri;
+		const property = event.detail.property;
+		selected_node = "";
+
+		await graph.load_data(uri, property.uri, last_click);
+	}
+
+	function set_progress(new_progress) {
+		progress = new_progress;
+	}
 </script>
 
-<main>
-	<svg width="600" height="600" bind:this={svg_element} />
-	<PropertySelect
-		bind:properties={selected_properties}
-		bind:node={selected_node}
-		on:property_clicked={get_data}
-	/>
-</main>
+<div class="flex flex-col justify-center w-full container">
+	<div class="graph_container" bind:this={container} />
+</div>
+<Menu
+	{menu_position}
+	node={selected_node}
+	{properties}
+	on:property_clicked={property_clicked}
+	{progress}
+/>
 
 <style>
-	:global(.links line) {
-		stroke: #999;
-		stroke-opacity: 0.6;
+	.graph_container {
+		width: 100%;
+		height: 100%;
 	}
 
-	:global(.nodes circle) {
-		stroke: #fff;
-		stroke-width: 1.5px;
-	}
-
-	:global(text) {
-		font-family: sans-serif;
-		font-size: 10px;
+	.container {
+		height: 65vh;
 	}
 </style>

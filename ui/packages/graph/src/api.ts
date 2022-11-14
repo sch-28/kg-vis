@@ -1,95 +1,260 @@
-import { Triple, SimNode, SimLink } from "./types/rdf.types";
+import type { Property, URI } from "./types";
 
-const endpoint = " https://skynet.coypu.org/freebase/";
+const RATE_LIMIT = 20;
+const SIZE_LIMIT = 100;
+
+export interface Triple {
+	subject: Node;
+	property: Node;
+	object: Node;
+}
+
+export interface Node {
+	// termType: string;
+	type: "literal" | "uri";
+	value: string;
+}
+
+const endpoint = "https://skynet.coypu.org/wikidata/";
+//const endpoint = "https://query.wikidata.org/sparql";
 
 async function SPARQL_query(body: string) {
+
+	var urlencoded = new URLSearchParams();
+	urlencoded.append("query", body);
+
 	const result = await fetch(endpoint, {
 		method: "POST",
 		headers: { "Content-Type": "application/x-www-form-urlencoded" },
-		body: `query=${body}`
+		body: urlencoded,
 	});
-
+	/* const content = `?query=${encodeURIComponent(body)}`;
+	const result = await fetch(endpoint + content, {
+		method: "GET",
+		headers: {
+			Accept: "application/sparql-results+json",
+		},
+	}); */
 	const json = await result.json();
 
-	const triples: Triple[] = [];
+	const triples = [];
 	for (let binding of json.results.bindings) {
-		triples.push({ s: binding.s, p: binding.p, o: binding.o } as Triple);
+		triples.push(binding);
 	}
-
 
 	return triples;
 }
 
-export function parse_data(data: Triple[], origin_uri: string) {
-	const nodes: SimNode[] = [];
-	const links: SimLink[] = [];
-	for (let triple of data) {
-		const origin = new SimNode(origin_uri);
-		const source = new SimNode(triple.o.value);
-		const target = new SimNode(triple.s.value);
-		const link = new SimLink(triple.p.value, origin, source);
-		const link2 = new SimLink("something", origin, source);
+export async function fetch_data(subject: URI, property: URI, nodes: URI[]) {
+	const result = await SPARQL_query(
+		`PREFIX wikibase: <http://wikiba.se/ontology#>
+		PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+		SELECT DISTINCT ?object  WHERE {
+			{
+			  ?object <${property}> <${subject}> .
+			} UNION{
+				<${subject}> <${property}> ?object
+			}
+			} LIMIT ${SIZE_LIMIT}`
+	);
 
-		nodes.push(source, target);
-		links.push(link);
+	const results: {
+		uri: URI;
+		label: string;
+		relations: { subject: Node; property: Node; object: Node; propLabel: Node }[];
+	}[] = [];
+
+	const all_new_nodes = result.map((c) => c.object.value);
+
+	for (let i = 0; i < result.length; i += RATE_LIMIT) {
+		const new_nodes = result.slice(i, i + RATE_LIMIT).map((c) => c.object.value);
+		
+
+		const requests: { uri: URI; relations: any }[] = [];
+		new_nodes.forEach((node) =>
+			requests.push({
+				uri: node,
+				relations: fetch_relations(node, [...nodes, ...all_new_nodes]),
+			})
+		);
+		// results.push(...(await Promise.all(requests.map(r => [r.label, r.relations]))));
+		for (let i = 0; i < requests.length; i++) {
+			const request = requests[i];
+			const r = await request.relations;
+			results.push({ uri: request.uri, relations: r, label: "" });
+		}
 	}
 
-	return [nodes, links] as const;
+	const labels = await fetch_labels(results.map((r) => r.uri));
+
+	for (let node of results) {
+		node.label = labels.find((l) => l.uri == node.uri)?.label ?? "";
+	}
+
+	return results;
 }
 
-export async function fetch_data(uri: string, property: string) {
+export async function fetch_labels(subjects: URI[]) {
 	const result = await SPARQL_query(
-		`SELECT DISTINCT ?s ?p ?o WHERE 
-		{{
-			?s 		<${property}> 	<${uri}> .
-					
-		}UNION{
-			<${uri}>		<${property}> 	 ?s .
-		}}`
+		`
+		PREFIX bd: <http://www.bigdata.com/rdf#>
+		PREFIX wikibase: <http://wikiba.se/ontology#>
+		PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+		SELECT DISTINCT ?subject ?subjectLabel  WHERE {
+          VALUES ?subject {
+    		${subjects.map((s) => `<${s}>`).join("\n")}
+  			}
+
+ 		
+			  ?subject rdfs:label ?subjectLabel 
+			  FILTER (lang(?subjectLabel) = 'en')
+		}
+			`
 	);
+	if (result.length > 0) {
+		return result.map((r) => {
+			return { uri: r.subject.value, label: r.subjectLabel.value };
+		});
+	}
 
-	return result.map((c) => {
-		/* const data: rdf_data = {
-			source: { value: uri },
-			property: { value: property },
-			target: c.s,
-			target_property: c.p,
-			target_target: c.o
-		}; */
-		const data: Triple = {
-			s: { value: uri, type: "uri" },
-			p: { value: property, type: "uri" },
-			o: c.s
-		};
-		return data;
-	});
+	throw new Error("Unable to fetch label: " + result);
 }
 
-export async function fetch_properties(uri: string) {
+export async function fetch_label(subject: URI) {
 	const result = await SPARQL_query(
-		// removed ?o for now, it has yet to be implemented.
-		// Alternatively keeping it like this will increase fetch time.
-		`SELECT DISTINCT ?p WHERE {
-			{
-			  ?o ?p <${uri}> .
-			} UNION{
-				<${uri}> ?p ?o
+		`
+		PREFIX bd: <http://www.bigdata.com/rdf#>
+		PREFIX wikibase: <http://wikiba.se/ontology#>
+		PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+		SELECT DISTINCT ?subjectLabel WHERE {
+          VALUES ?subject {
+    		<${subject}>
+  			}
+
+ 		
+		?subject rdfs:label ?subjectLabel 
+		FILTER (lang(?subjectLabel) = 'en')
+		
+		}
+			`
+	);
+	if (result.length > 0) {
+		return result[0].subjectLabel.value;
+	}
+
+	throw new Error("Unable to fetch label: " + result);
+}
+
+export async function fetch_relations(subject: URI, other_nodes: URI[]) {
+	let relations = `VALUES ?object {\n`;
+
+	for (let i = 0; i < other_nodes.length; i++) {
+		const node = other_nodes[i];
+
+		relations += `<${node}>\n`;
+	}
+	relations += "}";
+
+	const result = await SPARQL_query(
+		`
+		PREFIX bd: <http://www.bigdata.com/rdf#>
+		PREFIX wikibase: <http://wikiba.se/ontology#>
+		PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+		SELECT DISTINCT ?object ?property ?propLabel ?subject WHERE
+		{
+			VALUES ?subject {
+				<${subject}>
 			}
-			}GROUP BY ?p`
+			${relations}
+			{	
+				?object ?property ?subject .
+			} UNION{
+				?subject ?property ?object .
+			}
+			?claim wikibase:directClaim ?property.
+			?prop wikibase:directClaim ?property .
+			?prop rdfs:label ?propLabel 
+			FILTER (lang(?propLabel) = 'en')
+			
+		}`
 	);
-	return result.map((c) => {
-		/* const data: rdf_data = {
-			source: { value: uri },
-			property: { value: property },
-			target: c.s,
-			target_property: c.p,
-			target_target: c.o
-		}; */
-		const data: Triple = {
-			s: { value: uri, type: "uri" },
-			p: c.p,
-			o: { value: "TODO", type: "literal" }
+
+	return result as { subject: Node; property: Node; object: Node; propLabel: Node }[];
+}
+
+export async function fetch_property(subject: URI, property: URI): Promise<Property> {
+	const result = await SPARQL_query(
+		`
+		PREFIX wikibase: <http://wikiba.se/ontology#>
+		PREFIX bd: <http://www.bigdata.com/rdf#>
+		PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+		PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+		PREFIX wd: <http://www.wikidata.org/entity/>
+		SELECT DISTINCT ?propLabel (COUNT(?outObject) AS ?outCount) (COUNT(?inObject) AS ?inCount)    WHERE {
+		{
+			SELECT DISTINCT ?outObject WHERE {
+			<${subject}> <${property}> ?outObject.
+			}
+			LIMIT ${SIZE_LIMIT}
+		}
+		UNION
+		{
+			SELECT DISTINCT ?inObject WHERE {
+			?inObject <${property}> <${subject}>.
+			}
+			LIMIT ${SIZE_LIMIT}
+		}
+		OPTIONAL {
+			?prop wikibase:directClaim <${property}> .
+			}
+		?prop rdfs:label ?propLabel 
+		FILTER (lang(?propLabel) = 'en')
+		} GROUP BY ?propLabel `
+	);
+
+	if (result.length > 0) {
+		const res = result[0];
+		return {
+			label: res.propLabel?.value,
+			uri: property,
+			out_count: +res.outCount.value,
+			in_count: +res.inCount.value,
 		};
-		return data;
+	}
+
+	throw new Error("Unable to fetch Property: " + result);
+}
+
+export async function fetch_properties(subject: URI, progress_function?: Function) {
+	const result = await SPARQL_query(
+		`
+		PREFIX wikibase: <http://wikiba.se/ontology#>
+		PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+		SELECT DISTINCT ?property  WHERE {
+			{
+			  ?o ?property <${subject}> .
+			} UNION{
+				<${subject}> ?property ?o
+			}
+			?claim wikibase:directClaim ?property.
+			}`
+	);
+
+	const results: Property[] = [];
+	for (let i = 0; i < result.length; i += RATE_LIMIT) {
+		const properties = result.slice(i, i + RATE_LIMIT).map((c) => c.property.value);
+
+		const requests = [];
+		properties.forEach((prop) => requests.push(fetch_property(subject, prop)));
+		results.push(...((await Promise.all(requests)) as Property[]));
+		progress_function(Math.floor((i / result.length) * 100));
+	}
+
+	return results;
+}
+
+async function timeout(ms: number) {
+	return new Promise((resolve) => {
+		setTimeout(resolve, ms);
 	});
 }
