@@ -113,7 +113,7 @@ export class Graph {
 			}
 		}
 
-		const deleted_nodes: DataSet<any>[] = [];
+		const deleted_nodes: Node[] = [];
 		old_nodes.forEach((node: Node) => {
 			if (!nodes.includes(node)) {
 				deleted_nodes.push(node);
@@ -124,7 +124,7 @@ export class Graph {
 			old_nodes.remove(node);
 		}
 
-		const deleted_edges: DataSet<any>[] = [];
+		const deleted_edges: Edge[] = [];
 		old_edges.forEach((edge: Edge) => {
 			if (!edges.includes(edge)) {
 				deleted_edges.push(edge);
