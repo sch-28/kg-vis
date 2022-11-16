@@ -56,7 +56,7 @@
 				font: {
 					strokeWidth: 0,
 					color: "white",
-					background: "#0b0f19",
+					background: "#0b0f19"
 				},
 				labelHighlightBold: false
 			},
@@ -121,7 +121,7 @@
 		await graph.load_data(uri, property.uri, last_click);
 	}
 
-	function set_progress(new_progress) {
+	function set_progress(new_progress: number) {
 		progress = new_progress;
 	}
 </script>

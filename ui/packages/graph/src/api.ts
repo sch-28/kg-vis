@@ -19,14 +19,13 @@ const endpoint = "https://skynet.coypu.org/wikidata/";
 //const endpoint = "https://query.wikidata.org/sparql";
 
 async function SPARQL_query(body: string) {
-
 	var urlencoded = new URLSearchParams();
 	urlencoded.append("query", body);
 
 	const result = await fetch(endpoint, {
 		method: "POST",
 		headers: { "Content-Type": "application/x-www-form-urlencoded" },
-		body: urlencoded,
+		body: urlencoded
 	});
 	/* const content = `?query=${encodeURIComponent(body)}`;
 	const result = await fetch(endpoint + content, {
@@ -61,20 +60,26 @@ export async function fetch_data(subject: URI, property: URI, nodes: URI[]) {
 	const results: {
 		uri: URI;
 		label: string;
-		relations: { subject: Node; property: Node; object: Node; propLabel: Node }[];
+		relations: {
+			subject: Node;
+			property: Node;
+			object: Node;
+			propLabel: Node;
+		}[];
 	}[] = [];
 
 	const all_new_nodes = result.map((c) => c.object.value);
 
 	for (let i = 0; i < result.length; i += RATE_LIMIT) {
-		const new_nodes = result.slice(i, i + RATE_LIMIT).map((c) => c.object.value);
-		
+		const new_nodes = result
+			.slice(i, i + RATE_LIMIT)
+			.map((c) => c.object.value);
 
 		const requests: { uri: URI; relations: any }[] = [];
 		new_nodes.forEach((node) =>
 			requests.push({
 				uri: node,
-				relations: fetch_relations(node, [...nodes, ...all_new_nodes]),
+				relations: fetch_relations(node, [...nodes, ...all_new_nodes])
 			})
 		);
 		// results.push(...(await Promise.all(requests.map(r => [r.label, r.relations]))));
@@ -179,10 +184,18 @@ export async function fetch_relations(subject: URI, other_nodes: URI[]) {
 		}`
 	);
 
-	return result as { subject: Node; property: Node; object: Node; propLabel: Node }[];
+	return result as {
+		subject: Node;
+		property: Node;
+		object: Node;
+		propLabel: Node;
+	}[];
 }
 
-export async function fetch_property(subject: URI, property: URI): Promise<Property> {
+export async function fetch_property(
+	subject: URI,
+	property: URI
+): Promise<Property> {
 	const result = await SPARQL_query(
 		`
 		PREFIX wikibase: <http://wikiba.se/ontology#>
@@ -218,14 +231,17 @@ export async function fetch_property(subject: URI, property: URI): Promise<Prope
 			label: res.propLabel?.value,
 			uri: property,
 			out_count: +res.outCount.value,
-			in_count: +res.inCount.value,
+			in_count: +res.inCount.value
 		};
 	}
 
 	throw new Error("Unable to fetch Property: " + result);
 }
 
-export async function fetch_properties(subject: URI, progress_function?: Function) {
+export async function fetch_properties(
+	subject: URI,
+	progress_function?: Function
+) {
 	const result = await SPARQL_query(
 		`
 		PREFIX wikibase: <http://wikiba.se/ontology#>
@@ -242,12 +258,15 @@ export async function fetch_properties(subject: URI, progress_function?: Functio
 
 	const results: Property[] = [];
 	for (let i = 0; i < result.length; i += RATE_LIMIT) {
-		const properties = result.slice(i, i + RATE_LIMIT).map((c) => c.property.value);
+		const properties = result
+			.slice(i, i + RATE_LIMIT)
+			.map((c) => c.property.value);
 
-		const requests = [];
+		const requests: Promise<Property>[] = [];
 		properties.forEach((prop) => requests.push(fetch_property(subject, prop)));
 		results.push(...((await Promise.all(requests)) as Property[]));
-		progress_function(Math.floor((i / result.length) * 100));
+		if (progress_function)
+			progress_function(Math.floor((i / result.length) * 100));
 	}
 
 	return results;

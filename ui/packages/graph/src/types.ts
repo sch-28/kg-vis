@@ -27,9 +27,14 @@ export class Node {
 	is_fetched: boolean;
 	x: number;
 	y: number;
-	properties: Property[];
+	properties: Property[] = [];
 
-	constructor(uri: URI, label: string, visible = false, position: { x: number; y: number } = { x: 0, y: 0 }) {
+	constructor(
+		uri: URI,
+		label: string,
+		visible = false,
+		position: { x: number; y: number } = { x: 0, y: 0 }
+	) {
 		this.id = uri;
 		this.label = label;
 		this.visible = visible;
@@ -72,7 +77,11 @@ export class Graph {
 		for (let node_one of this.nodes) {
 			if (node_one.id == edge.from && node_one.visible) {
 				for (let node_two of this.nodes) {
-					if (node_two != node_one && node_two.id == edge.to && node_two.visible) {
+					if (
+						node_two != node_one &&
+						node_two.id == edge.to &&
+						node_two.visible
+					) {
 						return true;
 					}
 				}
@@ -104,8 +113,8 @@ export class Graph {
 			}
 		}
 
-		const deleted_nodes = [];
-		old_nodes.forEach((node) => {
+		const deleted_nodes: DataSet<any>[] = [];
+		old_nodes.forEach((node: Node) => {
 			if (!nodes.includes(node)) {
 				deleted_nodes.push(node);
 			}
@@ -115,8 +124,8 @@ export class Graph {
 			old_nodes.remove(node);
 		}
 
-		const deleted_edges = [];
-		old_edges.forEach((edge) => {
+		const deleted_edges: DataSet<any>[] = [];
+		old_edges.forEach((edge: Edge) => {
 			if (!edges.includes(edge)) {
 				deleted_edges.push(edge);
 			}
@@ -224,7 +233,12 @@ export class Graph {
 		);
 
 		for (let new_node of new_nodes) {
-			const node = this.find_or_create_node(new_node.uri, new_node.label, true, position);
+			const node = this.find_or_create_node(
+				new_node.uri,
+				new_node.label,
+				true,
+				position
+			);
 			node.x = position.x;
 			node.y = position.y;
 			node.visible = true;
