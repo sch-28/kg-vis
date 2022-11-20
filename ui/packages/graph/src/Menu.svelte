@@ -20,7 +20,10 @@
 </script>
 
 {#if node.length > 0}
-	<div class="wrapper" bind:this={wrapper}>
+	<div
+		class="wrapper bg-slate-200 dark:bg-slate-700 shadow-md "
+		bind:this={wrapper}
+	>
 		<div class="properties">
 			{#if properties.length > 0}
 				{#each properties as property}
@@ -43,7 +46,7 @@
 				<div class="m-auto w-4/5">
 					<h2 class="mb-2">Loading...</h2>
 					<!-- <div progress={progress.toString()} /> -->
-					<div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+					<div class="w-full bg-slate-400 rounded-full h-2.5 dark:bg-slate-200">
 						<div
 							class="bg-blue-600 h-2.5 rounded-full"
 							style="width: {progress.toString()}%"
@@ -58,7 +61,6 @@
 <style>
 	.wrapper {
 		position: absolute;
-		background-color: rgba(0, 0, 0, 0.8);
 		padding: 10px;
 		border-radius: 20px;
 		width: fit-content;

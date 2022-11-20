@@ -19,6 +19,8 @@
 
 	let progress = 0;
 
+	let dark_mode = true;
+
 	export let elem_id: string = "";
 	export let value: string;
 	export let visible: boolean = true;
@@ -37,6 +39,11 @@
 		create_graph("http://www.wikidata.org/entity/Q42442324");
 	}); */
 
+	onMount(() => {
+		dark_mode =
+			document.getElementById("root")?.classList.contains("dark") ?? false;
+	});
+
 	async function create_graph(starting_point: string) {
 		graph = new Graph();
 
@@ -48,15 +55,15 @@
 				color: "#6a7e9d",
 				shape: "dot",
 				font: {
-					color: "white"
+					color: dark_mode ? "white" : "black"
 				},
 				chosen: false
 			},
 			edges: {
 				font: {
 					strokeWidth: 0,
-					color: "white",
-					background: "#0b0f19"
+					color: dark_mode ? "white" : "black",
+					background: dark_mode ? "#0b0f19" : "white"
 				},
 				labelHighlightBold: false
 			},
