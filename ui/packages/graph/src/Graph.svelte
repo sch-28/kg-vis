@@ -41,7 +41,6 @@
 
 	onMount(() => {
 		dark_mode =
-			document.getElementById("root")?.classList.contains("dark") ??
 			document.querySelector(".gradio-container")?.classList.contains("dark") ??
 			document
 				.querySelector("gradio-app")
