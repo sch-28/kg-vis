@@ -69,12 +69,13 @@
 			},
 			physics: {
 				solver: "forceAtlas2Based",
-				maxVelocity: 5,
-				minVelocity: 0.08,
+				maxVelocity: 25,
+				minVelocity: 1.5,
+
 				barnesHut: {
 					springLength: 175
 				},
-				timestep: 0.4
+				timestep: 0.5
 			}
 		};
 		network = new vis.Network(container, graph.data, options);
