@@ -43,6 +43,10 @@
 		dark_mode =
 			document.getElementById("root")?.classList.contains("dark") ??
 			document.querySelector(".gradio-container")?.classList.contains("dark") ??
+			document
+				.querySelector("gradio-app")
+				?.shadowRoot?.querySelector(".gradio-container")
+				?.classList.contains("dark") ??
 			false;
 	});
 
