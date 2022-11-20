@@ -41,7 +41,9 @@
 
 	onMount(() => {
 		dark_mode =
-			document.getElementById("root")?.classList.contains("dark") ?? false;
+			document.getElementById("root")?.classList.contains("dark") ??
+			document.querySelector(".gradio-container")?.classList.contains("dark") ??
+			false;
 	});
 
 	async function create_graph(starting_point: string) {
