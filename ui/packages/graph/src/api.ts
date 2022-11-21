@@ -120,6 +120,8 @@ export async function fetch_labels(subjects: URI[]) {
 		return result.map((r) => {
 			return { uri: r.subject.value, label: r.subjectLabel.value };
 		});
+	} else if (subjects.length == 1) {
+		return [{ uri: subjects[0], label: subjects[0] }];
 	}
 
 	throw new Error("Unable to fetch label: " + result);

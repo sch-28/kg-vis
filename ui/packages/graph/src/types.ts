@@ -220,7 +220,7 @@ export class Graph {
 
 	async load_data(
 		uri: string,
-		property: string,
+		property: Property,
 		position: {
 			x: number;
 			y: number;
@@ -228,7 +228,7 @@ export class Graph {
 	) {
 		const new_nodes = await fetch_data(
 			uri,
-			property,
+			property.uri,
 			this.nodes.map((n) => n.id)
 		);
 
@@ -244,13 +244,22 @@ export class Graph {
 			node.visible = true;
 
 			//this.create_edge(uri, property, new_node.uri, "");
-			for (let relation of new_node.relations) {
+			if (new_node.relations.length == 0) {
 				this.create_edge(
-					relation.subject.value,
-					relation.property.value,
-					relation.object.value,
-					relation.propLabel.value
+					uri,
+					property.uri,
+					new_node.uri,
+					property.label ?? "label"
 				);
+			} else {
+				for (let relation of new_node.relations) {
+					this.create_edge(
+						relation.subject.value,
+						relation.property.value,
+						relation.object.value,
+						relation.propLabel.value
+					);
+				}
 			}
 		}
 

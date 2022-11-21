@@ -131,7 +131,7 @@
 		const property = event.detail.property;
 		selected_node = "";
 
-		await graph.load_data(uri, property.uri, last_click);
+		await graph.load_data(uri, property, last_click);
 	}
 
 	function set_progress(new_progress: number) {
