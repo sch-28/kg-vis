@@ -18,7 +18,7 @@ const endpoint = "https://dbpedia.org/sparql";
 //const endpoint = "https://skynet.coypu.org/wikidata/";
 //const endpoint = "https://query.wikidata.org/sparql";
 
-async function SPARQL_query(body: string) {
+async function SPARQL_query<T>(body: string) {
 	var urlencoded = new URLSearchParams();
 	urlencoded.append("query", body);
 
@@ -41,7 +41,7 @@ async function SPARQL_query(body: string) {
 	}); */
 	const json = await result.json();
 
-	const triples = [];
+	const triples: T[] = [];
 	for (let binding of json.results.bindings) {
 		triples.push(binding);
 	}
@@ -50,7 +50,7 @@ async function SPARQL_query(body: string) {
 }
 
 export async function fetch_data(subject: URI, property: URI, nodes: URI[]) {
-	const result = await SPARQL_query(
+	const result = await SPARQL_query<Triple>(
 		`PREFIX wikibase: <http://wikiba.se/ontology#>
 		PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 		SELECT DISTINCT ?object  WHERE {
@@ -105,7 +105,10 @@ export async function fetch_data(subject: URI, property: URI, nodes: URI[]) {
 }
 
 export async function fetch_labels(subjects: URI[]) {
-	const result = await SPARQL_query(
+	const result = await SPARQL_query<{
+		subject: { value: URI };
+		subjectLabel: { value: string };
+	}>(
 		`
 		PREFIX bd: <http://www.bigdata.com/rdf#>
 		PREFIX wikibase: <http://wikiba.se/ontology#>
@@ -133,7 +136,7 @@ export async function fetch_labels(subjects: URI[]) {
 }
 
 export async function fetch_label(subject: URI) {
-	const result = await SPARQL_query(
+	const result = await SPARQL_query<{ subjectLabel: { value: string } }>(
 		`
 		PREFIX bd: <http://www.bigdata.com/rdf#>
 		PREFIX wikibase: <http://wikiba.se/ontology#>
@@ -203,7 +206,11 @@ export async function fetch_property(
 	subject: URI,
 	property: URI
 ): Promise<Property> {
-	const result = await SPARQL_query(
+	const result = await SPARQL_query<{
+		propLabel: { value: string };
+		outCount: { value: number };
+		inCount: { value: number };
+	}>(
 		`
 		PREFIX wikibase: <http://wikiba.se/ontology#>
 		PREFIX bd: <http://www.bigdata.com/rdf#>
@@ -249,7 +256,7 @@ export async function fetch_properties(
 	subject: URI,
 	progress_function?: Function
 ) {
-	const result = await SPARQL_query(
+	const result = await SPARQL_query<{ property: { value: string } }>(
 		`
 		PREFIX wikibase: <http://wikiba.se/ontology#>
 		PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
