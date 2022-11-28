@@ -3,8 +3,7 @@
 	import type { Network, Options } from "vis-network";
 	import * as vis from "vis-network";
 	import Menu from "./Menu.svelte";
-	import { Graph, Property, type Properties, type URI } from "./types";
-	import { createEventDispatcher } from "svelte";
+	import { Graph, Property, type URI } from "./types";
 
 	let container: HTMLElement;
 
@@ -22,22 +21,18 @@
 	let dark_mode = true;
 
 	export let elem_id: string = "";
-	export let value: string;
 	export let visible: boolean = true;
 
-	const dispatch = createEventDispatcher<{ change: undefined }>();
-
-	$: value, dispatch("change");
+	export let root: string;
+	export let endpoint: string = "https://query.wikidata.org/sparql";
+	export let rate_limit: number = 5;
+	export let size_limit: number = 100;
 
 	$: {
-		if (value.length > 0) {
-			create_graph(value);
+		if (root.length > 0) {
+			create_graph(root);
 		}
 	}
-
-	/* onMount(() => {
-		create_graph("http://www.wikidata.org/entity/Q42442324");
-	}); */
 
 	onMount(() => {
 		dark_mode =
@@ -50,7 +45,7 @@
 	});
 
 	async function create_graph(starting_point: string) {
-		graph = new Graph();
+		graph = new Graph(rate_limit, size_limit, endpoint);
 
 		await graph.load(starting_point);
 		graph.update_data();
@@ -111,9 +106,6 @@
 			selected_node = event.nodes[0];
 			menu_position = event.pointer.DOM;
 			last_click = event.pointer.canvas;
-			/* const canvas_position = container.getBoundingClientRect();
-			menu_position.x += canvas_position.x;
-			menu_position.y += canvas_position.y; */
 
 			properties = [];
 			graph.get_properties(selected_node, set_progress).then((result) => {
@@ -139,16 +131,18 @@
 	}
 </script>
 
-<div class="flex flex-col justify-center w-full container">
-	<div class="graph_container" bind:this={container} />
+<div id={elem_id} hidden={!visible}>
+	<div class="flex flex-col justify-center w-full container">
+		<div class="graph_container" bind:this={container} />
+	</div>
+	<Menu
+		{menu_position}
+		node={selected_node}
+		{properties}
+		on:property_clicked={property_clicked}
+		{progress}
+	/>
 </div>
-<Menu
-	{menu_position}
-	node={selected_node}
-	{properties}
-	on:property_clicked={property_clicked}
-	{progress}
-/>
 
 <style>
 	.graph_container {

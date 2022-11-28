@@ -1,5 +1,5 @@
 import { DataSet } from "vis-data";
-import { fetch_data, fetch_label, fetch_properties } from "./api";
+import { SPARQL } from "./api";
 
 export type URI = string;
 
@@ -64,12 +64,21 @@ export class Graph {
 
 	data: { nodes: DataSet<any>; edges: DataSet<any> };
 
-	constructor() {
+	constructor(
+		rate_limit = 5,
+		size_limit = 100,
+		endpoint = "https://query.wikidata.org/sparql"
+	) {
 		this.nodes = [];
 		this.edges = [];
 		const data_nodes = new DataSet([]);
 		const data_edges = new DataSet([]);
 		this.data = { nodes: data_nodes, edges: data_edges };
+
+		SPARQL.set_endpoint(endpoint);
+		SPARQL.set_rate_limit(rate_limit);
+		SPARQL.set_size_limit(size_limit);
+
 		this.update_data();
 	}
 
@@ -172,17 +181,7 @@ export class Graph {
 	}
 
 	async load_properties(uri: URI, progress_function?: Function) {
-		/* const triples = await fetch_properties(uri);
-		if (triples.length > 0) {
-			const node = this.find_or_create_node(uri, triples[0].s.label, true);
-			node.is_fetched = true;
-		}
-		for (let triple of triples) {
-			this.find_or_create_node(triple.o.value, triple.o.label);
-			this.create_edge(uri, triple.p.value, triple.o.value, triple.p.label);
-		} */
-
-		const properties = await fetch_properties(uri, progress_function);
+		const properties = await SPARQL.fetch_properties(uri, progress_function);
 		if (properties.length > 0) {
 			const node = this.find_or_create_node(uri, uri, true);
 			node.is_fetched = true;
@@ -191,7 +190,7 @@ export class Graph {
 	}
 
 	async load(uri: URI) {
-		const label = await fetch_label(uri);
+		const label = await SPARQL.fetch_label(uri);
 		this.find_or_create_node(uri, label, true);
 	}
 
@@ -201,20 +200,6 @@ export class Graph {
 			await this.load_properties(node.id, progress_function);
 		}
 
-		/* const property_edges = this.edges.filter((edge) => edge.from == uri);
-		const properties: Properties = {};
-
-		for (let edge of property_edges) {
-			if (!properties[edge.uri]) {
-				properties[edge.uri] = [{ label: edge.label, uri: edge.uri }];
-			} else {
-				properties[edge.uri].push({ label: edge.label, uri: edge.uri });
-			}
-		} */
-
-		/* const properties = property_edges.map((p) => {
-			return { label: p.label, uri: p.uri };
-		}); */
 		return node.properties;
 	}
 
@@ -226,7 +211,7 @@ export class Graph {
 			y: number;
 		} = { x: 0, y: 0 }
 	) {
-		const new_nodes = await fetch_data(
+		const new_nodes = await SPARQL.fetch_data(
 			uri,
 			property.uri,
 			this.nodes.map((n) => n.id)
@@ -243,7 +228,6 @@ export class Graph {
 			node.y = position.y;
 			node.visible = true;
 
-			//this.create_edge(uri, property, new_node.uri, "");
 			if (new_node.relations.length == 0) {
 				this.create_edge(
 					uri,
