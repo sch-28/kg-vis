@@ -23,14 +23,15 @@
 	export let elem_id: string = "";
 	export let visible: boolean = true;
 
-	export let root: string;
+	export let value: string;
 	export let endpoint: string = "https://query.wikidata.org/sparql";
 	export let rate_limit: number = 5;
 	export let size_limit: number = 100;
 
 	$: {
-		if (root.length > 0) {
-			create_graph(root);
+		endpoint, size_limit, rate_limit;
+		if (value && value.length > 0) {
+			create_graph(value);
 		}
 	}
 
@@ -45,7 +46,7 @@
 	});
 
 	async function create_graph(starting_point: string) {
-		graph = new Graph(rate_limit, size_limit, endpoint);
+		graph = new Graph(+rate_limit, +size_limit, endpoint);
 
 		await graph.load(starting_point);
 		graph.update_data();
