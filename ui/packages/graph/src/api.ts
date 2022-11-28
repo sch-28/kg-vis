@@ -1,6 +1,6 @@
 import type { Property, URI } from "./types";
 
-const RATE_LIMIT = 20;
+const RATE_LIMIT = 5;
 const SIZE_LIMIT = 100;
 
 export interface Triple {
@@ -14,8 +14,8 @@ export interface Node {
 	type: "literal" | "uri";
 	value: string;
 }
-
-const endpoint = "https://skynet.coypu.org/wikidata/";
+const endpoint = "https://dbpedia.org/sparql";
+//const endpoint = "https://skynet.coypu.org/wikidata/";
 //const endpoint = "https://query.wikidata.org/sparql";
 
 async function SPARQL_query(body: string) {
@@ -24,7 +24,12 @@ async function SPARQL_query(body: string) {
 
 	const result = await fetch(endpoint, {
 		method: "POST",
-		headers: { "Content-Type": "application/x-www-form-urlencoded" },
+
+		headers: {
+			"Content-Type": "application/x-www-form-urlencoded",
+			Accept: "application/sparql-results+json"
+		},
+
 		body: urlencoded
 	});
 	/* const content = `?query=${encodeURIComponent(body)}`;
@@ -149,7 +154,7 @@ export async function fetch_label(subject: URI) {
 		return result[0].subjectLabel.value;
 	}
 
-	throw new Error("Unable to fetch label: " + result);
+	return subject;
 }
 
 export async function fetch_relations(subject: URI, other_nodes: URI[]) {
