@@ -12,7 +12,7 @@
 	type SortDirection = 1 | -1;
 	type SortOptions = "name" | "count";
 	const sort_options: SortOptions[] = ["name", "count"];
-	let sort_direction: SortDirection = 1;
+	let sort_direction: SortDirection = -1;
 	let sort_by: SortOptions = "name";
 	let sorted_properties: Property[] = [];
 
