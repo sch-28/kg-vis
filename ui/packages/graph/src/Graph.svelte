@@ -3,15 +3,15 @@
 	import type { Network, Options } from "vis-network";
 	import * as vis from "vis-network";
 	import Menu from "./Menu.svelte";
-	import { Graph, Property, type URI } from "./types";
+	import { Graph, Property, type URI, type Node } from "./types";
 
 	let container: HTMLElement;
 
 	let graph: Graph;
 	let network: Network;
 
-	let selected_node: URI;
-	let properties: Property[];
+	let selected_node_uri: URI;
+	let selected_node: Node | undefined;
 	let menu_position = { x: 0, y: 0 };
 
 	let last_click = { x: 0, y: 0 };
@@ -104,16 +104,16 @@
 	function show_related_menu(event: Click_Event) {
 		if (network.getSelectedNodes().length > 0) {
 			progress = 0;
-			selected_node = event.nodes[0];
+			selected_node_uri = event.nodes[0];
 			menu_position = event.pointer.DOM;
 			last_click = event.pointer.canvas;
 
-			properties = [];
-			graph.get_properties(selected_node, set_progress).then((result) => {
-				properties = result;
+			selected_node = undefined;
+			graph.get_properties(selected_node_uri, set_progress).then((result) => {
+				selected_node = result;
 			});
 		} else {
-			selected_node = "";
+			selected_node_uri = "";
 		}
 	}
 
@@ -122,7 +122,7 @@
 	) {
 		const uri = event.detail.uri;
 		const property = event.detail.property;
-		selected_node = "";
+		selected_node_uri = "";
 
 		await graph.load_data(uri, property, last_click);
 	}
@@ -138,8 +138,8 @@
 	</div>
 	<Menu
 		{menu_position}
-		node={selected_node}
-		{properties}
+		node={selected_node_uri}
+		{selected_node}
 		on:property_clicked={property_clicked}
 		{progress}
 	/>

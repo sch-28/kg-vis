@@ -1,10 +1,12 @@
 <script lang="ts">
 	import { createEventDispatcher } from "svelte";
-	import type { Property, URI } from "./types";
+	import type { Property, URI, Node } from "./types";
+	import { Icon } from "@steeze-ui/svelte-icon";
+	import { Link } from "@steeze-ui/heroicons";
 
 	const dispatch = createEventDispatcher();
 
-	export let properties: Property[] = [];
+	export let selected_node: Node | undefined = undefined;
 	export let node: URI = "";
 	export let menu_position = { x: 0, y: 0 };
 	export let progress = 0;
@@ -40,8 +42,8 @@
 	$: {
 		sort_by;
 		sort_direction;
-		if (properties && properties.length > 0) {
-			sorted_properties = [...properties].sort((a, b) => {
+		if (selected_node && selected_node.properties.length > 0) {
+			sorted_properties = [...selected_node.properties].sort((a, b) => {
 				if (sort_by == "count") {
 					return (
 						sort_direction *
@@ -66,16 +68,28 @@
 		class="wrapper bg-slate-200 dark:bg-slate-700 shadow-md "
 		bind:this={wrapper}
 	>
-		{#if properties.length > 0}
+		{#if selected_node && selected_node.properties.length > 0}
+			<div
+				class="text-lg font-bold mx-2 flex items-center gap-5 justify-between"
+			>
+				<h1 class="truncate" title={selected_node.label}>
+					{selected_node.label}
+				</h1>
+				<a href={selected_node.id} target="_blank">
+					<Icon src={Link} theme="solid" class="h-5 w-5 cursor-pointer" />
+				</a>
+			</div>
+			<hr
+				class="my-2 mx-auto  h-1 bg-gray-100 rounded border-0  dark:bg-gray-800"
+			/>
 			<div class="flex justify-between mx-2 mb-1 ">
 				{#each sort_options as sort_option}
 					<div
-						class={`gap-2 flex flex-none items-center justify-center p-2 cursor-pointer  leading-snug transform transition-all ${
+						class={`gap-2 flex flex-none items-center justify-center p-2 cursor-pointer  leading-snug transform transition-all !text-opacity-80 hover:!text-opacity-100 ${
 							sort_by !== sort_option
-								? "text-gray-200 hover:text-gray-500"
+								? "text-black dark:text-white"
 								: "text-orange-500"
 						} `}
-						class:text-gray-200={sort_by !== sort_option}
 						on:click={() => sort(sort_option)}
 					>
 						<span class="capitalize select-none">{sort_option}</span>
@@ -113,7 +127,6 @@
 		{:else}
 			<div class="properties m-auto w-4/5 items-center justify-center p-5">
 				<h2 class="mb-2">Loading...</h2>
-				<!-- <div progress={progress.toString()} /> -->
 				<div class="w-full bg-slate-400 rounded-full h-2.5 dark:bg-slate-200">
 					<div
 						class="bg-blue-600 h-2.5 rounded-full"
@@ -130,14 +143,13 @@
 		position: absolute;
 		padding: 10px;
 		border-radius: 20px;
-		width: fit-content;
+		max-width: 380px;
+		width: 380px;
 	}
 
 	.properties {
 		overflow-y: auto;
 		max-height: 200px;
-		width: 350px;
-		max-width: 350px;
 		height: 200px;
 		display: flex;
 		flex-direction: column;

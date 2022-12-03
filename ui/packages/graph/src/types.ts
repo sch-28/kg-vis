@@ -200,7 +200,7 @@ export class Graph {
 			await this.load_properties(node.id, progress_function);
 		}
 
-		return node.properties;
+		return node;
 	}
 
 	async load_data(
