@@ -25,14 +25,27 @@ export class Node {
 	label: string;
 	visible: boolean;
 	is_fetched: boolean;
+	image: string | undefined;
 	x: number;
 	y: number;
 	properties: Property[] = [];
+	shape:
+		| "dot"
+		| "image"
+		| "box"
+		| "circularImage"
+		| "database"
+		| "ellipse"
+		| "icon"
+		| "text"
+		| "triangle"
+		| "triangleDown" = "dot";
 
 	constructor(
 		uri: URI,
 		label: string,
 		visible = false,
+		image?: URI,
 		position: { x: number; y: number } = { x: 0, y: 0 }
 	) {
 		this.id = uri;
@@ -41,6 +54,16 @@ export class Node {
 		this.is_fetched = false;
 		this.x = position.x;
 		this.y = position.y;
+		if (image) {
+			this.image = image;
+			this.shape = "circularImage";
+		}
+	}
+
+	update_image(url: URI) {
+		console.log(url);
+		this.image = url;
+		this.shape = "circularImage";
 	}
 }
 
@@ -151,6 +174,7 @@ export class Graph {
 		uri: URI,
 		label: string,
 		visible = false,
+		image?: URI,
 		position: {
 			x: number;
 			y: number;
@@ -158,7 +182,7 @@ export class Graph {
 	) {
 		let node = this.nodes.find((node) => node.id == uri);
 		if (!node) {
-			node = new Node(uri, label, visible, position);
+			node = new Node(uri, label, visible, image, position);
 			this.nodes.push(node);
 		}
 		return node;
@@ -191,7 +215,8 @@ export class Graph {
 
 	async load(uri: URI) {
 		const label = await SPARQL.fetch_label(uri);
-		this.find_or_create_node(uri, label, true);
+		const image = await SPARQL.fetch_image(uri);
+		this.find_or_create_node(uri, label, true, image);
 	}
 
 	async get_properties(uri: URI, progress_function?: Function) {
@@ -222,6 +247,7 @@ export class Graph {
 				new_node.uri,
 				new_node.label,
 				true,
+				undefined,
 				position
 			);
 			node.x = position.x;
@@ -245,8 +271,17 @@ export class Graph {
 					);
 				}
 			}
+			this.update_data();
 		}
 
-		this.update_data();
+		SPARQL.fetch_images(this.nodes.map((n) => n.id)).then((images) => {
+			for (let image of images) {
+				const node = this.nodes.find((n) => n.id == image.uri);
+				if (node) {
+					node.update_image(image.image);
+					this.data.nodes.update(node);
+				}
+			}
+		});
 	}
 }

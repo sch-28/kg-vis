@@ -125,6 +125,57 @@ export class SPARQL {
 		return results;
 	}
 
+	public static async fetch_image(subject: URI) {
+		const result = await SPARQL.SPARQL_query<{
+			image: { value: string };
+		}>(
+			`
+			PREFIX bd: <http://www.bigdata.com/rdf#>
+			PREFIX wikibase: <http://wikiba.se/ontology#>
+			PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+			PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+			SELECT DISTINCT ?image WHERE {
+			  VALUES ?subject {
+				<${subject}>
+				  }
+	
+			?subject wdt:P18 ?image
+			
+			}
+				`
+		);
+		if (result.length > 0) {
+			return result[0].image.value;
+		}
+
+		return undefined;
+	}
+
+	public static async fetch_images(subjects: URI[]) {
+		const result = await SPARQL.SPARQL_query<{
+			image: { value: string };
+			subject: { value: URI };
+		}>(
+			`
+			PREFIX bd: <http://www.bigdata.com/rdf#>
+			PREFIX wikibase: <http://wikiba.se/ontology#>
+			PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+			PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+			SELECT DISTINCT ?subject ?image WHERE {
+			  VALUES ?subject {
+				${subjects.map((s) => `<${s}>`).join("\n")}
+				  }
+	
+			?subject wdt:P18 ?image
+			
+			}
+				`
+		);
+		return result.map((r) => {
+			return { image: r.image.value, uri: r.subject.value };
+		});
+	}
+
 	public static async fetch_labels(subjects: URI[]) {
 		const result = await SPARQL.SPARQL_query<{
 			subject: { value: URI };
