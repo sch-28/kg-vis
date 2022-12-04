@@ -109,12 +109,12 @@
 					</div>
 				{/each}
 			</div>
-			<div class="properties px-2">
+			<div class="properties">
 				{#each sorted_properties as property}
 					<button
 						on:click={() =>
 							dispatch("property_clicked", { uri: node, property: property })}
-						class="flex   py-0.5 rounded border-transparent dark:border-transparent bg-transparent dark:text-white h-10 dark:hover:border-white border-solid border transition-all duration-200 ease-in-out"
+						class="flex px-2 rounded bg-transparent h-10 hover:bg-black/30 transition-all duration-200 ease-in-out"
 					>
 						<span>{property.label ?? property.uri}</span>
 						<span
@@ -161,8 +161,8 @@
 		text-overflow: ellipsis;
 		overflow: hidden;
 		white-space: nowrap;
-		min-height: 35px;
-		max-height: 35px;
+		min-height: 40px;
+		max-height: 40px;
 		align-items: center;
 	}
 
