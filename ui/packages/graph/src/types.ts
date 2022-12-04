@@ -61,7 +61,6 @@ export class Node {
 	}
 
 	update_image(url: URI) {
-		console.log(url);
 		this.image = url;
 		this.shape = "circularImage";
 	}
@@ -273,7 +272,7 @@ export class Graph {
 			}
 			this.update_data();
 		}
-
+		
 		SPARQL.fetch_images(this.nodes.map((n) => n.id)).then((images) => {
 			for (let image of images) {
 				const node = this.nodes.find((n) => n.id == image.uri);
