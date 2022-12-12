@@ -272,7 +272,7 @@ export class Graph {
 			}
 			this.update_data();
 		}
-		
+
 		SPARQL.fetch_images(this.nodes.map((n) => n.id)).then((images) => {
 			for (let image of images) {
 				const node = this.nodes.find((n) => n.id == image.uri);

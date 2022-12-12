@@ -94,16 +94,12 @@
 		}
 	}
 
-	function move_cursor_to_end(
-		event: FocusEvent & { target: EventTarget & HTMLInputElement }
-	): any {
+	function move_cursor_to_end(event: FocusEvent) {
+		const target = event.target as EventTarget & HTMLInputElement;
 		setTimeout(
 			() =>
 				event.target &&
-				event.target.setSelectionRange(
-					event.target.value.length,
-					event.target.value.length
-				),
+				target.setSelectionRange(target.value.length, target.value.length),
 			10
 		);
 	}
