@@ -2,7 +2,8 @@
 	import { createEventDispatcher } from "svelte";
 	import type { Property, URI, Node } from "./types";
 	import { Icon } from "@steeze-ui/svelte-icon";
-	import { Link } from "@steeze-ui/heroicons";
+	import { MagnifyingGlass, Link } from "@steeze-ui/heroicons";
+	import Fuse from "fuse.js";
 
 	const dispatch = createEventDispatcher();
 
@@ -16,7 +17,12 @@
 	const sort_options: SortOptions[] = ["name", "count"];
 	let sort_direction: SortDirection = -1;
 	let sort_by: SortOptions = "name";
-	let sorted_properties: Property[] = [];
+	let sorted_properties: {
+		property: Property;
+		matches?: readonly Fuse.FuseResultMatch[];
+	}[] = [];
+
+	let search_property: string = "";
 
 	let wrapper: HTMLElement;
 
@@ -42,24 +48,64 @@
 	$: {
 		sort_by;
 		sort_direction;
+		search_property;
 		if (selected_node && selected_node.properties.length > 0) {
-			sorted_properties = [...selected_node.properties].sort((a, b) => {
+			let properties = [...selected_node.properties].map(
+				(
+					property
+				): {
+					property: Property;
+					matches?: readonly Fuse.FuseResultMatch[];
+				} => {
+					return { property, matches: [] };
+				}
+			);
+			if (search_property.length > 0) {
+				const fuse = new Fuse(selected_node.properties, {
+					keys: ["label"],
+					includeMatches: true,
+					threshold: 0.3
+				});
+				properties = fuse.search(search_property).map((result) => {
+					return { property: result.item, matches: result.matches };
+				});
+			}
+
+			sorted_properties = properties.sort((a, b) => {
 				if (sort_by == "count") {
 					return (
 						sort_direction *
-						(a.in_count + a.out_count <= b.in_count + b.out_count ? 1 : -1)
+						(a.property.in_count + a.property.out_count <=
+						b.property.in_count + b.property.out_count
+							? 1
+							: -1)
 					);
 				} else {
-					if (!a.label || !b.label) return 1;
+					if (!a.property.label || !b.property.label) return 1;
 					return (
 						sort_direction *
-						(a.label.toLocaleLowerCase() <= b.label.toLocaleLowerCase()
+						(a.property.label.toLocaleLowerCase() <=
+						b.property.label.toLocaleLowerCase()
 							? 1
 							: -1)
 					);
 				}
 			});
 		}
+	}
+
+	function move_cursor_to_end(
+		event: FocusEvent & { target: EventTarget & HTMLInputElement }
+	): any {
+		setTimeout(
+			() =>
+				event.target &&
+				event.target.setSelectionRange(
+					event.target.value.length,
+					event.target.value.length
+				),
+			10
+		);
 	}
 </script>
 
@@ -75,9 +121,36 @@
 				<h1 class="truncate" title={selected_node.label}>
 					{selected_node.label}
 				</h1>
-				<a href={selected_node.id} target="_blank">
-					<Icon src={Link} theme="solid" class="h-5 w-5 cursor-pointer" />
-				</a>
+				<div class="flex items-center gap-3">
+					<div class="w-6 focus-within:w-36 relative transition-all">
+						<input
+							on:focus={move_cursor_to_end}
+							bind:value={search_property}
+							type="text"
+							class="peer w-full bg-transparent border-transparent focus:bg-slate-800 rounded-md focus:pl-8 focus:border-blue-300 
+							focus:ring 
+							focus:ring-blue-200 
+							focus:ring-opacity-50 
+							placeholder:text-gray-400
+							checked:shadow-inner
+							dark:text-gray-200
+							dark:focus:ring-0
+							dark:focus:border-gray-600
+							dark:placeholder:text-gray-500
+							text-sm
+							font-normal
+							"
+						/>
+						<Icon
+							src={MagnifyingGlass}
+							theme="solid"
+							class="h-5 w-5 absolute z-10 bottom-1/2 translate-y-1/2 pointer-events-none peer-focus:left-2"
+						/>
+					</div>
+					<a href={selected_node.id} target="_blank">
+						<Icon src={Link} theme="solid" class="h-5 w-5 cursor-pointer" />
+					</a>
+				</div>
 			</div>
 			<hr
 				class="my-2 mx-auto  h-1 bg-gray-100 rounded border-0  dark:bg-gray-800"
@@ -116,10 +189,36 @@
 							dispatch("property_clicked", { uri: node, property: property })}
 						class="flex px-2 rounded bg-transparent h-10 hover:bg-black/30 transition-all duration-200 ease-in-out"
 					>
-						<span>{property.label ?? property.uri}</span>
+						{#if property.property.label}
+							<span class="truncate" title={property.property.label}>
+								{#if property.matches && property.matches.length > 0}
+									{property.property.label.slice(
+										0,
+										property.matches[0].indices[0][0]
+									)}{#each property.matches[0].indices as indice, index}
+										<span class="text-orange-500"
+											>{property.property.label.slice(
+												indice[0],
+												indice[1]
+											)}</span
+										>{property.property.label.slice(
+											indice[1],
+											property.matches[0].indices[index + 1]?.[0] ??
+												property.property.label.length
+										)}
+									{/each}
+								{:else}
+									{property.property.label}
+								{/if}
+							</span>
+						{:else}
+							<span class="truncate" title={property.property.uri}>
+								{property.property.uri}
+							</span>
+						{/if}
 						<span
 							class="ml-auto w-6 bg-white rounded-full inline-flex items-center justify-center -mb-0.5 text-xs font-semibold  p-1 "
-							>{property.in_count + property.out_count}</span
+							>{property.property.in_count + property.property.out_count}</span
 						>
 					</button>
 				{/each}
