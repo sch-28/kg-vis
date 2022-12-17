@@ -6,9 +6,11 @@
 		MagnifyingGlass,
 		Link,
 		ArrowRightOnRectangle,
-		ArrowLeftOnRectangle
+		ArrowLeftOnRectangle,
+		XMark
 	} from "@steeze-ui/heroicons";
 	import Fuse from "fuse.js";
+	import { click_outside } from "./util/util";
 
 	const dispatch = createEventDispatcher();
 
@@ -27,6 +29,7 @@
 	}[] = [];
 
 	let search_property: string = "";
+	let show_search: boolean = false;
 
 	let wrapper: HTMLElement;
 
@@ -112,6 +115,8 @@
 			10
 		);
 	}
+
+	const notypecheck = (x: any) => x;
 </script>
 
 {#if selected_node}
@@ -124,29 +129,48 @@
 				{selected_node.label}
 			</h1>
 			<div class="flex items-center gap-3">
-				<div class="w-6 focus-within:w-36 relative transition-all">
+				<div
+					class="w-6 h-10 relative transition-all {show_search
+						? 'w-36'
+						: 'cursor-pointer'}"
+					on:click={() => (show_search = true)}
+					use:click_outside
+					{...notypecheck({ on: { click_outside: () => null } })}
+					on:click_outside={() =>
+						search_property.length == 0 ? (show_search = false) : null}
+				>
+					<div on:click={() => (search_property = "")}>
+						<Icon
+							src={XMark}
+							theme="solid"
+							class="h-5 w-5  absolute z-10 bottom-1/2 translate-y-1/2 cursor-pointer right-2 {show_search &&
+							search_property.length > 0
+								? 'visible'
+								: 'hidden'}"
+						/>
+					</div>
 					<input
-						on:focus={move_cursor_to_end}
 						bind:value={search_property}
 						type="text"
-						class="peer w-full bg-transparent border-transparent focus:bg-slate-800 rounded-md focus:pl-8 focus:border-blue-300 
-							focus:ring 
-							focus:ring-blue-200 
-							focus:ring-opacity-50 
+						class="{show_search
+							? 'dark:bg-slate-800 bg-slate-300 pl-8 ring-blue-200  ring-opacity-50 dark:ring-0 dark:border-gray-600 visible pr-7'
+							: 'hidden'}
+							peer w-full bg-transparent border-transparent rounded-md 
 							placeholder:text-gray-400
 							checked:shadow-inner
 							dark:text-gray-200
-							dark:focus:ring-0
-							dark:focus:border-gray-600
 							dark:placeholder:text-gray-500
 							text-sm
 							font-normal
+							focus:ring-transparent
 							"
 					/>
+
 					<Icon
 						src={MagnifyingGlass}
 						theme="solid"
-						class="h-5 w-5 absolute z-10 bottom-1/2 translate-y-1/2 pointer-events-none peer-focus:left-2"
+						class="h-5 w-5 absolute z-10 bottom-1/2 translate-y-1/2 pointer-events-none cursor-pointer {show_search &&
+							'left-2'}"
 					/>
 				</div>
 				<a href={selected_node.id} target="_blank">
@@ -206,7 +230,7 @@
 								uri: selected_node.id,
 								property: property.property
 							})}
-						class="flex px-2 rounded bg-transparent h-10 hover:bg-black/30 transition-all duration-200 ease-in-out"
+						class="flex px-2 rounded bg-transparent h-10 hover:bg-black/10 dark:hover:bg-black/30 transition-all duration-200 ease-in-out"
 					>
 						<div
 							title={`${
