@@ -8,7 +8,6 @@
 	const dispatch = createEventDispatcher();
 
 	export let selected_node: Node | undefined = undefined;
-	export let node: URI = "";
 	export let menu_position = { x: 0, y: 0 };
 	export let progress = 0;
 
@@ -105,12 +104,12 @@
 	}
 </script>
 
-{#if node.length > 0}
+{#if selected_node}
 	<div
 		class="wrapper bg-slate-200 dark:bg-slate-700 shadow-md "
 		bind:this={wrapper}
 	>
-		{#if selected_node && selected_node.properties.length > 0}
+		{#if selected_node.properties.length > 0}
 			<div
 				class="text-lg font-bold mx-2 flex items-center gap-5 justify-between"
 			>
@@ -182,7 +181,11 @@
 				{#each sorted_properties as property}
 					<button
 						on:click={() =>
-							dispatch("property_clicked", { uri: node, property: property })}
+							selected_node &&
+							dispatch("property_clicked", {
+								uri: selected_node.id,
+								property: property.property
+							})}
 						class="flex px-2 rounded bg-transparent h-10 hover:bg-black/30 transition-all duration-200 ease-in-out"
 					>
 						{#if property.property.label}
@@ -221,7 +224,7 @@
 			</div>
 		{:else}
 			<div class="properties m-auto w-4/5 items-center justify-center p-5">
-				<h2 class="mb-2">Loading...</h2>
+				<h2 class="mb-2">Loading {selected_node?.label}</h2>
 				<div class="w-full bg-slate-400 rounded-full h-2.5 dark:bg-slate-200">
 					<div
 						class="bg-blue-600 h-2.5 rounded-full"

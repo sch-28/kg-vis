@@ -187,6 +187,10 @@ export class Graph {
 		return node;
 	}
 
+	get_node(uri: URI) {
+		return this.nodes.find((node) => node.id == uri);
+	}
+
 	create_edge(source: URI, uri: URI, target: URI, label: string) {
 		if (
 			this.edges.find(

@@ -10,7 +10,6 @@
 	let graph: Graph;
 	let network: Network;
 
-	let selected_node_uri: URI;
 	let selected_node: Node | undefined;
 	let menu_position = { x: 0, y: 0 };
 
@@ -104,25 +103,26 @@
 	function show_related_menu(event: Click_Event) {
 		if (network.getSelectedNodes().length > 0) {
 			progress = 0;
-			selected_node_uri = event.nodes[0];
+			const uri = event.nodes[0];
+			selected_node = graph.get_node(uri);
 			menu_position = event.pointer.DOM;
 			last_click = event.pointer.canvas;
 
-			selected_node = undefined;
-			graph.get_properties(selected_node_uri, set_progress).then((result) => {
-				selected_node = result;
+			graph.get_properties(uri, set_progress).then(node => {
+				selected_node = node;
 			});
 		} else {
-			selected_node_uri = "";
+			selected_node = undefined;
 		}
 	}
 
 	async function property_clicked(
 		event: CustomEvent<{ uri: URI; property: Property }>
 	) {
+		console.log(event)
 		const uri = event.detail.uri;
 		const property = event.detail.property;
-		selected_node_uri = "";
+		selected_node = undefined;
 
 		await graph.load_data(uri, property, last_click);
 	}
@@ -138,7 +138,6 @@
 	</div>
 	<Menu
 		{menu_position}
-		node={selected_node_uri}
 		{selected_node}
 		on:property_clicked={property_clicked}
 		{progress}
