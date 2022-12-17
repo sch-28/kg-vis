@@ -107,7 +107,7 @@
 			menu_position = event.pointer.DOM;
 			last_click = event.pointer.canvas;
 
-			graph.get_properties(uri, set_progress).then(node => {
+			graph.get_properties(uri, set_progress).then((node) => {
 				selected_node = node;
 			});
 		} else {
