@@ -2,7 +2,12 @@
 	import { createEventDispatcher } from "svelte";
 	import type { Property, URI, Node } from "./types";
 	import { Icon } from "@steeze-ui/svelte-icon";
-	import { MagnifyingGlass, Link } from "@steeze-ui/heroicons";
+	import {
+		MagnifyingGlass,
+		Link,
+		ArrowRightOnRectangle,
+		ArrowLeftOnRectangle
+	} from "@steeze-ui/heroicons";
 	import Fuse from "fuse.js";
 
 	const dispatch = createEventDispatcher();
@@ -12,8 +17,8 @@
 	export let progress = 0;
 
 	type SortDirection = 1 | -1;
-	type SortOptions = "name" | "count";
-	const sort_options: SortOptions[] = ["name", "count"];
+	type SortOptions = "name" | "count" | "direction";
+	const sort_options: SortOptions[] = ["direction", "name", "count"];
 	let sort_direction: SortDirection = -1;
 	let sort_by: SortOptions = "name";
 	let sorted_properties: {
@@ -79,7 +84,7 @@
 							? 1
 							: -1)
 					);
-				} else {
+				} else if (sort_by == "name") {
 					if (!a.property.label || !b.property.label) return 1;
 					return (
 						sort_direction *
@@ -87,6 +92,11 @@
 						b.property.label.toLocaleLowerCase()
 							? 1
 							: -1)
+					);
+				} else {
+					return (
+						sort_direction *
+						(a.property.in_count < b.property.in_count ? 1 : -1)
 					);
 				}
 			});
@@ -145,9 +155,7 @@
 			</div>
 		</div>
 		<div class="mx-2 my-2">
-			<div
-				class="w-full bg-slate-400 rounded-full h-1.5  dark:bg-slate-200 "
-			>
+			<div class="w-full bg-slate-400 rounded-full h-1.5  dark:bg-slate-200 ">
 				<div
 					class="bg-[#ce6400] h-1.5 rounded-full"
 					style="width: {selected_node.properties.length == 0
@@ -158,17 +166,21 @@
 		</div>
 
 		{#if selected_node.properties.length > 0}
-			<div class="flex justify-between mx-2 mb-1 ">
+			<div class="flex  mb-1 ">
 				{#each sort_options as sort_option}
 					<div
-						class={`gap-2 flex flex-none items-center justify-center p-2 cursor-pointer  leading-snug transform transition-all !text-opacity-80 hover:!text-opacity-100 ${
+						class={`select-none gap-2 flex flex-none items-center justify-center p-2 cursor-pointer  leading-snug transform transition-all !text-opacity-80 hover:!text-opacity-100 ${
 							sort_by !== sort_option
 								? "text-black dark:text-white"
 								: "text-orange-500"
-						} `}
+						} 
+						${sort_option == "count" ? "ml-auto" : ""}
+						`}
 						on:click={() => sort(sort_option)}
 					>
-						<span class="capitalize select-none">{sort_option}</span>
+						<span class="capitalize "
+							>{sort_option != "direction" ? sort_option : ""}</span
+						>
 						<svg
 							width="1em"
 							height="1em"
@@ -196,6 +208,22 @@
 							})}
 						class="flex px-2 rounded bg-transparent h-10 hover:bg-black/30 transition-all duration-200 ease-in-out"
 					>
+						<div
+							title={`${
+								property.property.in_count > property.property.out_count
+									? `Target of`
+									: `Source of`
+							} "${property.property.label}"`}
+						>
+							<Icon
+								src={property.property.in_count > property.property.out_count
+									? ArrowRightOnRectangle
+									: ArrowLeftOnRectangle}
+								theme="solid"
+								class="h-5 w-5  mr-3"
+								title="test"
+							/>
+						</div>
 						{#if property.property.label}
 							<span class="truncate" title={property.property.label}>
 								{#if property.matches && property.matches.length > 0}

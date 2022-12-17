@@ -97,7 +97,6 @@
 
 	function show_menu(params: Click_Event) {
 		params.event.preventDefault();
-		console.log(event);
 	}
 
 	function show_related_menu(event: Click_Event) {
@@ -119,7 +118,6 @@
 	async function property_clicked(
 		event: CustomEvent<{ uri: URI; property: Property }>
 	) {
-		console.log(event)
 		const uri = event.detail.uri;
 		const property = event.detail.property;
 		selected_node = undefined;
