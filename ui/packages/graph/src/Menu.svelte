@@ -106,23 +106,20 @@
 
 {#if selected_node}
 	<div
-		class="wrapper bg-slate-200 dark:bg-slate-700 shadow-md "
+		class="wrapper bg-slate-200 dark:bg-[#1f2937] shadow-md "
 		bind:this={wrapper}
 	>
-		{#if selected_node.properties.length > 0}
-			<div
-				class="text-lg font-bold mx-2 flex items-center gap-5 justify-between"
-			>
-				<h1 class="truncate" title={selected_node.label}>
-					{selected_node.label}
-				</h1>
-				<div class="flex items-center gap-3">
-					<div class="w-6 focus-within:w-36 relative transition-all">
-						<input
-							on:focus={move_cursor_to_end}
-							bind:value={search_property}
-							type="text"
-							class="peer w-full bg-transparent border-transparent focus:bg-slate-800 rounded-md focus:pl-8 focus:border-blue-300 
+		<div class="text-lg font-bold mx-2 flex items-center gap-5 justify-between">
+			<h1 class="truncate" title={selected_node.label}>
+				{selected_node.label}
+			</h1>
+			<div class="flex items-center gap-3">
+				<div class="w-6 focus-within:w-36 relative transition-all">
+					<input
+						on:focus={move_cursor_to_end}
+						bind:value={search_property}
+						type="text"
+						class="peer w-full bg-transparent border-transparent focus:bg-slate-800 rounded-md focus:pl-8 focus:border-blue-300 
 							focus:ring 
 							focus:ring-blue-200 
 							focus:ring-opacity-50 
@@ -135,21 +132,32 @@
 							text-sm
 							font-normal
 							"
-						/>
-						<Icon
-							src={MagnifyingGlass}
-							theme="solid"
-							class="h-5 w-5 absolute z-10 bottom-1/2 translate-y-1/2 pointer-events-none peer-focus:left-2"
-						/>
-					</div>
-					<a href={selected_node.id} target="_blank">
-						<Icon src={Link} theme="solid" class="h-5 w-5 cursor-pointer" />
-					</a>
+					/>
+					<Icon
+						src={MagnifyingGlass}
+						theme="solid"
+						class="h-5 w-5 absolute z-10 bottom-1/2 translate-y-1/2 pointer-events-none peer-focus:left-2"
+					/>
 				</div>
+				<a href={selected_node.id} target="_blank">
+					<Icon src={Link} theme="solid" class="h-5 w-5 cursor-pointer" />
+				</a>
 			</div>
-			<hr
-				class="my-2 mx-auto  h-1 bg-gray-100 rounded border-0  dark:bg-gray-800"
-			/>
+		</div>
+		<div class="mx-2 my-2">
+			<div
+				class="w-full bg-slate-400 rounded-full h-1.5  dark:bg-slate-200 "
+			>
+				<div
+					class="bg-[#ce6400] h-1.5 rounded-full"
+					style="width: {selected_node.properties.length == 0
+						? progress.toString()
+						: 100}%"
+				/>
+			</div>
+		</div>
+
+		{#if selected_node.properties.length > 0}
 			<div class="flex justify-between mx-2 mb-1 ">
 				{#each sort_options as sort_option}
 					<div
@@ -224,13 +232,7 @@
 			</div>
 		{:else}
 			<div class="properties m-auto w-4/5 items-center justify-center p-5">
-				<h2 class="mb-2">Loading {selected_node?.label}</h2>
-				<div class="w-full bg-slate-400 rounded-full h-2.5 dark:bg-slate-200">
-					<div
-						class="bg-blue-600 h-2.5 rounded-full"
-						style="width: {progress.toString()}%"
-					/>
-				</div>
+				<h2 class="mb-2 text-lg">Loading...</h2>
 			</div>
 		{/if}
 	</div>
