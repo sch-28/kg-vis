@@ -129,7 +129,6 @@
 						setTimeout(() => search_input.focus(), 0);
 					}}
 					use:click_outside
-					{...notypecheck({ on: { click_outside: () => null } })}
 					on:click_outside={() =>
 						search_property.length == 0 ? (show_search = false) : null}
 				>
