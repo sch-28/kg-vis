@@ -29,6 +29,7 @@
 	}[] = [];
 
 	let search_property: string = "";
+	let search_input: HTMLInputElement;
 	let show_search: boolean = false;
 
 	let wrapper: HTMLElement;
@@ -106,16 +107,6 @@
 		}
 	}
 
-	function move_cursor_to_end(event: FocusEvent) {
-		const target = event.target as EventTarget & HTMLInputElement;
-		setTimeout(
-			() =>
-				event.target &&
-				target.setSelectionRange(target.value.length, target.value.length),
-			10
-		);
-	}
-
 	const notypecheck = (x: any) => x;
 </script>
 
@@ -133,7 +124,10 @@
 					class="w-6 h-10 relative transition-all {show_search
 						? 'w-36'
 						: 'cursor-pointer'}"
-					on:click={() => (show_search = true)}
+					on:click={() => {
+						show_search = true;
+						setTimeout(() => search_input.focus(), 0);
+					}}
 					use:click_outside
 					{...notypecheck({ on: { click_outside: () => null } })}
 					on:click_outside={() =>
@@ -150,6 +144,7 @@
 						/>
 					</div>
 					<input
+						bind:this={search_input}
 						bind:value={search_property}
 						type="text"
 						class="{show_search
