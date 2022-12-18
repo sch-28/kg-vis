@@ -72,13 +72,14 @@
 				const fuse = new Fuse(selected_node.properties, {
 					keys: ["label"],
 					includeMatches: true,
-					threshold: 0.3
+					threshold: 0.3,
+					minMatchCharLength: 2,
+					shouldSort: true,
 				});
 				properties = fuse.search(search_property).map((result) => {
 					return { property: result.item, matches: result.matches };
 				});
 			}
-
 			sorted_properties = properties.sort((a, b) => {
 				if (sort_by == "count") {
 					return (
@@ -107,12 +108,25 @@
 		}
 	}
 
-	const notypecheck = (x: any) => x;
+	function search(event: KeyboardEvent) {
+		if (!show_search || document.activeElement !== search_input) {
+			search_property += event.key;
+			show_search = true;
+			setTimeout(() => {
+				search_input?.focus();
+			}, 0);
+		} else {
+		}
+	}
 </script>
 
 {#if selected_node}
 	<div
-		class="wrapper bg-slate-200 dark:bg-[#1f2937] shadow-md "
+		class="wrapper bg-slate-200 dark:bg-[#1f2937] shadow-md"
+		on:mouseover={() => document.addEventListener("keypress", search)}
+		on:focus={() => document.addEventListener("keypress", search)}
+		on:mouseout={() => document.removeEventListener("keypress", search, false)}
+		on:blur={() => document.removeEventListener("keypress", search, false)}
 		bind:this={wrapper}
 	>
 		<div class="text-lg font-bold mx-2 flex items-center gap-5 justify-between">
@@ -252,10 +266,10 @@
 										<span class="text-orange-500"
 											>{property.property.label.slice(
 												indice[0],
-												indice[1]
+												indice[1] + 1
 											)}</span
 										>{property.property.label.slice(
-											indice[1],
+											indice[1] + 1,
 											property.matches[0].indices[index + 1]?.[0] ??
 												property.property.label.length
 										)}
