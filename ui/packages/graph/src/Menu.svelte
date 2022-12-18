@@ -155,7 +155,7 @@
 						class="{show_search
 							? 'dark:bg-slate-800 bg-slate-300 pl-8 ring-blue-200  ring-opacity-50 dark:ring-0 dark:border-gray-600 visible pr-7'
 							: 'hidden'}
-							peer w-full bg-transparent border-transparent rounded-md 
+							peer w-full  border-transparent rounded-md 
 							placeholder:text-gray-400
 							checked:shadow-inner
 							dark:text-gray-200
