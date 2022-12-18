@@ -86,6 +86,7 @@ export class SPARQL {
 		const results: {
 			uri: URI;
 			label: string;
+			type: "literal" | "uri";
 			relations: {
 				subject: Node;
 				property: Node;
@@ -101,10 +102,12 @@ export class SPARQL {
 				.slice(i, i + this.rate_limit)
 				.map((c) => c.object.value);
 
-			const requests: { uri: URI; relations: any }[] = [];
+			const requests: { uri: URI; type: "uri" | "literal"; relations: any }[] =
+				[];
 			new_nodes.forEach((node) =>
 				requests.push({
 					uri: node,
+					type: result[i].object.type,
 					relations: SPARQL.fetch_relations(node, [...nodes, ...all_new_nodes])
 				})
 			);
@@ -112,7 +115,12 @@ export class SPARQL {
 			for (let i = 0; i < requests.length; i++) {
 				const request = requests[i];
 				const r = await request.relations;
-				results.push({ uri: request.uri, relations: r, label: "" });
+				results.push({
+					uri: request.uri,
+					type: request.type,
+					relations: r,
+					label: ""
+				});
 			}
 		}
 
@@ -200,11 +208,9 @@ export class SPARQL {
 			return result.map((r) => {
 				return { uri: r.subject.value, label: r.subjectLabel.value };
 			});
-		} else if (subjects.length == 1) {
-			return [{ uri: subjects[0], label: subjects[0] }];
 		}
 
-		throw new Error("Unable to fetch label: " + result);
+		return subjects.map((s) => ({ uri: s, label: s }));
 	}
 
 	public static async fetch_label(subject: URI) {

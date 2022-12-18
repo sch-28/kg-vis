@@ -103,7 +103,10 @@
 		if (network.getSelectedNodes().length > 0) {
 			progress = 0;
 			const uri = event.nodes[0];
-			selected_node = graph.get_node(uri);
+			const node = graph.get_node(uri);
+			if (!node || node.type === "literal") return;
+
+			selected_node = node;
 			menu_position = event.pointer.DOM;
 			last_click = event.pointer.canvas;
 

@@ -26,6 +26,7 @@ export class Node {
 	visible: boolean;
 	is_fetched: boolean;
 	image: string | undefined;
+	type: "uri" | "literal";
 	x: number;
 	y: number;
 	properties: Property[] = [];
@@ -44,6 +45,7 @@ export class Node {
 	constructor(
 		uri: URI,
 		label: string,
+		type: "uri" | "literal" = "uri",
 		visible = false,
 		image?: URI,
 		position: { x: number; y: number } = { x: 0, y: 0 }
@@ -52,6 +54,7 @@ export class Node {
 		this.label = label;
 		this.visible = visible;
 		this.is_fetched = false;
+		this.type = type;
 		this.x = position.x;
 		this.y = position.y;
 		if (image) {
@@ -172,6 +175,7 @@ export class Graph {
 	find_or_create_node(
 		uri: URI,
 		label: string,
+		type: "uri" | "literal" = "uri",
 		visible = false,
 		image?: URI,
 		position: {
@@ -181,7 +185,7 @@ export class Graph {
 	) {
 		let node = this.nodes.find((node) => node.id == uri);
 		if (!node) {
-			node = new Node(uri, label, visible, image, position);
+			node = new Node(uri, label, type, visible, image, position);
 			this.nodes.push(node);
 		}
 		return node;
@@ -210,7 +214,7 @@ export class Graph {
 	async load_properties(uri: URI, progress_function?: Function) {
 		const properties = await SPARQL.fetch_properties(uri, progress_function);
 		if (properties.length > 0) {
-			const node = this.find_or_create_node(uri, uri, true);
+			const node = this.find_or_create_node(uri, uri);
 			node.is_fetched = true;
 			node.properties = properties;
 		}
@@ -219,11 +223,11 @@ export class Graph {
 	async load(uri: URI) {
 		const label = await SPARQL.fetch_label(uri);
 		const image = await SPARQL.fetch_image(uri);
-		this.find_or_create_node(uri, label, true, image);
+		this.find_or_create_node(uri, label, "uri", true, image);
 	}
 
 	async get_properties(uri: URI, progress_function?: Function) {
-		const node = this.find_or_create_node(uri, "", true);
+		const node = this.find_or_create_node(uri, "");
 		if (!node.is_fetched) {
 			await this.load_properties(node.id, progress_function);
 		}
@@ -249,6 +253,7 @@ export class Graph {
 			const node = this.find_or_create_node(
 				new_node.uri,
 				new_node.label,
+				new_node.type,
 				true,
 				undefined,
 				position
