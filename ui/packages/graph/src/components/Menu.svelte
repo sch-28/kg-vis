@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { createEventDispatcher } from "svelte";
-	import type { Property, URI, Node } from "./types";
+	import type { Property, Node } from "../graph";
 	import { Icon } from "@steeze-ui/svelte-icon";
 	import {
 		MagnifyingGlass,
@@ -10,7 +10,7 @@
 		XMark
 	} from "@steeze-ui/heroicons";
 	import Fuse from "fuse.js";
-	import { click_outside } from "./util/util";
+	import { click_outside } from "../util/util";
 
 	const dispatch = createEventDispatcher();
 
@@ -74,7 +74,7 @@
 					includeMatches: true,
 					threshold: 0.3,
 					minMatchCharLength: 2,
-					shouldSort: true,
+					shouldSort: true
 				});
 				properties = fuse.search(search_property).map((result) => {
 					return { property: result.item, matches: result.matches };
@@ -122,7 +122,7 @@
 
 {#if selected_node}
 	<div
-		class="wrapper bg-slate-200 dark:bg-[#1f2937] shadow-md"
+		class="wrapper bg-slate-200 dark:bg-[#1f2937] shadow-md z-40"
 		on:mouseover={() => document.addEventListener("keypress", search)}
 		on:focus={() => document.addEventListener("keypress", search)}
 		on:mouseout={() => document.removeEventListener("keypress", search, false)}

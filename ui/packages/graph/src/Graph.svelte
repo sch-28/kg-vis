@@ -2,8 +2,8 @@
 	import { onMount } from "svelte";
 	import type { Network, Options } from "vis-network";
 	import * as vis from "vis-network";
-	import Menu from "./Menu.svelte";
-	import { Graph, Property, type URI, type Node } from "./types";
+	import Menu from "./components/Menu.svelte";
+	import { Graph, Property, type URI, type Node } from "./graph";
 
 	let container: HTMLElement;
 

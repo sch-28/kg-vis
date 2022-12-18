@@ -1,4 +1,4 @@
-import type { Property, URI } from "./types";
+import type { Property, URI } from "./graph";
 export interface Triple {
 	subject: Node;
 	property: Node;
