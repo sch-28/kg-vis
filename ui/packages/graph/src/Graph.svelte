@@ -5,6 +5,7 @@
 	import ContextMenu from "./components/Context-Menu.svelte";
 	import Menu from "./components/Menu.svelte";
 	import { Graph, Property, type URI, type Node } from "./graph";
+	import toast, { Toaster } from "svelte-french-toast";
 
 	let container: HTMLElement;
 
@@ -137,8 +138,23 @@
 		const uri = event.detail.uri;
 		const property = event.detail.property;
 		selected_node = undefined;
-
-		await graph.load_data(uri, property, last_click);
+		const data_promise = graph.load_data(uri, property, last_click);
+		toast.promise(
+			data_promise,
+			{
+				loading: "Loading...",
+				success: "Loaded!",
+				error: "Error!"
+			},
+			{
+				position: "bottom-center",
+				style: `${
+					dark_mode
+						? "background: #1f2937; color: #fff"
+						: "background: #fff; color: #000"
+				}`
+			}
+		);
 	}
 
 	function set_progress(new_progress: number) {
@@ -147,6 +163,7 @@
 </script>
 
 <div id={elem_id} hidden={!visible} class="relative">
+	<Toaster />
 	<div class="flex flex-col justify-center w-full container">
 		<div class="graph_container" bind:this={container} />
 	</div>

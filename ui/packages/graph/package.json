@@ -13,5 +13,8 @@
 		"fuse.js": "^6.6.2",
 		"vis-data": "^7.1.4",
 		"vis-network": "^9.1.2"
+	},
+	"dependencies": {
+		"svelte-french-toast": "^1.0.3"
 	}
 }
