@@ -115,7 +115,9 @@
 			setTimeout(() => {
 				search_input?.focus();
 			}, 0);
-		} else {
+		} else if (show_search && event.key === "Escape") {
+			show_search = false;
+			search_property = "";
 		}
 	}
 </script>
@@ -123,10 +125,10 @@
 {#if selected_node}
 	<div
 		class="wrapper bg-slate-200 dark:bg-[#1f2937] shadow-md z-40 -translate-y-1/2 translate-x-12 rounded-2xl"
-		on:mouseover={() => document.addEventListener("keypress", search)}
-		on:focus={() => document.addEventListener("keypress", search)}
-		on:mouseout={() => document.removeEventListener("keypress", search, false)}
-		on:blur={() => document.removeEventListener("keypress", search, false)}
+		on:mouseover={() => document.addEventListener("keydown", search)}
+		on:focus={() => document.addEventListener("keydown", search)}
+		on:mouseout={() => document.removeEventListener("keydown", search, false)}
+		on:blur={() => document.removeEventListener("keydown", search, false)}
 		bind:this={wrapper}
 	>
 		<div class="text-lg font-bold mx-2 flex items-center gap-5 justify-between">
@@ -134,7 +136,7 @@
 				{selected_node.label}
 			</h1>
 			<div class="flex items-center gap-3">
-				<div
+				<button
 					class="w-6 h-10 relative transition-all {show_search
 						? 'w-36'
 						: 'cursor-pointer'}"
@@ -146,7 +148,7 @@
 					on:click_outside={() =>
 						search_property.length == 0 ? (show_search = false) : null}
 				>
-					<div on:click={() => (search_property = "")}>
+					<button on:click={() => (search_property = "")} class="contents">
 						<Icon
 							src={XMark}
 							theme="solid"
@@ -155,7 +157,7 @@
 								? 'visible'
 								: 'hidden'}"
 						/>
-					</div>
+					</button>
 					<input
 						bind:this={search_input}
 						bind:value={search_property}
@@ -180,8 +182,8 @@
 						class="h-5 w-5 absolute z-10 bottom-1/2 translate-y-1/2 pointer-events-none cursor-pointer {show_search &&
 							'left-2'}"
 					/>
-				</div>
-				<a href={selected_node.id} target="_blank">
+				</button>
+				<a href={selected_node.id} target="_blank" rel="noreferrer">
 					<Icon src={Link} theme="solid" class="h-5 w-5 cursor-pointer" />
 				</a>
 			</div>
@@ -200,7 +202,7 @@
 		{#if selected_node.properties.length > 0}
 			<div class="flex  mb-1 ">
 				{#each sort_options as sort_option}
-					<div
+					<button
 						class={`select-none gap-2 flex flex-none items-center justify-center p-2 cursor-pointer  leading-snug transform transition-all !text-opacity-80 hover:!text-opacity-100 ${
 							sort_by !== sort_option
 								? "text-black dark:text-white"
@@ -226,7 +228,7 @@
 						>
 							<path d="M4.49999 0L8.3971 6.75H0.602875L4.49999 0Z" />
 						</svg>
-					</div>
+					</button>
 				{/each}
 			</div>
 			<div class="properties">
