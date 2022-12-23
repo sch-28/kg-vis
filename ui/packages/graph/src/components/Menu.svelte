@@ -122,7 +122,7 @@
 
 {#if selected_node}
 	<div
-		class="wrapper bg-slate-200 dark:bg-[#1f2937] shadow-md z-40"
+		class="wrapper bg-slate-200 dark:bg-[#1f2937] shadow-md z-40 -translate-y-1/2 translate-x-12 rounded-2xl"
 		on:mouseover={() => document.addEventListener("keypress", search)}
 		on:focus={() => document.addEventListener("keypress", search)}
 		on:mouseout={() => document.removeEventListener("keypress", search, false)}
@@ -163,7 +163,7 @@
 						class="{show_search
 							? 'dark:bg-slate-800 bg-slate-300 pl-8 ring-blue-200  ring-opacity-50 dark:ring-0 dark:border-gray-600 visible pr-7'
 							: 'hidden'}
-							peer w-full  border-transparent rounded-md 
+							peer w-full  border-transparent rounded-lg 
 							placeholder:text-gray-400
 							checked:shadow-inner
 							dark:text-gray-200
@@ -238,7 +238,7 @@
 								uri: selected_node.id,
 								property: property.property
 							})}
-						class="flex px-2 rounded bg-transparent h-10 hover:bg-black/10 dark:hover:bg-black/30 transition-all duration-200 ease-in-out"
+						class="flex px-2 rounded-lg bg-transparent h-10 hover:bg-black/10 dark:hover:bg-black/30 transition-all duration-200 ease-in-out"
 					>
 						<div
 							title={`${
@@ -302,7 +302,6 @@
 	.wrapper {
 		position: absolute;
 		padding: 10px;
-		border-radius: 20px;
 		max-width: 380px;
 		width: 380px;
 	}

@@ -2,6 +2,7 @@
 	import { onMount } from "svelte";
 	import type { Network, Options } from "vis-network";
 	import * as vis from "vis-network";
+	import ContextMenu from "./components/Context-Menu.svelte";
 	import Menu from "./components/Menu.svelte";
 	import { Graph, Property, type URI, type Node } from "./graph";
 
@@ -18,6 +19,9 @@
 	let progress = 0;
 
 	let dark_mode = true;
+
+	let hide_context_menu = true;
+	let context_selection: Node | undefined = undefined;
 
 	export let elem_id: string = "";
 	export let visible: boolean = true;
@@ -79,9 +83,10 @@
 			}
 		};
 		network = new vis.Network(container, graph.data, options);
+		graph.set_network(network);
 
-		network.on("click", show_related_menu);
-		network.on("oncontext", show_menu);
+		network.on("click", show_properties);
+		network.on("oncontext", show_context_menu);
 	}
 
 	interface Click_Event {
@@ -95,11 +100,18 @@
 		};
 	}
 
-	function show_menu(params: Click_Event) {
-		params.event.preventDefault();
+	function show_context_menu(event: Click_Event) {
+		event.event.preventDefault();
+		selected_node = undefined;
+		const uri = network.getNodeAt(event.pointer.DOM) as URI;
+		const node = graph.get_node(uri);
+		node ? (context_selection = node) : (context_selection = undefined);
+		hide_context_menu = false;
+		menu_position = event.pointer.DOM;
 	}
 
-	function show_related_menu(event: Click_Event) {
+	function show_properties(event: Click_Event) {
+		hide_context_menu = true;
 		if (network.getSelectedNodes().length > 0) {
 			progress = 0;
 			const uri = event.nodes[0];
@@ -107,11 +119,12 @@
 			if (!node || node.type === "literal") return;
 
 			selected_node = node;
-			menu_position = event.pointer.DOM;
+			const node_position = network.canvasToDOM(network.getPosition(uri));
+			menu_position = node_position;
 			last_click = event.pointer.canvas;
 
 			graph.get_properties(uri, set_progress).then((node) => {
-				selected_node = node;
+				if (hide_context_menu) selected_node = node;
 			});
 		} else {
 			selected_node = undefined;
@@ -133,7 +146,7 @@
 	}
 </script>
 
-<div id={elem_id} hidden={!visible}>
+<div id={elem_id} hidden={!visible} class="relative">
 	<div class="flex flex-col justify-center w-full container">
 		<div class="graph_container" bind:this={container} />
 	</div>
@@ -142,6 +155,12 @@
 		{selected_node}
 		on:property_clicked={property_clicked}
 		{progress}
+	/>
+	<ContextMenu
+		{menu_position}
+		bind:hidden={hide_context_menu}
+		selection={context_selection}
+		{graph}
 	/>
 </div>
 

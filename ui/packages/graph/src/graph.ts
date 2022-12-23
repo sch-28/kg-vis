@@ -1,4 +1,5 @@
 import { DataSet } from "vis-data";
+import type { Network } from "vis-network";
 import { SPARQL } from "./api";
 
 export type URI = string;
@@ -25,6 +26,7 @@ export class Node {
 	label: string;
 	visible: boolean;
 	is_fetched: boolean;
+	fixed: boolean;
 	image: string | undefined;
 	type: "uri" | "literal";
 	x: number;
@@ -48,7 +50,8 @@ export class Node {
 		type: "uri" | "literal" = "uri",
 		visible = false,
 		image?: URI,
-		position: { x: number; y: number } = { x: 0, y: 0 }
+		position: { x: number; y: number } = { x: 0, y: 0 },
+		fixed = false
 	) {
 		this.id = uri;
 		this.label = label;
@@ -57,6 +60,7 @@ export class Node {
 		this.type = type;
 		this.x = position.x;
 		this.y = position.y;
+		this.fixed = fixed;
 		if (image) {
 			this.image = image;
 			this.shape = "circularImage";
@@ -81,11 +85,25 @@ export class Edge {
 		this.to = target;
 		this.label = label;
 	}
+
+	compare(other: Edge) {
+		if (
+			this.from == other.from &&
+			this.to == other.to &&
+			this.uri == other.uri
+		) {
+			return true;
+		} else {
+			return false;
+		}
+	}
 }
 
 export class Graph {
 	nodes: Node[];
 	edges: Edge[];
+
+	network: Network | undefined;
 
 	data: { nodes: DataSet<any>; edges: DataSet<any> };
 
@@ -125,6 +143,10 @@ export class Graph {
 		return false;
 	}
 
+	set_network(network: Network) {
+		this.network = network;
+	}
+
 	update_data() {
 		const nodes = this.nodes.filter((node) => node.visible);
 		const edges = this.edges.filter((edge) => this.is_edge_visible(edge));
@@ -149,7 +171,7 @@ export class Graph {
 
 		const deleted_nodes: Node[] = [];
 		old_nodes.forEach((node: Node) => {
-			if (!nodes.includes(node)) {
+			if (!nodes.find((n) => n.id == node.id)) {
 				deleted_nodes.push(node);
 			}
 		});
@@ -160,7 +182,7 @@ export class Graph {
 
 		const deleted_edges: Edge[] = [];
 		old_edges.forEach((edge: Edge) => {
-			if (!edges.includes(edge)) {
+			if (!edges.find((e) => e.compare(edge))) {
 				deleted_edges.push(edge);
 			}
 		});
@@ -193,6 +215,24 @@ export class Graph {
 
 	get_node(uri: URI) {
 		return this.nodes.find((node) => node.id == uri);
+	}
+
+	update_node(node: Node, position?: { x: number; y: number }) {
+		if (position) {
+			node.x = position.x;
+			node.y = position.y;
+		}
+		this.data.nodes.update(node);
+	}
+
+	hide_node(node: Node) {
+		node.visible = false;
+		this.update_data();
+	}
+
+	lock_node(node: Node, position: { x: number; y: number }) {
+		node.fixed = true;
+		this.update_node(node, position );
 	}
 
 	create_edge(source: URI, uri: URI, target: URI, label: string) {
