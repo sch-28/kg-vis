@@ -4,7 +4,8 @@
 		MagnifyingGlass,
 		InformationCircle,
 		LockClosed,
-		Trash
+		Trash,
+		LockOpen
 	} from "@steeze-ui/heroicons";
 	import type { Graph, Node } from "../graph";
 	import type { Network } from "vis-network";
@@ -43,7 +44,7 @@
 
 	function handle_lock() {
 		if (selection) {
-			graph.lock_node(
+			graph.toggle_node_lock(
 				selection,
 				graph.network?.getPosition(selection.id) ?? { x: 0, y: 0 }
 			);
@@ -91,10 +92,10 @@
 				on:click={handle_lock}
 			>
 				<div class="icon">
-					<Icon src={LockClosed} />
+					<Icon src={selection.fixed ? LockOpen : LockClosed} />
 				</div>
 
-				Lock
+				{selection.fixed ? "Unlock" : "Lock"}
 			</button>
 			<button
 				class="context-menu-item dark:hover:bg-black/30 hover:bg-black/10 text-[#EF4444]"

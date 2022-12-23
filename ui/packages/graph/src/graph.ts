@@ -230,9 +230,9 @@ export class Graph {
 		this.update_data();
 	}
 
-	lock_node(node: Node, position: { x: number; y: number }) {
-		node.fixed = true;
-		this.update_node(node, position );
+	toggle_node_lock(node: Node, position: { x: number; y: number }) {
+		node.fixed = !node.fixed;
+		this.update_node(node, position);
 	}
 
 	create_edge(source: URI, uri: URI, target: URI, label: string) {
