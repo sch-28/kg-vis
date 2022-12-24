@@ -230,6 +230,16 @@ export class Graph {
 		this.update_data();
 	}
 
+	show_node(node: Node) {
+		node.visible = true;
+		this.update_data();
+	}
+
+	show_nodes(nodes: Node[]) {
+		nodes.forEach((n) => (n.visible = true));
+		this.update_data();
+	}
+
 	toggle_node_lock(node: Node, position: { x: number; y: number }) {
 		node.fixed = !node.fixed;
 		this.update_node(node, position);
@@ -278,29 +288,38 @@ export class Graph {
 	async load_data(
 		uri: string,
 		property: Property,
+		visible = true,
 		position: {
 			x: number;
 			y: number;
 		} = { x: 0, y: 0 }
 	) {
-		const new_nodes = await SPARQL.fetch_data(
+		const raw_new_nodes = await SPARQL.fetch_data(
 			uri,
 			property.uri,
 			this.nodes.map((n) => n.id)
 		);
 
-		for (let new_node of new_nodes) {
+		const new_nodes: Node[] = [];
+		const already_exists: Node[] = [];
+
+		for (let new_node of raw_new_nodes) {
 			const node = this.find_or_create_node(
 				new_node.uri,
 				new_node.label,
 				new_node.type,
-				true,
+				visible,
 				undefined,
 				position
 			);
-			node.x = position.x;
-			node.y = position.y;
-			node.visible = true;
+			if (!node.visible) {
+				node.x = position.x;
+				node.y = position.y;
+				node.visible = visible;
+				new_nodes.push(node);
+			} else {
+				already_exists.push(node);
+			}
 
 			if (new_node.relations.length == 0) {
 				this.create_edge(
@@ -322,14 +341,16 @@ export class Graph {
 			this.update_data();
 		}
 
-		SPARQL.fetch_images(this.nodes.map((n) => n.id)).then((images) => {
+		SPARQL.fetch_images(new_nodes.map((n) => n.id)).then((images) => {
 			for (let image of images) {
 				const node = this.nodes.find((n) => n.id == image.uri);
 				if (node) {
 					node.update_image(image.image);
-					this.data.nodes.update(node);
+					if (node.visible) this.data.nodes.update(node);
 				}
 			}
 		});
+
+		return new_nodes.concat(already_exists);
 	}
 }

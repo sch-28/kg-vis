@@ -15,3 +15,11 @@ export const click_outside: Action = (node) => {
 		}
 	};
 };
+
+export const dark_mode =
+	document.querySelector(".gradio-container")?.classList.contains("dark") ??
+	document
+		.querySelector("gradio-app")
+		?.shadowRoot?.querySelector(".gradio-container")
+		?.classList.contains("dark") ??
+	false;

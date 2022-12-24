@@ -3,9 +3,10 @@
 	import type { Network, Options } from "vis-network";
 	import * as vis from "vis-network";
 	import ContextMenu from "./components/Context-Menu.svelte";
-	import Menu from "./components/Menu.svelte";
+	import Menu from "./components/Property-Menu.svelte";
 	import { Graph, Property, type URI, type Node } from "./graph";
 	import toast, { Toaster } from "svelte-french-toast";
+	import { dark_mode } from "./util/util";
 
 	let container: HTMLElement;
 
@@ -18,8 +19,6 @@
 	let last_click = { x: 0, y: 0 };
 
 	let progress = 0;
-
-	let dark_mode = true;
 
 	let hide_context_menu = true;
 	let context_selection: Node | undefined = undefined;
@@ -38,16 +37,6 @@
 			create_graph(value);
 		}
 	}
-
-	onMount(() => {
-		dark_mode =
-			document.querySelector(".gradio-container")?.classList.contains("dark") ??
-			document
-				.querySelector("gradio-app")
-				?.shadowRoot?.querySelector(".gradio-container")
-				?.classList.contains("dark") ??
-			false;
-	});
 
 	async function create_graph(starting_point: string) {
 		graph = new Graph(+rate_limit, +size_limit, endpoint);
@@ -132,31 +121,6 @@
 		}
 	}
 
-	async function property_clicked(
-		event: CustomEvent<{ uri: URI; property: Property }>
-	) {
-		const uri = event.detail.uri;
-		const property = event.detail.property;
-		selected_node = undefined;
-		const data_promise = graph.load_data(uri, property, last_click);
-		toast.promise(
-			data_promise,
-			{
-				loading: "Loading...",
-				success: "Loaded!",
-				error: "Error!"
-			},
-			{
-				position: "bottom-center",
-				style: `${
-					dark_mode
-						? "background: #1f2937; color: #fff"
-						: "background: #fff; color: #000"
-				}`
-			}
-		);
-	}
-
 	function set_progress(new_progress: number) {
 		progress = new_progress;
 	}
@@ -167,12 +131,7 @@
 	<div class="flex flex-col justify-center w-full container">
 		<div class="graph_container" bind:this={container} />
 	</div>
-	<Menu
-		{menu_position}
-		{selected_node}
-		on:property_clicked={property_clicked}
-		{progress}
-	/>
+	<Menu {menu_position} {selected_node} {progress} {graph} />
 	<ContextMenu
 		{menu_position}
 		bind:hidden={hide_context_menu}
