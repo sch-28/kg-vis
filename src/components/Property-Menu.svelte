@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { createEventDispatcher } from "svelte";
-	import type { Property, Node, Graph, URI } from "../graph";
+	import type { Property, Node, Graph, URI } from "../api/graph";
 	import { Icon } from "@steeze-ui/svelte-icon";
 	import {
 		MagnifyingGlass,
@@ -10,7 +10,7 @@
 		XMark
 	} from "@steeze-ui/heroicons";
 	import Fuse from "fuse.js";
-	import { click_outside, dark_mode } from "../util/util";
+	import { click_outside, dark_mode } from "../util";
 	import toast from "svelte-french-toast";
 
 	const dispatch = createEventDispatcher();

@@ -1,0 +1,6 @@
+{
+	"css.customData": ["./css-data.json"],
+	"files.associations": {
+		"*.css": "tailwindcss"
+	}
+}

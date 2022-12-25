@@ -1,12 +1,12 @@
 <script lang="ts">
-	import { onMount } from "svelte";
-	import type { Network, Options } from "vis-network";
-	import * as vis from "vis-network";
-	import ContextMenu from "./components/Context-Menu.svelte";
-	import Menu from "./components/Property-Menu.svelte";
-	import { Graph, Property, type URI, type Node } from "./graph";
-	import toast, { Toaster } from "svelte-french-toast";
-	import { dark_mode } from "./util/util";
+	import { onMount } from 'svelte';
+	import type { Network, Options } from 'vis-network';
+	import * as vis from 'vis-network';
+	import ContextMenu from './Context-Menu.svelte';
+	import Menu from './Property-Menu.svelte';
+	import { Graph, Property, type URI, type Node } from '../api/graph';
+	import toast, { Toaster } from 'svelte-french-toast';
+	import { dark_mode } from '../util';
 
 	let container: HTMLElement;
 
@@ -23,11 +23,8 @@
 	let hide_context_menu = true;
 	let context_selection: Node | undefined = undefined;
 
-	export let elem_id: string = "";
-	export let visible: boolean = true;
-
 	export let value: string;
-	export let endpoint: string = "https://query.wikidata.org/sparql";
+	export let endpoint: string = 'https://query.wikidata.org/sparql';
 	export let rate_limit: number = 5;
 	export let size_limit: number = 100;
 
@@ -46,23 +43,23 @@
 
 		const options: Options = {
 			nodes: {
-				color: "#6a7e9d",
-				shape: "dot",
+				color: '#6a7e9d',
+				shape: 'dot',
 				font: {
-					color: dark_mode ? "white" : "black"
+					color: dark_mode ? 'white' : 'black'
 				},
 				chosen: false
 			},
 			edges: {
 				font: {
 					strokeWidth: 0,
-					color: dark_mode ? "white" : "black",
-					background: dark_mode ? "#0b0f19" : "white"
+					color: dark_mode ? 'white' : 'black',
+					background: dark_mode ? '#0b0f19' : 'white'
 				},
 				labelHighlightBold: false
 			},
 			physics: {
-				solver: "forceAtlas2Based",
+				solver: 'forceAtlas2Based',
 				maxVelocity: 25,
 				minVelocity: 1.5,
 
@@ -75,8 +72,8 @@
 		network = new vis.Network(container, graph.data, options);
 		graph.set_network(network);
 
-		network.on("click", show_properties);
-		network.on("oncontext", show_context_menu);
+		network.on('click', show_properties);
+		network.on('oncontext', show_context_menu);
 	}
 
 	interface Click_Event {
@@ -106,7 +103,7 @@
 			progress = 0;
 			const uri = event.nodes[0];
 			const node = graph.get_node(uri);
-			if (!node || node.type === "literal") return;
+			if (!node || node.type === 'literal') return;
 
 			selected_node = node;
 			const node_position = network.canvasToDOM(network.getPosition(uri));
@@ -126,7 +123,7 @@
 	}
 </script>
 
-<div id={elem_id} hidden={!visible} class="relative">
+<div class="relative">
 	<Toaster />
 	<div class="flex flex-col justify-center w-full container">
 		<div class="graph_container" bind:this={container} />

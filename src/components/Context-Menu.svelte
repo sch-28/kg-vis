@@ -1,14 +1,14 @@
 <script lang="ts">
-	import { Icon } from "@steeze-ui/svelte-icon";
+	import { Icon } from '@steeze-ui/svelte-icon';
 	import {
 		MagnifyingGlass,
 		InformationCircle,
 		LockClosed,
 		Trash,
 		LockOpen
-	} from "@steeze-ui/heroicons";
-	import type { Graph, Node } from "../graph";
-	import type { Network } from "vis-network";
+	} from '@steeze-ui/heroicons';
+	import type { Graph, Node } from '../api/graph';
+	import type { Network } from 'vis-network';
 	export let menu_position = { x: 0, y: 0 };
 	export let hidden = true;
 	export let selection: Node | undefined = undefined;
@@ -17,8 +17,8 @@
 
 	$: {
 		if (wrapper) {
-			wrapper.style.top = menu_position.y + "px";
-			wrapper.style.left = menu_position.x + "px";
+			wrapper.style.top = menu_position.y + 'px';
+			wrapper.style.left = menu_position.x + 'px';
 		}
 	}
 
@@ -35,7 +35,7 @@
 				scale: 1,
 				animation: {
 					duration: 1000,
-					easingFunction: "easeInOutQuad"
+					easingFunction: 'easeInOutQuad'
 				}
 			});
 		}
@@ -44,10 +44,7 @@
 
 	function handle_lock() {
 		if (selection) {
-			graph.toggle_node_lock(
-				selection,
-				graph.network?.getPosition(selection.id) ?? { x: 0, y: 0 }
-			);
+			graph.toggle_node_lock(selection, graph.network?.getPosition(selection.id) ?? { x: 0, y: 0 });
 		}
 		hidden = true;
 	}
@@ -95,7 +92,7 @@
 					<Icon src={selection.fixed ? LockOpen : LockClosed} />
 				</div>
 
-				{selection.fixed ? "Unlock" : "Lock"}
+				{selection.fixed ? 'Unlock' : 'Lock'}
 			</button>
 			<button
 				class="context-menu-item dark:hover:bg-black/30 hover:bg-black/10 text-[#EF4444]"

@@ -1,0 +1,16 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+html {
+    color-scheme: light ;
+}
+
+
+@media (prefers-color-scheme: dark) {
+    html {
+        color-scheme: dark;
+        @apply bg-gray-900 text-white font-sans;
+    }
+}

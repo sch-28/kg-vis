@@ -1,4 +1,4 @@
-import type { Property, URI } from "./graph";
+import type { Property, URI } from './graph';
 export interface Triple {
 	subject: Node;
 	property: Node;
@@ -6,14 +6,14 @@ export interface Triple {
 }
 
 export interface Node {
-	type: "literal" | "uri";
+	type: 'literal' | 'uri';
 	value: string;
 }
 
 export class SPARQL {
 	private static _rate_limit: number = 5;
 	private static _size_limit: number = 100;
-	private static _endpoint: URI = "https://query.wikidata.org/sparql";
+	private static _endpoint: URI = 'https://query.wikidata.org/sparql';
 
 	public static set_rate_limit(rate_limit: number) {
 		this._rate_limit = rate_limit;
@@ -40,15 +40,15 @@ export class SPARQL {
 	}
 
 	private static async SPARQL_query<T>(body: string) {
-		var urlencoded = new URLSearchParams();
-		urlencoded.append("query", body);
+		const urlencoded = new URLSearchParams();
+		urlencoded.append('query', body);
 
 		const result = await fetch(this._endpoint, {
-			method: "POST",
+			method: 'POST',
 
 			headers: {
-				"Content-Type": "application/x-www-form-urlencoded",
-				Accept: "application/sparql-results+json"
+				'Content-Type': 'application/x-www-form-urlencoded',
+				Accept: 'application/sparql-results+json'
 			},
 
 			body: urlencoded
@@ -63,7 +63,7 @@ export class SPARQL {
 		const json = await result.json();
 
 		const triples: T[] = [];
-		for (let binding of json.results.bindings) {
+		for (const binding of json.results.bindings) {
 			triples.push(binding);
 		}
 
@@ -86,7 +86,7 @@ export class SPARQL {
 		const results: {
 			uri: URI;
 			label: string;
-			type: "literal" | "uri";
+			type: 'literal' | 'uri';
 			relations: {
 				subject: Node;
 				property: Node;
@@ -98,12 +98,9 @@ export class SPARQL {
 		const all_new_nodes = result.map((c) => c.object.value);
 
 		for (let i = 0; i < result.length; i += this.rate_limit) {
-			const new_nodes = result
-				.slice(i, i + this.rate_limit)
-				.map((c) => c.object.value);
+			const new_nodes = result.slice(i, i + this.rate_limit).map((c) => c.object.value);
 
-			const requests: { uri: URI; type: "uri" | "literal"; relations: any }[] =
-				[];
+			const requests: { uri: URI; type: 'uri' | 'literal'; relations: any }[] = [];
 			new_nodes.forEach((node) =>
 				requests.push({
 					uri: node,
@@ -119,15 +116,15 @@ export class SPARQL {
 					uri: request.uri,
 					type: request.type,
 					relations: r,
-					label: ""
+					label: ''
 				});
 			}
 		}
 
 		const labels = await SPARQL.fetch_labels(results.map((r) => r.uri));
 
-		for (let node of results) {
-			node.label = labels.find((l) => l.uri == node.uri)?.label ?? "";
+		for (const node of results) {
+			node.label = labels.find((l) => l.uri == node.uri)?.label ?? '';
 		}
 
 		return results;
@@ -171,7 +168,7 @@ export class SPARQL {
 			PREFIX wdt: <http://www.wikidata.org/prop/direct/>
 			SELECT DISTINCT ?subject ?image WHERE {
 			  VALUES ?subject {
-				${subjects.map((s) => `<${s}>`).join("\n")}
+				${subjects.map((s) => `<${s}>`).join('\n')}
 				  }
 	
 			?subject wdt:P18 ?image
@@ -195,7 +192,7 @@ export class SPARQL {
 			PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 			SELECT DISTINCT ?subject ?subjectLabel  WHERE {
 			  VALUES ?subject {
-				${subjects.map((s) => `<${s}>`).join("\n")}
+				${subjects.map((s) => `<${s}>`).join('\n')}
 				  }
 	
 			 
@@ -248,7 +245,7 @@ export class SPARQL {
 
 			relations += `<${node}>\n`;
 		}
-		relations += "}";
+		relations += '}';
 
 		const result = await SPARQL.SPARQL_query(
 			`
@@ -282,10 +279,7 @@ export class SPARQL {
 		}[];
 	}
 
-	public static async fetch_property(
-		subject: URI,
-		property: URI
-	): Promise<Property> {
+	public static async fetch_property(subject: URI, property: URI): Promise<Property> {
 		const result = await this.SPARQL_query<{
 			propLabel: { value: string };
 			outCount: { value: number };
@@ -329,13 +323,10 @@ export class SPARQL {
 			};
 		}
 
-		throw new Error("Unable to fetch Property: " + result);
+		throw new Error('Unable to fetch Property: ' + result);
 	}
 
-	public static async fetch_properties(
-		subject: URI,
-		progress_function?: Function
-	) {
+	public static async fetch_properties(subject: URI, progress_function?: (progress: number) => void) {
 		const result = await this.SPARQL_query<{ property: { value: string } }>(
 			`
 			PREFIX wikibase: <http://wikiba.se/ontology#>
@@ -352,17 +343,12 @@ export class SPARQL {
 
 		const results: Property[] = [];
 		for (let i = 0; i < result.length; i += this.rate_limit) {
-			const properties = result
-				.slice(i, i + this.rate_limit)
-				.map((c) => c.property.value);
+			const properties = result.slice(i, i + this.rate_limit).map((c) => c.property.value);
 
 			const requests: Promise<Property>[] = [];
-			properties.forEach((prop) =>
-				requests.push(this.fetch_property(subject, prop))
-			);
+			properties.forEach((prop) => requests.push(this.fetch_property(subject, prop)));
 			results.push(...((await Promise.all(requests)) as Property[]));
-			if (progress_function)
-				progress_function(Math.floor((i / result.length) * 100));
+			if (progress_function) progress_function(Math.floor((i / result.length) * 100));
 		}
 
 		return results;

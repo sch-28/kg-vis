@@ -1,6 +1,6 @@
-import { DataSet } from "vis-data";
-import type { Network } from "vis-network";
-import { SPARQL } from "./api";
+import { DataSet } from 'vis-data';
+import type { Network } from 'vis-network';
+import { SPARQL } from './api';
 
 export type URI = string;
 
@@ -28,26 +28,26 @@ export class Node {
 	is_fetched: boolean;
 	fixed: boolean;
 	image: string | undefined;
-	type: "uri" | "literal";
+	type: 'uri' | 'literal';
 	x: number;
 	y: number;
 	properties: Property[] = [];
 	shape:
-		| "dot"
-		| "image"
-		| "box"
-		| "circularImage"
-		| "database"
-		| "ellipse"
-		| "icon"
-		| "text"
-		| "triangle"
-		| "triangleDown" = "dot";
+		| 'dot'
+		| 'image'
+		| 'box'
+		| 'circularImage'
+		| 'database'
+		| 'ellipse'
+		| 'icon'
+		| 'text'
+		| 'triangle'
+		| 'triangleDown' = 'dot';
 
 	constructor(
 		uri: URI,
 		label: string,
-		type: "uri" | "literal" = "uri",
+		type: 'uri' | 'literal' = 'uri',
 		visible = false,
 		image?: URI,
 		position: { x: number; y: number } = { x: 0, y: 0 },
@@ -63,13 +63,13 @@ export class Node {
 		this.fixed = fixed;
 		if (image) {
 			this.image = image;
-			this.shape = "circularImage";
+			this.shape = 'circularImage';
 		}
 	}
 
 	update_image(url: URI) {
 		this.image = url;
-		this.shape = "circularImage";
+		this.shape = 'circularImage';
 	}
 }
 
@@ -87,11 +87,7 @@ export class Edge {
 	}
 
 	compare(other: Edge) {
-		if (
-			this.from == other.from &&
-			this.to == other.to &&
-			this.uri == other.uri
-		) {
+		if (this.from == other.from && this.to == other.to && this.uri == other.uri) {
 			return true;
 		} else {
 			return false;
@@ -107,11 +103,7 @@ export class Graph {
 
 	data: { nodes: DataSet<any>; edges: DataSet<any> };
 
-	constructor(
-		rate_limit = 5,
-		size_limit = 100,
-		endpoint = "https://query.wikidata.org/sparql"
-	) {
+	constructor(rate_limit = 5, size_limit = 100, endpoint = 'https://query.wikidata.org/sparql') {
 		this.nodes = [];
 		this.edges = [];
 		const data_nodes = new DataSet([]);
@@ -126,14 +118,10 @@ export class Graph {
 	}
 
 	is_edge_visible(edge: Edge) {
-		for (let node_one of this.nodes) {
+		for (const node_one of this.nodes) {
 			if (node_one.id == edge.from && node_one.visible) {
-				for (let node_two of this.nodes) {
-					if (
-						node_two != node_one &&
-						node_two.id == edge.to &&
-						node_two.visible
-					) {
+				for (const node_two of this.nodes) {
+					if (node_two != node_one && node_two.id == edge.to && node_two.visible) {
 						return true;
 					}
 				}
@@ -154,14 +142,14 @@ export class Graph {
 		const old_nodes = this.data.nodes;
 		const old_edges = this.data.edges;
 
-		for (let node of nodes) {
+		for (const node of nodes) {
 			try {
 				old_nodes.add(node);
 			} catch {
 				//pass
 			}
 		}
-		for (let edge of edges) {
+		for (const edge of edges) {
 			try {
 				old_edges.add(edge);
 			} catch {
@@ -176,7 +164,7 @@ export class Graph {
 			}
 		});
 
-		for (let node of deleted_nodes) {
+		for (const node of deleted_nodes) {
 			old_nodes.remove(node);
 		}
 
@@ -187,7 +175,7 @@ export class Graph {
 			}
 		});
 
-		for (let edge of deleted_edges) {
+		for (const edge of deleted_edges) {
 			old_edges.remove(edge);
 		}
 
@@ -197,7 +185,7 @@ export class Graph {
 	find_or_create_node(
 		uri: URI,
 		label: string,
-		type: "uri" | "literal" = "uri",
+		type: 'uri' | 'literal' = 'uri',
 		visible = false,
 		image?: URI,
 		position: {
@@ -261,7 +249,7 @@ export class Graph {
 		return true;
 	}
 
-	async load_properties(uri: URI, progress_function?: Function) {
+	async load_properties(uri: URI, progress_function?: (progress: number) => void) {
 		const properties = await SPARQL.fetch_properties(uri, progress_function);
 		if (properties.length > 0) {
 			const node = this.find_or_create_node(uri, uri);
@@ -273,11 +261,11 @@ export class Graph {
 	async load(uri: URI) {
 		const label = await SPARQL.fetch_label(uri);
 		const image = await SPARQL.fetch_image(uri);
-		this.find_or_create_node(uri, label, "uri", true, image);
+		this.find_or_create_node(uri, label, 'uri', true, image);
 	}
 
-	async get_properties(uri: URI, progress_function?: Function) {
-		const node = this.find_or_create_node(uri, "");
+	async get_properties(uri: URI, progress_function?: (progress: number) => void) {
+		const node = this.find_or_create_node(uri, '');
 		if (!node.is_fetched) {
 			await this.load_properties(node.id, progress_function);
 		}
@@ -303,7 +291,7 @@ export class Graph {
 		const new_nodes: Node[] = [];
 		const already_exists: Node[] = [];
 
-		for (let new_node of raw_new_nodes) {
+		for (const new_node of raw_new_nodes) {
 			const node = this.find_or_create_node(
 				new_node.uri,
 				new_node.label,
@@ -322,14 +310,9 @@ export class Graph {
 			}
 
 			if (new_node.relations.length == 0) {
-				this.create_edge(
-					uri,
-					property.uri,
-					new_node.uri,
-					property.label ?? "label"
-				);
+				this.create_edge(uri, property.uri, new_node.uri, property.label ?? 'label');
 			} else {
-				for (let relation of new_node.relations) {
+				for (const relation of new_node.relations) {
 					this.create_edge(
 						relation.subject.value,
 						relation.property.value,
@@ -342,7 +325,7 @@ export class Graph {
 		}
 
 		SPARQL.fetch_images(new_nodes.map((n) => n.id)).then((images) => {
-			for (let image of images) {
+			for (const image of images) {
 				const node = this.nodes.find((n) => n.id == image.uri);
 				if (node) {
 					node.update_image(image.image);
