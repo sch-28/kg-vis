@@ -123,27 +123,12 @@
 	}
 </script>
 
-<div class="relative">
-	<Toaster />
-	<div class="flex flex-col justify-center w-full container">
-		<div class="graph_container" bind:this={container} />
-	</div>
-	<Menu {menu_position} {selected_node} {progress} {graph} />
-	<ContextMenu
-		{menu_position}
-		bind:hidden={hide_context_menu}
-		selection={context_selection}
-		{graph}
-	/>
-</div>
-
-<style>
-	.graph_container {
-		width: 100%;
-		height: 100%;
-	}
-
-	.container {
-		height: 65vh;
-	}
-</style>
+<Toaster />
+<div bind:this={container} class="w-full h-full"/>
+<Menu {menu_position} {selected_node} {progress} {graph} />
+<ContextMenu
+	{menu_position}
+	bind:hidden={hide_context_menu}
+	selection={context_selection}
+	{graph}
+/>

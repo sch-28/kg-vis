@@ -5,12 +5,24 @@
 
 html {
     color-scheme: light ;
+    width: 100vw;
+    height: 100vh;
+    @apply text-dark font-sans;
 }
 
+body{
+    height: 100%;
+    width: 100%;
+}
 
-@media (prefers-color-scheme: dark) {
+/* @media (prefers-color-scheme: dark) {
     html {
         color-scheme: dark;
-        @apply bg-gray-900 text-white font-sans;
+        @apply bg-gray-900 text-dark font-sans;
     }
+} */
+
+html.dark{
+    color-scheme: dark;
+    @apply bg-gray-900 text-light font-sans;
 }

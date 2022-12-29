@@ -1,17 +1,17 @@
 <script lang="ts">
-	import { createEventDispatcher } from "svelte";
-	import type { Property, Node, Graph, URI } from "../api/graph";
-	import { Icon } from "@steeze-ui/svelte-icon";
+	import { createEventDispatcher } from 'svelte';
+	import type { Property, Node, Graph, URI } from '../api/graph';
+	import { Icon } from '@steeze-ui/svelte-icon';
 	import {
 		MagnifyingGlass,
 		Link,
 		ArrowRightOnRectangle,
 		ArrowLeftOnRectangle,
 		XMark
-	} from "@steeze-ui/heroicons";
-	import Fuse from "fuse.js";
-	import { click_outside, dark_mode } from "../util";
-	import toast from "svelte-french-toast";
+	} from '@steeze-ui/heroicons';
+	import Fuse from 'fuse.js';
+	import { click_outside, dark_mode } from '../util';
+	import toast from 'svelte-french-toast';
 
 	const dispatch = createEventDispatcher();
 
@@ -21,16 +21,16 @@
 	export let graph: Graph;
 
 	type SortDirection = 1 | -1;
-	type SortOptions = "name" | "count" | "direction";
-	const sort_options: SortOptions[] = ["direction", "name", "count"];
+	type SortOptions = 'name' | 'count' | 'direction';
+	const sort_options: SortOptions[] = ['direction', 'name', 'count'];
 	let sort_direction: SortDirection = -1;
-	let sort_by: SortOptions = "name";
+	let sort_by: SortOptions = 'name';
 	let sorted_properties: {
 		property: Property;
 		matches?: readonly Fuse.FuseResultMatch[];
 	}[] = [];
 
-	let search_string: string = "";
+	let search_string: string = '';
 	let search_input: HTMLInputElement;
 	let show_search: boolean = false;
 
@@ -46,8 +46,8 @@
 
 	$: {
 		if (wrapper) {
-			wrapper.style.top = menu_position.y + "px";
-			wrapper.style.left = menu_position.x + "px";
+			wrapper.style.top = menu_position.y + 'px';
+			wrapper.style.left = menu_position.x + 'px';
 		}
 	}
 
@@ -73,11 +73,7 @@
 		sort_by;
 		sort_direction;
 		search_string;
-		if (
-			selected_node &&
-			selected_node.properties.length > 0 &&
-			!selected_property
-		) {
+		if (selected_node && selected_node.properties.length > 0 && !selected_property) {
 			let properties = [...selected_node.properties].map(
 				(
 					property
@@ -90,7 +86,7 @@
 			);
 			if (search_string.length > 0) {
 				const fuse = new Fuse(selected_node.properties, {
-					keys: ["label"],
+					keys: ['label'],
 					includeMatches: true,
 					threshold: 0.3,
 					shouldSort: true,
@@ -101,7 +97,7 @@
 				});
 			}
 			sorted_properties = properties.sort((a, b) => {
-				if (sort_by == "count") {
+				if (sort_by == 'count') {
 					return (
 						sort_direction *
 						(a.property.in_count + a.property.out_count <=
@@ -109,20 +105,14 @@
 							? 1
 							: -1)
 					);
-				} else if (sort_by == "name") {
+				} else if (sort_by == 'name') {
 					if (!a.property.label || !b.property.label) return 1;
 					return (
 						sort_direction *
-						(a.property.label.toLocaleLowerCase() <=
-						b.property.label.toLocaleLowerCase()
-							? 1
-							: -1)
+						(a.property.label.toLocaleLowerCase() <= b.property.label.toLocaleLowerCase() ? 1 : -1)
 					);
 				} else {
-					return (
-						sort_direction *
-						(a.property.in_count < b.property.in_count ? 1 : -1)
-					);
+					return sort_direction * (a.property.in_count < b.property.in_count ? 1 : -1);
 				}
 			});
 		}
@@ -152,7 +142,7 @@
 			);
 			if (search_string.length > 0) {
 				const fuse = new Fuse(selected_property_nodes, {
-					keys: ["label"],
+					keys: ['label'],
 					includeMatches: true,
 					threshold: 0.3,
 					shouldSort: true,
@@ -177,17 +167,13 @@
 		toast.promise(
 			data_promise,
 			{
-				loading: "Loading...",
-				success: "Loaded!",
-				error: "Error!"
+				loading: 'Loading...',
+				success: 'Loaded!',
+				error: 'Error!'
 			},
 			{
-				position: "bottom-center",
-				style: `${
-					dark_mode
-						? "background: #1f2937; color: #fff"
-						: "background: #fff; color: #000"
-				}`
+				position: 'bottom-center',
+				style: `${dark_mode ? 'background: #1f2937; color: #fff' : 'background: #fff; color: #000'}`
 			}
 		);
 	}
@@ -195,7 +181,7 @@
 	async function property_clicked(uri: URI, property: Property) {
 		selected_property = property;
 		selected_property_nodes = [];
-		search_string = "";
+		search_string = '';
 		show_search = false;
 		selected_property_nodes = await graph.load_data(
 			uri,
@@ -207,7 +193,7 @@
 
 	function search(event: KeyboardEvent) {
 		if (
-			event.key !== "Escape" &&
+			event.key !== 'Escape' &&
 			event.key.length == 1 &&
 			(!show_search || document.activeElement !== search_input)
 		) {
@@ -216,9 +202,9 @@
 			setTimeout(() => {
 				search_input?.focus();
 			}, 0);
-		} else if (show_search && event.key === "Escape") {
+		} else if (show_search && event.key === 'Escape') {
 			show_search = false;
-			search_string = "";
+			search_string = '';
 		}
 	}
 
@@ -235,36 +221,31 @@
 
 {#if selected_node}
 	<div
-		class="wrapper bg-slate-200 dark:bg-[#1f2937] shadow-md z-40 -translate-y-1/2 translate-x-12 rounded-2xl flex flex-col"
-		on:mouseover={() => document.addEventListener("keydown", search)}
-		on:focus={() => document.addEventListener("keydown", search)}
-		on:mouseout={() => document.removeEventListener("keydown", search, false)}
-		on:blur={() => document.removeEventListener("keydown", search, false)}
+		class="wrapper border dark:bg-[#1f2937] shadow-md z-40 -translate-y-1/2 translate-x-12 rounded-2xl flex flex-col"
+		on:mouseover={() => document.addEventListener('keydown', search)}
+		on:focus={() => document.addEventListener('keydown', search)}
+		on:mouseout={() => document.removeEventListener('keydown', search, false)}
+		on:blur={() => document.removeEventListener('keydown', search, false)}
 		bind:this={wrapper}
 	>
 		<div class="text-lg font-bold mx-2 flex items-center gap-5 justify-between">
 			<h1 class="truncate" title={selected_node.label}>
-				<button on:click={() => (selected_property = undefined)}
-					>{selected_node.label}</button
-				>
+				<button on:click={() => (selected_property = undefined)}>{selected_node.label}</button>
 				{#if selected_property}
 					<span class="text-sm font-normal">/ {selected_property.label}</span>
 				{/if}
 			</h1>
 			<div class="flex items-center gap-3">
 				<button
-					class="w-6 h-10 relative transition-all {show_search
-						? 'w-36'
-						: 'cursor-pointer'}"
+					class="w-6 h-10 relative transition-all {show_search ? 'w-36' : 'cursor-pointer'}"
 					on:click={() => {
 						show_search = true;
 						setTimeout(() => search_input.focus(), 0);
 					}}
 					use:click_outside
-					on:click_outside={() =>
-						search_string.length == 0 ? (show_search = false) : null}
+					on:click_outside={() => (search_string.length == 0 ? (show_search = false) : null)}
 				>
-					<button on:click={() => (search_string = "")} class="contents">
+					<button on:click={() => (search_string = '')} class="contents">
 						<Icon
 							src={XMark}
 							theme="solid"
@@ -278,17 +259,13 @@
 						bind:this={search_input}
 						bind:value={search_string}
 						type="text"
-						class="{show_search
-							? 'dark:bg-slate-800 bg-slate-300 pl-8 ring-blue-200  ring-opacity-50 dark:ring-0 dark:border-gray-600 visible pr-7'
-							: 'hidden'}
-							peer w-full  border-transparent rounded-lg 
+						class="{show_search ? 'dark:bg-slate-800  pl-8 visible pr-7 shadow-inset' : 'hidden'}
+							w-full  rounded-lg 
 							placeholder:text-gray-400
-							checked:shadow-inner
-							dark:text-gray-200
-							dark:placeholder:text-gray-500
 							text-sm
+							py-2
+							outline-none
 							font-normal
-							focus:ring-transparent
 							"
 					/>
 
@@ -307,10 +284,8 @@
 		<div class="mx-2 my-2">
 			<div class="w-full bg-slate-400 rounded-full h-1.5  dark:bg-slate-200 ">
 				<div
-					class="bg-[#ce6400] h-1.5 rounded-full"
-					style="width: {selected_node.properties.length == 0
-						? progress.toString()
-						: 100}%"
+					class="bg-dark h-1.5 rounded-full"
+					style="width: {selected_node.properties.length == 0 ? progress.toString() : 100}%"
 				/>
 			</div>
 		</div>
@@ -320,22 +295,17 @@
 				{#each sort_options as sort_option}
 					<button
 						class={`select-none gap-2 flex flex-none items-center justify-center p-2 cursor-pointer  leading-snug transform transition-all !text-opacity-80 hover:!text-opacity-100 ${
-							sort_by !== sort_option
-								? "text-black dark:text-white"
-								: "text-orange-500"
+							sort_by !== sort_option ? 'text-black dark:text-white' : 'text-primary'
 						} 
-						${sort_option == "count" ? "ml-auto" : ""}
+						${sort_option == 'count' ? 'ml-auto' : ''}
 						`}
 						on:click={() => sort(sort_option)}
 					>
-						<span class="capitalize "
-							>{sort_option != "direction" ? sort_option : ""}</span
-						>
+						<span class="capitalize ">{sort_option != 'direction' ? sort_option : ''}</span>
 						<svg
 							width="1em"
 							height="1em"
-							class="fill-current text-[10px] {sort_by === sort_option &&
-							sort_direction === 1
+							class="fill-current text-[10px] {sort_by === sort_option && sort_direction === 1
 								? '-scale-y-[1]'
 								: ''}"
 							viewBox="0 0 9 7"
@@ -350,16 +320,12 @@
 			<div class="properties">
 				{#each sorted_properties as property}
 					<button
-						on:click={() =>
-							selected_node &&
-							property_clicked(selected_node.id, property.property)}
-						class="button flex px-2 rounded-lg bg-transparent h-10 hover:bg-black/10 dark:hover:bg-black/30 transition-all duration-200 ease-in-out"
+						on:click={() => selected_node && property_clicked(selected_node.id, property.property)}
+						class="button flex px-2 rounded-lg bg-transparent h-10 hover:bg-black/5 dark:hover:bg-black/30 transition-all duration-200 ease-in-out"
 					>
 						<div
 							title={`${
-								property.property.in_count < property.property.out_count
-									? `Target of`
-									: `Source of`
+								property.property.in_count < property.property.out_count ? `Target of` : `Source of`
 							} "${property.property.label}"`}
 						>
 							<Icon
@@ -378,15 +344,11 @@
 										0,
 										property.matches[0].indices[0][0]
 									)}{#each property.matches[0].indices as indice, index}
-										<span class="text-orange-500"
-											>{property.property.label.slice(
-												indice[0],
-												indice[1] + 1
-											)}</span
+										<span class="text-primary"
+											>{property.property.label.slice(indice[0], indice[1] + 1)}</span
 										>{property.property.label.slice(
 											indice[1] + 1,
-											property.matches[0].indices[index + 1]?.[0] ??
-												property.property.label.length
+											property.matches[0].indices[index + 1]?.[0] ?? property.property.label.length
 										)}
 									{/each}
 								{:else}
@@ -399,7 +361,7 @@
 							</span>
 						{/if}
 						<span
-							class="ml-auto w-6 bg-white rounded-full inline-flex items-center justify-center -mb-0.5 text-xs font-semibold  p-1 "
+							class="ml-auto w-6 bg-white dark:text-black rounded-full inline-flex items-center justify-center -mb-0.5 text-xs font-semibold  p-1 "
 							>{property.property.in_count + property.property.out_count}</span
 						>
 					</button>
@@ -412,9 +374,10 @@
 						<input
 							id="select_all"
 							type="checkbox"
+							value=""
 							on:change={toggle_all_nodes}
 							checked={selected_nodes.length === selected_property_nodes.length}
-							class="cursor-pointer w-4 h-4 text-[#CE6400] bg-gray-100 rounded border-gray-300 focus:ring-[#CE6400] dark:focus:ring-[#CE6400] dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600 checked:bg-[#CE6400] dark:checked:bg-[#CE6400]"
+							class="cursor-pointer w-4 h-4 text-dark bg-gray-100 rounded border-gray-300 focus:ring-dark dark:focus:ring-dark dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600 checked:bg-dark dark:checked:bg-dark"
 						/>
 						<label
 							for="select_all"
@@ -427,20 +390,16 @@
 					{selected_nodes.length} / {sorted_nodes.length}
 				</div>
 			</div>
-			<ul
-				class="dark:bg-white/5 rounded-lg mx-2  overflow-y-auto  flex flex-col gap-2 flex-grow"
-			>
+			<ul class="dark:bg-white/5 rounded-lg mx-2  overflow-y-auto  flex flex-col gap-2 flex-grow">
 				{#each sorted_nodes as node}
-					<li
-						class="px-3 rounded-lg bg-transparent flex transition-all duration-200 ease-in-out"
-					>
+					<li class="px-3 rounded-lg bg-transparent flex transition-all duration-200 ease-in-out">
 						<div class="flex items-center cursor-pointer min-w-0">
 							<input
 								id={node.node.id}
 								type="checkbox"
 								value={node.node}
 								bind:group={selected_nodes}
-								class="cursor-pointer w-4 h-4 text-[#CE6400] bg-gray-100 rounded border-gray-300 focus:ring-[#CE6400] dark:focus:ring-[#CE6400] dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600 checked:bg-[#CE6400] dark:checked:bg-[#CE6400]"
+								class="cursor-pointer w-4 h-4 text-dark bg-gray-100 rounded border-gray-300 focus:ring-dark dark:focus:ring-dark dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600 checked:bg-dark dark:checked:bg-dark"
 							/>
 							<label
 								for={node.node.id}
@@ -452,15 +411,11 @@
 												0,
 												node.matches[0].indices[0][0]
 											)}{#each node.matches[0].indices as indice, index}
-												<span class="text-orange-500"
-													>{node.node.label.slice(
-														indice[0],
-														indice[1] + 1
-													)}</span
+												<span class="text-primary"
+													>{node.node.label.slice(indice[0], indice[1] + 1)}</span
 												>{node.node.label.slice(
 													indice[1] + 1,
-													node.matches[0].indices[index + 1]?.[0] ??
-														node.node.label.length
+													node.matches[0].indices[index + 1]?.[0] ?? node.node.label.length
 												)}
 											{/each}
 										{:else}
@@ -487,7 +442,7 @@
 				<div role="status">
 					<svg
 						aria-hidden="true"
-						class="mr-2 w-10 h-10 text-gray-200 animate-spin dark:text-gray-600 fill-[#CE6400]"
+						class="mr-2 w-10 h-10 text-gray-200 animate-spin dark:text-gray-600 fill-dark"
 						viewBox="0 0 100 101"
 						fill="none"
 						xmlns="http://www.w3.org/2000/svg"
