@@ -9,7 +9,7 @@ module.exports = {
 				'light-muted': '#94a3b8',
 				light: '#e2e8f0',
 				'dark-muted': '#334155',
-				dark: '#334155',
+				dark: '#0f172a',
 				primary: '#1a73e8'
 			},
 			boxShadow: {

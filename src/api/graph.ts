@@ -32,6 +32,7 @@ export class Node {
 	x: number;
 	y: number;
 	properties: Property[] = [];
+	color: string = '#6a7e9d';
 	shape:
 		| 'dot'
 		| 'image'
@@ -62,14 +63,14 @@ export class Node {
 		this.y = position.y;
 		this.fixed = fixed;
 		if (image) {
-			this.image = image;
-			this.shape = 'circularImage';
+			this.update_image(image);
 		}
 	}
 
 	update_image(url: URI) {
 		this.image = url;
 		this.shape = 'circularImage';
+		this.color = "transparent"
 	}
 }
 

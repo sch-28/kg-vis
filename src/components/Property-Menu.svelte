@@ -221,7 +221,7 @@
 
 {#if selected_node}
 	<div
-		class="wrapper border dark:bg-[#1f2937] shadow-md z-40 -translate-y-1/2 translate-x-12 rounded-2xl flex flex-col"
+		class="wrapper border dark:border-dark-muted dark:bg-gray-900 bg-white shadow-md z-40 -translate-y-1/2 translate-x-12 rounded-2xl flex flex-col"
 		on:mouseover={() => document.addEventListener('keydown', search)}
 		on:focus={() => document.addEventListener('keydown', search)}
 		on:mouseout={() => document.removeEventListener('keydown', search, false)}
@@ -265,7 +265,7 @@
 							text-sm
 							py-2
 							outline-none
-							font-normal
+							font-normal border-none focus:ring-primary
 							"
 					/>
 
@@ -282,9 +282,9 @@
 			</div>
 		</div>
 		<div class="mx-2 my-2">
-			<div class="w-full bg-slate-400 rounded-full h-1.5  dark:bg-slate-200 ">
+			<div class="w-full bg-slate-400 rounded-full h-1.5  dark:bg-slate-.500 ">
 				<div
-					class="bg-dark h-1.5 rounded-full"
+					class="bg-dark-muted h-1.5 rounded-full"
 					style="width: {selected_node.properties.length == 0 ? progress.toString() : 100}%"
 				/>
 			</div>
@@ -294,8 +294,8 @@
 			<div class="flex mb-1">
 				{#each sort_options as sort_option}
 					<button
-						class={`select-none gap-2 flex flex-none items-center justify-center p-2 cursor-pointer  leading-snug transform transition-all !text-opacity-80 hover:!text-opacity-100 ${
-							sort_by !== sort_option ? 'text-black dark:text-white' : 'text-primary'
+						class={`select-none gap-2 flex flex-none items-center justify-center p-2 cursor-pointer  leading-snug transform transition-all ${
+							sort_by !== sort_option ? 'text-dark-muted dark:text-light-muted' : 'text-primary'
 						} 
 						${sort_option == 'count' ? 'ml-auto' : ''}
 						`}
@@ -321,7 +321,7 @@
 				{#each sorted_properties as property}
 					<button
 						on:click={() => selected_node && property_clicked(selected_node.id, property.property)}
-						class="button flex px-2 rounded-lg bg-transparent h-10 hover:bg-black/5 dark:hover:bg-black/30 transition-all duration-200 ease-in-out"
+						class="button flex px-2 rounded-lg bg-transparent h-10 hover:bg-black/5 dark:hover:bg-black/30 transition-all duration-200 ease-in-out "
 					>
 						<div
 							title={`${
@@ -361,15 +361,15 @@
 							</span>
 						{/if}
 						<span
-							class="ml-auto w-6 bg-white dark:text-black rounded-full inline-flex items-center justify-center -mb-0.5 text-xs font-semibold  p-1 "
+							class="ml-auto w-6 bg-dark-muted text-light rounded-full inline-flex items-center justify-center -mb-0.5 text-xs font-semibold  p-1 "
 							>{property.property.in_count + property.property.out_count}</span
 						>
 					</button>
 				{/each}
 			</div>
 		{:else if selected_property_nodes.length > 0}
-			<div class="flex justify-between items-center mb-1">
-				<div class="flex h-10 pl-2">
+			<div class="flex justify-between items-center mb-1 mx-2">
+				<div class="flex h-10">
 					<div class="flex items-center cursor-pointer">
 						<input
 							id="select_all"
@@ -390,7 +390,7 @@
 					{selected_nodes.length} / {sorted_nodes.length}
 				</div>
 			</div>
-			<ul class="dark:bg-white/5 rounded-lg mx-2  overflow-y-auto  flex flex-col gap-2 flex-grow">
+			<ul class=" rounded-lg mx-2  overflow-y-auto  flex flex-col gap-2 flex-grow">
 				{#each sorted_nodes as node}
 					<li class="px-3 rounded-lg bg-transparent flex transition-all duration-200 ease-in-out">
 						<div class="flex items-center cursor-pointer min-w-0">
