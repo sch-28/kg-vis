@@ -229,7 +229,10 @@
 		bind:this={wrapper}
 	>
 		<div class="text-lg font-bold mx-2 flex items-center gap-5 justify-between">
-			<h1 class="truncate" title={selected_node.label}>
+			<h1
+				class="truncate"
+				title={selected_node.label + (selected_property ? ' / ' + selected_property.label : '')}
+			>
 				<button on:click={() => (selected_property = undefined)}>{selected_node.label}</button>
 				{#if selected_property}
 					<span class="text-sm font-normal">/ {selected_property.label}</span>
