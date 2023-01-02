@@ -5,7 +5,7 @@
 
 	const test = getContext('action') as Function;
 
-	let hide_advanced = false;
+	let hide_advanced = true;
 	let advanced_container: HTMLDivElement;
 	let container_height: number = 250;
 
@@ -13,8 +13,12 @@
 		if (hide_advanced) {
 			hide_advanced = false;
 			advanced_container.style.height = container_height + 'px';
-			setTimeout(() => (advanced_container.style.height = 'fit-content'), 200);
+			setTimeout(() => {
+				advanced_container.style.height = 'fit-content';
+				advanced_container.style.overflow = 'visible';
+			}, 200);
 		} else {
+			advanced_container.style.overflow = 'hidden';
 			container_height = advanced_container.clientHeight;
 			advanced_container.style.height = container_height + 'px';
 			setTimeout(() => (advanced_container.style.height = '0px'), 0);
@@ -27,7 +31,7 @@
 	<h1 class="text-lg font-bold">Add Node(s)</h1>
 
 	<button
-		class="border-b border-dark-muted flex justify-center items-center text-light-muted pb-1 relative"
+		class="border-b border-dark-muted flex justify-center items-center text-dark-muted dark:text-light-muted pb-1 relative"
 		on:click={toggle_advanced}
 	>
 		Advanced <Icon
@@ -38,17 +42,14 @@
 		/>
 	</button>
 
-	<div
-		bind:this={advanced_container}
-		class="transition-all duration-200 overflow-hidden flex gap-2 flex-col"
-	>
+	<div bind:this={advanced_container} class="transition-all duration-200 flex gap-2 flex-col">
 		<div class="flex items-center mt-2">
 			<input
 				checked
 				id="checked-checkbox"
 				type="checkbox"
 				value=""
-				class="w-4 h-4 text-blue-600 bg-gray-100 rounded border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+				class="w-4 h-4 text-primary bg-gray-100 rounded border-gray-300 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
 			/>
 			<label
 				for="checked-checkbox"
@@ -67,7 +68,7 @@
 						<textarea
 							id="sparql-query"
 							rows="4"
-							class="w-full px-0 text-sm text-gray-900 bg-white border-0 dark:bg-gray-800 focus:ring-0 dark:text-white dark:placeholder-gray-400"
+							class="w-full px-0 text-sm text-gray-900 bg-white border-0 dark:bg-gray-800 focus:ring-0 dark:text-light dark:placeholder-gray-400"
 							placeholder={`#Cats\nSELECT ?cat\nWHERE\n{\n	?cat wdt:P31 wd:Q146.\n}`}
 							required
 						/>
@@ -98,7 +99,9 @@
 		</div>
 		<div class="space-y-1 max-w-md list-disc list-inside">
 			<div class="flex">
-				<div class="w-1.5 h-1.5 bg-light rounded-full flex-shrink-0 place-self-center mr-2" />
+				<div
+					class="w-1.5 h-1.5 bg-dark-muted dark:bg-light rounded-full flex-shrink-0 place-self-center mr-2"
+				/>
 				<div class="truncate flex-grow">
 					<a href="#" class="text-sm text-primary leading-6"
 						>https://www.wikidata.org/wiki/Q84263196</a
@@ -110,7 +113,9 @@
 				</button>
 			</div>
 			<div class="flex">
-				<div class="w-1.5 h-1.5 bg-light rounded-full flex-shrink-0 place-self-center mr-2" />
+				<div
+					class="w-1.5 h-1.5 bg-dark-muted dark:bg-light rounded-full flex-shrink-0 place-self-center mr-2"
+				/>
 				<div class="truncate flex-grow">
 					<a href="#" class="text-sm text-primary leading-6"
 						>https://www.wikidata.org/wiki/Q84263196</a
@@ -122,7 +127,9 @@
 				</button>
 			</div>
 			<div class="flex">
-				<div class="w-1.5 h-1.5 bg-light rounded-full flex-shrink-0 place-self-center mr-2" />
+				<div
+					class="w-1.5 h-1.5 bg-dark-muted dark:bg-light rounded-full flex-shrink-0 place-self-center mr-2"
+				/>
 				<div class="truncate flex-grow">
 					<a href="#" class="text-sm text-primary leading-6"
 						>https://www.wikidata.org/wiki/Q84263196</a
@@ -136,8 +143,9 @@
 		</div>
 	</div>
 	<div class="flex gap-2">
-		<button on:click={() => test()} class="p-2 bg-primary rounded-lg w-20 font-semibold text-sm"
-			>Add</button
+		<button
+			on:click={() => test()}
+			class="p-2 bg-primary rounded-lg w-20 font-semibold text-sm text-white">Add</button
 		>
 		<button on:click={() => test()}>Cancel</button>
 	</div>

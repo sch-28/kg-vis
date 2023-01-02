@@ -22,8 +22,9 @@ export const dark_mode = (() => {
 		localStorage.theme === 'dark' ||
 		(!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)
 	) {
-		document.documentElement.classList.add('dark');
-		return true;
+		/* document.documentElement.classList.add('dark');
+		return true; */
+		return false;
 	} else {
 		document.documentElement.classList.remove('dark');
 		return false;
