@@ -2,7 +2,7 @@ const defaultTheme = require('tailwindcss/defaultTheme');
 
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-	content: ['./src/**/*.{html,js,svelte,ts}', "./node_modules/flowbite/**/*.js"],
+	content: ['./src/**/*.{html,js,svelte,ts}', './node_modules/flowbite/**/*.js'],
 	theme: {
 		extend: {
 			colors: {
@@ -10,7 +10,8 @@ module.exports = {
 				light: '#e2e8f0',
 				'dark-muted': '#334155',
 				dark: '#0f172a',
-				primary: '#1a73e8'
+				primary: '#1a73e8',
+				'dark-bg': '#1f2937'
 			},
 			boxShadow: {
 				inset: 'inset 1px 0px 4px 1px #00000026'
