@@ -7,6 +7,7 @@
 	import { Graph, Property, type URI, type Node } from '../api/graph';
 	import toast, { Toaster } from 'svelte-french-toast';
 	import { dark_mode } from '../util';
+	import ActionMenu from './Action-Menu.svelte';
 
 	let container: HTMLElement;
 
@@ -124,7 +125,8 @@
 </script>
 
 <Toaster />
-<div bind:this={container} class="w-full h-full"/>
+<div bind:this={container} class="w-full h-full" />
+<ActionMenu />
 <Menu {menu_position} {selected_node} {progress} {graph} />
 <ContextMenu
 	{menu_position}
