@@ -7,7 +7,7 @@
 
 	let hide_advanced = true;
 	let advanced_container: HTMLDivElement;
-	let container_height: number = 250;
+	let container_height: number = 274;
 
 	function toggle_advanced() {
 		if (hide_advanced) {
@@ -42,7 +42,7 @@
 		/>
 	</button>
 
-	<div bind:this={advanced_container} class="transition-all duration-200 flex gap-2 flex-col">
+	<div bind:this={advanced_container} class="h-0 overflow-hidden transition-all duration-200 flex gap-2 flex-col">
 		<div class="flex items-center mt-2">
 			<input
 				checked
@@ -69,7 +69,7 @@
 							id="sparql-query"
 							rows="4"
 							class="w-full px-0 text-sm text-gray-900 bg-white border-0 dark:bg-gray-800 focus:ring-0 dark:text-light dark:placeholder-gray-400"
-							placeholder={`#Cats\nSELECT ?cat\nWHERE\n{\n	?cat wdt:P31 wd:Q146.\n}`}
+							placeholder={`SELECT ?cat WHERE\n{\n	?cat wdt:P31 wd:Q146.\n}`}
 							required
 						/>
 					</div>
