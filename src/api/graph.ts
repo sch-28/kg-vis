@@ -1,6 +1,6 @@
 import { DataSet } from 'vis-data';
 import type { Network } from 'vis-network';
-import { SPARQL } from './api';
+import { SPARQL } from './sparql';
 
 export type URI = string;
 
@@ -70,7 +70,7 @@ export class Node {
 	update_image(url: URI) {
 		this.image = url;
 		this.shape = 'circularImage';
-		this.color = "transparent"
+		this.color = 'transparent';
 	}
 }
 
@@ -260,8 +260,9 @@ export class Graph {
 	}
 
 	async load(uri: URI) {
-		const label = await SPARQL.fetch_label(uri);
-		const image = await SPARQL.fetch_image(uri);
+		const label_promise = SPARQL.fetch_label(uri);
+		const image_promise = SPARQL.fetch_image(uri);
+		const [label, image] = await Promise.all([label_promise, image_promise]);
 		this.find_or_create_node(uri, label, 'uri', true, image);
 	}
 
