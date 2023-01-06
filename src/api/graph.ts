@@ -32,7 +32,7 @@ export class Node {
 	x: number;
 	y: number;
 	properties: Property[] = [];
-	color: string = '#6a7e9d';
+	color: string | undefined;
 	shape:
 		| 'dot'
 		| 'image'

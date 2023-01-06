@@ -23,6 +23,7 @@ export const dark_mode = (() => {
 	) {
 		document.documentElement.classList.add('dark');
 		return true;
+		return false;
 	} else {
 		document.documentElement.classList.remove('dark');
 		return false;

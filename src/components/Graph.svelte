@@ -44,18 +44,24 @@
 
 		const options: Options = {
 			nodes: {
-				color: '#6a7e9d',
+				color: dark_mode ? '#6a7e9d' : '#74a0e9',
 				shape: 'dot',
 				font: {
 					color: dark_mode ? 'white' : 'black'
 				},
+				borderWidth: 3,
+				
 				chosen: false
 			},
 			edges: {
 				font: {
 					strokeWidth: 0,
 					color: dark_mode ? 'white' : 'black',
-					background: dark_mode ? '#0b0f19' : 'white'
+					background: dark_mode ? '#111827' : 'white'
+				},
+				color: {
+					color: dark_mode ? '#4a5e7d' : '#74a0e9',
+					highlight: dark_mode ? '#4a5e7d' : '#74a0e9'
 				},
 				labelHighlightBold: false
 			},
