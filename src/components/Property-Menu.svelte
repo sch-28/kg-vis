@@ -407,6 +407,9 @@
 					>
 						<div class="flex items-center cursor-pointer min-w-0 flex-grow select-none">
 							<input
+								on:click={(e) => {
+									e.stopPropagation();
+								}}
 								id={node.node.id}
 								type="checkbox"
 								value={node.node}
@@ -414,6 +417,9 @@
 								class="w-4 h-4 text-primary bg-gray-100 rounded border-gray-300 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
 							/>
 							<label
+								on:click={(e) => {
+									e.stopPropagation();
+								}}
 								for={node.node.id}
 								class="cursor-pointer ml-2 font-medium text-gray-900 dark:text-gray-300 select-none truncate"
 								>{#if node.node.label}
