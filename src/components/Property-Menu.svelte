@@ -222,7 +222,7 @@
 
 {#if selected_node}
 	<div
-		class="wrapper border dark:border-dark-muted dark:bg-gray-900 bg-white shadow-md z-40 -translate-y-1/2 translate-x-12 rounded-2xl flex flex-col"
+		class="wrapper border dark:border-dark-muted dark:bg-dark-bg bg-white shadow-md z-40 -translate-y-1/2 translate-x-12 rounded-2xl flex flex-col"
 		on:mouseover={() => document.addEventListener('keydown', search)}
 		on:focus={() => document.addEventListener('keydown', search)}
 		on:mouseout={() => document.removeEventListener('keydown', search, false)}
@@ -381,7 +381,7 @@
 							value=""
 							on:change={toggle_all_nodes}
 							checked={selected_nodes.length === selected_property_nodes.length}
-							class="cursor-pointer w-4 h-4 text-dark bg-gray-100 rounded border-gray-300 focus:ring-dark dark:focus:ring-dark dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600 checked:bg-dark dark:checked:bg-dark"
+							class="w-4 h-4 text-primary bg-gray-100 rounded border-gray-300 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
 						/>
 						<label
 							for="select_all"
@@ -396,14 +396,22 @@
 			</div>
 			<ul class=" rounded-lg mx-2  overflow-y-auto  flex flex-col gap-2 flex-grow">
 				{#each sorted_nodes as node}
-					<li class="px-3 rounded-lg bg-transparent flex transition-all duration-200 ease-in-out">
-						<div class="flex items-center cursor-pointer min-w-0">
+					<!-- svelte-ignore a11y-click-events-have-key-events -->
+					<li
+						class="px-3 rounded-lg bg-transparent flex transition-all duration-200 ease-in-out"
+						on:click={() => {
+							if (selected_nodes.find((n) => n.id === node.node.id)) {
+								selected_nodes = selected_nodes.filter((n) => n.id !== node.node.id);
+							} else selected_nodes = selected_nodes.concat([node.node]);
+						}}
+					>
+						<div class="flex items-center cursor-pointer min-w-0 flex-grow select-none">
 							<input
 								id={node.node.id}
 								type="checkbox"
 								value={node.node}
 								bind:group={selected_nodes}
-								class="cursor-pointer w-4 h-4 text-dark bg-gray-100 rounded border-gray-300 focus:ring-dark dark:focus:ring-dark dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600 checked:bg-dark dark:checked:bg-dark"
+								class="w-4 h-4 text-primary bg-gray-100 rounded border-gray-300 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
 							/>
 							<label
 								for={node.node.id}
