@@ -39,7 +39,7 @@
 	async function create_graph(starting_point: string) {
 		graph = new Graph(+rate_limit, +size_limit, endpoint);
 
-		await graph.load(starting_point);
+		await graph.load_node(starting_point);
 		graph.update_data();
 
 		const options: Options = {
@@ -126,7 +126,6 @@
 
 <Toaster />
 <div bind:this={container} class="w-full h-full" />
-<ActionMenu />
 <Menu {menu_position} {selected_node} {progress} {graph} />
 <ContextMenu
 	{menu_position}
@@ -134,3 +133,4 @@
 	selection={context_selection}
 	{graph}
 />
+<ActionMenu {graph} />

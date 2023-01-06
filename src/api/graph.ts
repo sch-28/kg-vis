@@ -259,11 +259,11 @@ export class Graph {
 		}
 	}
 
-	async load(uri: URI) {
+	async load_node(uri: URI, visible: boolean = true) {
 		const label_promise = SPARQL.fetch_label(uri);
 		const image_promise = SPARQL.fetch_image(uri);
 		const [label, image] = await Promise.all([label_promise, image_promise]);
-		this.find_or_create_node(uri, label, 'uri', true, image);
+		return this.find_or_create_node(uri, label, 'uri', visible, image);
 	}
 
 	async get_properties(uri: URI, progress_function?: (progress: number) => void) {
@@ -275,7 +275,7 @@ export class Graph {
 		return node;
 	}
 
-	async load_data(
+	async load_related_nodes(
 		uri: string,
 		property: Property,
 		visible = true,

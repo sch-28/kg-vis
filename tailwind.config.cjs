@@ -11,7 +11,9 @@ module.exports = {
 				'dark-muted': '#334155',
 				dark: '#0f172a',
 				primary: '#1a73e8',
-				'dark-bg': '#1f2937'
+				'dark-bg': '#1f2937',
+				error: 'rgb(224 36 36)',
+				'error-dark': 'rgb(240 82 82)'
 			},
 			boxShadow: {
 				inset: 'inset 1px 0px 4px 1px #00000026'

@@ -1,13 +1,25 @@
 <script lang="ts">
 	import { ChevronDown, Link, Share, XMark } from '@steeze-ui/heroicons';
 	import { Icon } from '@steeze-ui/svelte-icon';
+	import isUrl from 'is-url';
+	import { SPARQL } from '../../api/sparql';
+	import type { Graph, Node, URI } from 'src/api/graph';
 	import { getContext } from 'svelte';
+	import LoadingCircle from '../Loading-Circle.svelte';
+	import { add } from 'svelte-french-toast/core/store';
 
-	const test = getContext('action') as Function;
+	export let graph: Graph;
+
+	const close = getContext('close') as () => void;
 
 	let hide_advanced = true;
 	let advanced_container: HTMLDivElement;
-	let container_height: number = 274;
+	let container_height: number = 258;
+
+	let error: string = '';
+	let loading: boolean = false;
+
+	let nodes: Node[] = [];
 
 	function toggle_advanced() {
 		if (hide_advanced) {
@@ -25,10 +37,51 @@
 			hide_advanced = true;
 		}
 	}
+
+	function handle_paste(e: ClipboardEvent) {
+		// paste is handled before the input value is updated, therefore we need to wait a bit
+		setTimeout(() => {
+			const url = (e.target as HTMLInputElement).value ?? e.clipboardData?.getData('text') ?? null;
+			if (url) {
+				fetch_url(url);
+			}
+		}, 0);
+	}
+
+	async function fetch_url(url: URI) {
+		if (loading) return;
+		if (!isUrl(url)) {
+			error = 'Invalid URL';
+			return;
+		}
+		if (nodes.find((node) => node.id === url)) {
+			error = 'Node already exists';
+			return;
+		}
+		error = '';
+		loading = true;
+		const node = await graph.load_node(url);
+		/* if (label === url) {
+			error = 'No label found';
+			return;
+		} */
+		nodes.push(node);
+		nodes = nodes;
+		loading = false;
+	}
+
+	function remove_node(node: Node) {
+		nodes = nodes.filter((n) => n !== node);
+	}
+
+	function add_nodes() {
+		graph.show_nodes(nodes);
+		close();
+	}
 </script>
 
-<div class="p-2 flex gap-2 flex-col w-[450px]">
-	<h1 class="text-lg font-bold">Add Node(s)</h1>
+<div class="p-2 flex flex-col w-[450px]">
+	<h1 class="text-lg font-bold mb-2">Add Node(s)</h1>
 
 	<button
 		class="border-b border-dark-muted flex justify-center items-center text-dark-muted dark:text-light-muted pb-1 relative"
@@ -42,7 +95,10 @@
 		/>
 	</button>
 
-	<div bind:this={advanced_container} class="h-0 overflow-hidden transition-all duration-200 flex gap-2 flex-col">
+	<div
+		bind:this={advanced_container}
+		class="h-0 overflow-hidden transition-all duration-200 flex gap-2 flex-col mb-2"
+	>
 		<div class="flex items-center mt-2">
 			<input
 				checked
@@ -61,7 +117,7 @@
 		<div>
 			<form>
 				<div
-					class="w-full mb-4 border border-gray-200 rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600"
+					class="w-full border border-gray-200 rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600"
 				>
 					<div class="px-4 py-2 bg-white rounded-t-lg dark:bg-gray-800">
 						<label for="sparql-query" class="block mb-2 text-sm font-medium">SPARQL Query</label>
@@ -86,67 +142,67 @@
 		</div>
 	</div>
 
-	<div class="flex gap-2 flex-col">
-		<div>
-			<label for="website" class="block mb-2 text-sm font-medium">Entity URL</label>
+	<div class="flex gap-2 flex-col mb-2">
+		<div class="relative">
+			<label for="entity_url" class="block mb-2 text-sm font-medium">Entity URL</label>
 			<input
+				disabled={loading}
+				on:paste={handle_paste}
+				on:keypress={(e) => {
+					if (e.key === 'Enter') {
+						const url = e.currentTarget.value;
+						if (url) {
+							fetch_url(url);
+						}
+					}
+				}}
+				on:change={(e) => {
+					const url = e.currentTarget.value;
+					if (url) {
+						fetch_url(url);
+					}
+				}}
 				type="url"
-				id="website"
-				class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-primary focus:border-primring-primary block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600  dark:focus:ring-primary dark:focus:border-primring-primary"
+				id="entity_url"
+				class="{loading
+					? 'cursor-not-allowed'
+					: ''} bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-primary focus:border-primring-primary block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600  dark:focus:ring-primary dark:focus:border-primring-primary"
 				placeholder="http://www.wikidata.org/entity/Q84263196"
 				required
 			/>
+			<div hidden={!loading} class="absolute right-2 top-[3.075rem] -translate-y-1/2 w-6 h-6">
+				<LoadingCircle />
+			</div>
+			{#if error && error.length > 0}
+				<p class="mt-2 text-sm text-error dark:text-error-dark">
+					<span class="font-medium">Invalid URL</span>
+				</p>
+			{/if}
 		</div>
-		<div class="space-y-1 max-w-md list-disc list-inside">
-			<div class="flex">
-				<div
-					class="w-1.5 h-1.5 bg-dark-muted dark:bg-light rounded-full flex-shrink-0 place-self-center mr-2"
-				/>
-				<div class="truncate flex-grow">
-					<a href="#" class="text-sm text-primary leading-6"
-						>https://www.wikidata.org/wiki/Q84263196</a
-					>
-				</div>
+		{#if nodes.length > 0}
+			<div class="space-y-1 max-w-md">
+				{#each nodes as node}
+					<div class="flex">
+						<div
+							class="w-1.5 h-1.5 bg-dark-muted dark:bg-light rounded-full flex-shrink-0 place-self-center mr-2"
+						/>
+						<div class="truncate flex-grow">
+							<a href={node.id} class="text-sm text-primary leading-6 pb-[2px]">{node.label}</a>
+						</div>
 
-				<button class="ml-2 align-middle">
-					<Icon src={XMark} class="w-4 h-4" />
-				</button>
+						<button class="ml-2 align-middle" on:click={() => remove_node(node)}>
+							<Icon src={XMark} class="w-4 h-4" />
+						</button>
+					</div>
+				{/each}
 			</div>
-			<div class="flex">
-				<div
-					class="w-1.5 h-1.5 bg-dark-muted dark:bg-light rounded-full flex-shrink-0 place-self-center mr-2"
-				/>
-				<div class="truncate flex-grow">
-					<a href="#" class="text-sm text-primary leading-6"
-						>https://www.wikidata.org/wiki/Q84263196</a
-					>
-				</div>
-
-				<button class="ml-2 align-middle">
-					<Icon src={XMark} class="w-4 h-4" />
-				</button>
-			</div>
-			<div class="flex">
-				<div
-					class="w-1.5 h-1.5 bg-dark-muted dark:bg-light rounded-full flex-shrink-0 place-self-center mr-2"
-				/>
-				<div class="truncate flex-grow">
-					<a href="#" class="text-sm text-primary leading-6"
-						>https://www.wikidata.org/wiki/Q84263196</a
-					>
-				</div>
-
-				<button class="ml-2 align-middle">
-					<Icon src={XMark} class="w-4 h-4" />
-				</button>
-			</div>
-		</div>
+		{/if}
 	</div>
 	<div class="flex gap-2">
 		<button
-			on:click={() => test()}
+			on:click={add_nodes}
 			class="p-2 bg-primary rounded-lg w-20 font-semibold text-sm text-white">Add</button
 		>
-		<button on:click={() => test()}>Cancel</button>
+		<button on:click={close}>Cancel</button>
 	</div>
 </div>
