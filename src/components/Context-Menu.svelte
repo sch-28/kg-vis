@@ -60,7 +60,7 @@
 <div
 	bind:this={wrapper}
 	{hidden}
-	class="bg-slate-200 dark:bg-[#1f2937] shadow-md z-40 absolute p-2 rounded-lg"
+	class="border dark:border-dark-muted dark:bg-dark-bg bg-white shadow-md z-40 absolute p-2 rounded-lg"
 >
 	<div class="context-menu">
 		{#if selection}
