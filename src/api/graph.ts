@@ -266,6 +266,20 @@ export class Graph {
 		return this.find_or_create_node(uri, label, 'uri', visible, image);
 	}
 
+	async load_nodes(uris: URI[], visible: boolean = true) {
+		const label_promises = SPARQL.fetch_labels(uris);
+		const image_promises = SPARQL.fetch_images(uris);
+		const [labels, images] = await Promise.all([label_promises, image_promises]);
+		const new_nodes = [];
+		for (const uri of uris) {
+			const label = labels.find((label) => label.uri === uri)?.label ?? '';
+			const image = images.find((image) => image.uri === uri)?.image;
+			const node = this.find_or_create_node(uri, label, 'uri', visible, image);
+			new_nodes.push(node);
+		}
+		return new_nodes;
+	}
+
 	async get_properties(uri: URI, progress_function?: (progress: number) => void) {
 		const node = this.find_or_create_node(uri, '');
 		if (!node.is_fetched) {

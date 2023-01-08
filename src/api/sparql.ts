@@ -1,5 +1,5 @@
 import type { Property, URI } from './graph';
-export interface Triple {
+export interface Triple extends Binding {
 	subject: Node;
 	property: Node;
 	object: Node;
@@ -8,6 +8,10 @@ export interface Triple {
 export interface Node {
 	type: 'literal' | 'uri';
 	value: string;
+}
+
+export interface Binding {
+	[key: string]: Node;
 }
 
 export class SPARQL {
@@ -39,7 +43,7 @@ export class SPARQL {
 		return this._endpoint;
 	}
 
-	private static async SPARQL_query<T>(body: string) {
+	public static async query<T extends Binding>(body: string) {
 		const urlencoded = new URLSearchParams();
 		urlencoded.append('query', body);
 
@@ -62,16 +66,16 @@ export class SPARQL {
 		}); */
 		const json = await result.json();
 
-		const triples: T[] = [];
+		const bindings: T[] = [];
 		for (const binding of json.results.bindings) {
-			triples.push(binding);
+			bindings.push(binding);
 		}
 
-		return triples;
+		return bindings;
 	}
 
 	public static async fetch_data(subject: URI, property: URI, nodes: URI[]) {
-		const result = await this.SPARQL_query<Triple>(
+		const result = await this.query<Triple>(
 			`PREFIX wikibase: <http://wikiba.se/ontology#>
 			PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 			SELECT DISTINCT ?object  WHERE {
@@ -131,8 +135,8 @@ export class SPARQL {
 	}
 
 	public static async fetch_image(subject: URI) {
-		const result = await SPARQL.SPARQL_query<{
-			image: { value: string };
+		const result = await SPARQL.query<{
+			image: Node;
 		}>(
 			`
 			PREFIX bd: <http://www.bigdata.com/rdf#>
@@ -157,9 +161,9 @@ export class SPARQL {
 	}
 
 	public static async fetch_images(subjects: URI[]) {
-		const result = await SPARQL.SPARQL_query<{
-			image: { value: string };
-			subject: { value: URI };
+		const result = await SPARQL.query<{
+			image: Node;
+			subject: Node;
 		}>(
 			`
 			PREFIX bd: <http://www.bigdata.com/rdf#>
@@ -182,9 +186,9 @@ export class SPARQL {
 	}
 
 	public static async fetch_labels(subjects: URI[]) {
-		const result = await SPARQL.SPARQL_query<{
-			subject: { value: URI };
-			subjectLabel: { value: string };
+		const result = await SPARQL.query<{
+			subject: Node;
+			subjectLabel: Node;
 		}>(
 			`
 			PREFIX bd: <http://www.bigdata.com/rdf#>
@@ -211,8 +215,8 @@ export class SPARQL {
 	}
 
 	public static async fetch_label(subject: URI) {
-		const result = await SPARQL.SPARQL_query<{
-			subjectLabel: { value: string };
+		const result = await SPARQL.query<{
+			subjectLabel: Node;
 		}>(
 			`
 			PREFIX bd: <http://www.bigdata.com/rdf#>
@@ -237,6 +241,29 @@ export class SPARQL {
 		return subject;
 	}
 
+	public static async fetch_multiple_relations(subjects: URI[], other_nodes: URI[]) {
+		const relations: {
+			subject: Node;
+			property: Node;
+			object: Node;
+			propLabel: Node;
+		}[] = [];
+		for (let i = 0; i < subjects.length; i += this.rate_limit) {
+			const new_nodes = subjects.slice(i, i + this.rate_limit);
+			const requests: Promise<
+				{
+					subject: Node;
+					property: Node;
+					object: Node;
+					propLabel: Node;
+				}[]
+			>[] = [];
+			new_nodes.forEach((node) => requests.push(SPARQL.fetch_relations(node, other_nodes)));
+			relations.push(...(await (await Promise.all(requests)).flat()));
+		}
+		return relations
+	}
+
 	public static async fetch_relations(subject: URI, other_nodes: URI[]) {
 		let relations = `VALUES ?object {\n`;
 
@@ -247,7 +274,7 @@ export class SPARQL {
 		}
 		relations += '}';
 
-		const result = await SPARQL.SPARQL_query(
+		const result = await SPARQL.query(
 			`
 			PREFIX bd: <http://www.bigdata.com/rdf#>
 			PREFIX wikibase: <http://wikiba.se/ontology#>
@@ -280,10 +307,10 @@ export class SPARQL {
 	}
 
 	public static async fetch_property(subject: URI, property: URI): Promise<Property> {
-		const result = await this.SPARQL_query<{
-			propLabel: { value: string };
-			outCount: { value: number };
-			inCount: { value: number };
+		const result = await this.query<{
+			propLabel: Node;
+			outCount: Node;
+			inCount: Node;
 		}>(
 			`
 			PREFIX wikibase: <http://wikiba.se/ontology#>
@@ -326,8 +353,11 @@ export class SPARQL {
 		throw new Error('Unable to fetch Property: ' + result);
 	}
 
-	public static async fetch_properties(subject: URI, progress_function?: (progress: number) => void) {
-		const result = await this.SPARQL_query<{ property: { value: string } }>(
+	public static async fetch_properties(
+		subject: URI,
+		progress_function?: (progress: number) => void
+	) {
+		const result = await this.query<{ property: Node }>(
 			`
 			PREFIX wikibase: <http://wikiba.se/ontology#>
 			PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>

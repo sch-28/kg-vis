@@ -21,6 +21,23 @@
 
 	let nodes: Node[] = [];
 
+	let sparql_query: HTMLTextAreaElement;
+
+	function submit_query() {
+		if (loading) return;
+		loading = true;
+		SPARQL.query(sparql_query.value).then(async (results) => {
+			loading = false;
+			if (results.length === 0) {
+				return;
+			}
+			nodes = await graph.load_nodes(
+				results.flatMap((b) => Object.values(b).map((n) => n.value)),
+				false
+			);
+		});
+	}
+
 	function toggle_advanced() {
 		if (hide_advanced) {
 			hide_advanced = false;
@@ -74,8 +91,23 @@
 		nodes = nodes.filter((n) => n !== node);
 	}
 
-	function add_nodes() {
+	async function add_nodes() {
 		graph.show_nodes(nodes);
+		SPARQL.fetch_multiple_relations(
+			nodes.map((n) => n.id),
+			graph.nodes.map((n) => n.id)
+		).then((relations) => {
+			for (let relation of relations) {
+				graph.create_edge(
+					relation.subject.value,
+					relation.property.value,
+					relation.object.value,
+					relation.propLabel.value
+				);
+			}
+			graph.update_data();
+		});
+
 		close();
 	}
 </script>
@@ -115,30 +147,30 @@
 
 		<hr class="border-dark-muted my-2" />
 		<div>
-			<form>
-				<div
-					class="w-full border border-gray-200 rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600"
-				>
-					<div class="px-4 py-2 bg-white rounded-t-lg dark:bg-gray-800">
-						<label for="sparql-query" class="block mb-2 text-sm font-medium">SPARQL Query</label>
-						<textarea
-							id="sparql-query"
-							rows="4"
-							class="w-full px-0 text-sm text-gray-900 bg-white border-0 dark:bg-gray-800 focus:ring-0 dark:text-light dark:placeholder-gray-400"
-							placeholder={`SELECT ?cat WHERE\n{\n	?cat wdt:P31 wd:Q146.\n}`}
-							required
-						/>
-					</div>
-					<div class="flex items-center justify-between px-3 py-2 border-t dark:border-gray-600">
-						<button
-							type="submit"
-							class="inline-flex items-center py-2 px-4 text-xs font-semibold text-center text-white bg-primary rounded-lg"
-						>
-							Fetch data
-						</button>
-					</div>
+			<div
+				class="w-full border border-gray-200 rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600"
+			>
+				<div class="px-4 py-2 bg-white rounded-t-lg dark:bg-gray-800">
+					<label for="sparql-query" class="block mb-2 text-sm font-medium">SPARQL Query</label>
+					<textarea
+						bind:this={sparql_query}
+						id="sparql-query"
+						rows="4"
+						class="w-full px-0 text-sm text-gray-900 bg-white border-0 dark:bg-gray-800 focus:ring-0 dark:text-light dark:placeholder-gray-400"
+						placeholder={`SELECT ?cat WHERE\n{\n	?cat wdt:P31 wd:Q146.\n}`}
+						required
+					/>
 				</div>
-			</form>
+				<div class="flex items-center justify-between px-3 py-2 border-t dark:border-gray-600">
+					<button
+						on:click={submit_query}
+						type="submit"
+						class="inline-flex items-center py-2 px-4 text-xs font-semibold text-center text-white bg-primary rounded-lg"
+					>
+						Fetch data
+					</button>
+				</div>
+			</div>
 		</div>
 	</div>
 
@@ -180,7 +212,7 @@
 			{/if}
 		</div>
 		{#if nodes.length > 0}
-			<div class="space-y-1 max-w-md">
+			<div class="space-y-1 max-w-md max-h-40 overflow-auto">
 				{#each nodes as node}
 					<div class="flex">
 						<div
