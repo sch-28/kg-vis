@@ -16,7 +16,6 @@
 
 	let advanced_container: HTMLDivElement;
 	let container_height: number = 258;
-
 	let error: string = '';
 	let loading: boolean = false;
 
@@ -49,6 +48,7 @@
 
 	function hide_advanced() {
 		advanced_container.style.overflow = 'hidden';
+		$Settings.advanced_settings_height = 0;
 		container_height = advanced_container.clientHeight;
 		advanced_container.style.height = container_height + 'px';
 		setTimeout(() => (advanced_container.style.height = '0px'), 0);
@@ -120,12 +120,20 @@
 		close();
 	}
 
+	function handle_resize() {
+		if (sparql_query) $Settings.advanced_settings_height = sparql_query.clientHeight;
+	}
+
 	onMount(() => {
 		if ($Settings.advanced_settings) {
+			if ($Settings.advanced_settings_height)
+				sparql_query.style.height = $Settings.advanced_settings_height + 'px';
 			advanced_container.style.height = 'fit-content';
 			advanced_container.style.overflow = 'visible';
 		}
 	});
+
+	$: sparql_query && new ResizeObserver(handle_resize).observe(sparql_query);
 </script>
 
 <div class="p-2 flex flex-col w-[450px]">
@@ -169,6 +177,7 @@
 				<div class="px-4 py-2 bg-white rounded-t-lg dark:bg-gray-800">
 					<label for="sparql-query" class="block mb-2 text-sm font-medium">SPARQL Query</label>
 					<textarea
+						on:resize={handle_resize}
 						bind:this={sparql_query}
 						id="sparql-query"
 						rows="4"

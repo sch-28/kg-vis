@@ -34,6 +34,7 @@ export default storage;
 
 export interface Settings {
 	advanced_settings: boolean;
+	advanced_settings_height: number;
 	fetch_related: boolean;
 	endpoint_url: string;
 	rate_limit: number;
@@ -42,6 +43,7 @@ export interface Settings {
 
 export const Settings = storage<Settings>('settings', {
 	advanced_settings: false,
+	advanced_settings_height: 258,
 	fetch_related: true,
 	endpoint_url: 'https://skynet.coypu.org/wikidata/',
 	rate_limit: 20,
