@@ -8,7 +8,6 @@
 		LockOpen
 	} from '@steeze-ui/heroicons';
 	import type { Graph, Node } from '../api/graph';
-	import type { Network } from 'vis-network';
 	export let menu_position = { x: 0, y: 0 };
 	export let hidden = true;
 	export let selection: Node | undefined = undefined;

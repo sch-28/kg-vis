@@ -4,15 +4,16 @@
 	import isUrl from 'is-url';
 	import { SPARQL } from '../../api/sparql';
 	import type { Graph, Node, URI } from 'src/api/graph';
-	import { getContext } from 'svelte';
+	import { getContext, onMount } from 'svelte';
 	import LoadingCircle from '../Loading-Circle.svelte';
 	import { add } from 'svelte-french-toast/core/store';
+	import { Settings } from '../../settings';
+	import ActionMenu from '../Action-Menu.svelte';
 
 	export let graph: Graph;
 
 	const close = getContext('close') as () => void;
 
-	let hide_advanced = true;
 	let advanced_container: HTMLDivElement;
 	let container_height: number = 258;
 
@@ -38,20 +39,28 @@
 		});
 	}
 
+	function show_advanced() {
+		advanced_container.style.height = container_height + 'px';
+		setTimeout(() => {
+			advanced_container.style.height = 'fit-content';
+			advanced_container.style.overflow = 'visible';
+		}, 200);
+	}
+
+	function hide_advanced() {
+		advanced_container.style.overflow = 'hidden';
+		container_height = advanced_container.clientHeight;
+		advanced_container.style.height = container_height + 'px';
+		setTimeout(() => (advanced_container.style.height = '0px'), 0);
+	}
+
 	function toggle_advanced() {
-		if (hide_advanced) {
-			hide_advanced = false;
-			advanced_container.style.height = container_height + 'px';
-			setTimeout(() => {
-				advanced_container.style.height = 'fit-content';
-				advanced_container.style.overflow = 'visible';
-			}, 200);
+		if (!$Settings.advanced_settings) {
+			$Settings.advanced_settings = true;
+			show_advanced();
 		} else {
-			advanced_container.style.overflow = 'hidden';
-			container_height = advanced_container.clientHeight;
-			advanced_container.style.height = container_height + 'px';
-			setTimeout(() => (advanced_container.style.height = '0px'), 0);
-			hide_advanced = true;
+			hide_advanced();
+			$Settings.advanced_settings = false;
 		}
 	}
 
@@ -110,6 +119,13 @@
 
 		close();
 	}
+
+	onMount(() => {
+		if ($Settings.advanced_settings) {
+			advanced_container.style.height = 'fit-content';
+			advanced_container.style.overflow = 'visible';
+		}
+	});
 </script>
 
 <div class="p-2 flex flex-col w-[450px]">
@@ -121,7 +137,7 @@
 	>
 		Advanced <Icon
 			src={ChevronDown}
-			class="w-5 h-5 absolute right-0 transition-all duration-200 {hide_advanced
+			class="w-5 h-5 absolute right-0 transition-all duration-200 {!$Settings.advanced_settings
 				? 'rotate-0'
 				: '-rotate-180'}"
 		/>
