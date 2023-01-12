@@ -16,16 +16,28 @@ export const click_outside: Action = (node) => {
 	};
 };
 
-export const dark_mode = (() => {
+export function change_theme(dark: boolean) {
+	if (dark) {
+		document.documentElement.classList.add('dark');
+		dark_mode = true;
+	} else {
+		document.documentElement.classList.remove('dark');
+		dark_mode = false;
+	}
+}
+
+
+export const get_theme = () => {
 	if (
 		localStorage.theme === 'dark' ||
 		(!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)
 	) {
 		document.documentElement.classList.add('dark');
 		return true;
-		return false;
 	} else {
 		document.documentElement.classList.remove('dark');
 		return false;
 	}
-})();
+};
+
+export let dark_mode = get_theme();
