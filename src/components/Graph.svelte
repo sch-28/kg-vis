@@ -50,7 +50,6 @@
 					color: dark_mode ? 'white' : 'black'
 				},
 				borderWidth: 3,
-				
 				chosen: false
 			},
 			edges: {
@@ -78,6 +77,11 @@
 		};
 		network = new vis.Network(container, graph.data, options);
 		graph.set_network(network);
+
+		// temporary fix to center node on load
+		setTimeout(() => {
+			network.fit({ animation: { duration: 0, easingFunction: 'easeInOutQuad' } });
+		}, 4);
 
 		network.on('click', show_properties);
 		network.on('oncontext', show_context_menu);
