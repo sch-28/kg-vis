@@ -1,3 +1,4 @@
+import isUrl from 'is-url';
 import type { Property, URI } from './graph';
 export interface Triple extends Binding {
 	subject: Node;
@@ -140,6 +141,7 @@ export class SPARQL {
 	}
 
 	public static async fetch_image(subject: URI) {
+		if (!isUrl(subject)) return undefined;
 		const result = await SPARQL.query<{
 			image: Node;
 		}>(
@@ -177,7 +179,10 @@ export class SPARQL {
 			PREFIX wdt: <http://www.wikidata.org/prop/direct/>
 			SELECT DISTINCT ?subject ?image WHERE {
 			  VALUES ?subject {
-				${subjects.map((s) => `<${s}>`).join('\n')}
+				${subjects
+					.filter((s) => isUrl(s))
+					.map((s) => `<${s}>`)
+					.join('\n')}
 				  }
 	
 			?subject wdt:P18 ?image
@@ -201,7 +206,10 @@ export class SPARQL {
 			PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 			SELECT DISTINCT ?subject ?subjectLabel  WHERE {
 			  VALUES ?subject {
-				${subjects.map((s) => `<${s}>`).join('\n')}
+				${subjects
+					.filter((s) => isUrl(s))
+					.map((s) => `<${s}>`)
+					.join('\n')}
 				  }
 	
 			 
@@ -220,6 +228,8 @@ export class SPARQL {
 	}
 
 	public static async fetch_label(subject: URI) {
+		if (!isUrl(subject)) return subject;
+
 		const result = await SPARQL.query<{
 			subjectLabel: Node;
 		}>(
@@ -270,12 +280,13 @@ export class SPARQL {
 	}
 
 	public static async fetch_relations(subject: URI, other_nodes: URI[]) {
+		if (!isUrl(subject)) return Promise.resolve([]);
+
 		let relations = `VALUES ?object {\n`;
 
 		for (let i = 0; i < other_nodes.length; i++) {
 			const node = other_nodes[i];
-
-			relations += `<${node}>\n`;
+			if (isUrl(node)) relations += `<${node}>\n`;
 		}
 		relations += '}';
 
