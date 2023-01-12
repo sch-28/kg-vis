@@ -64,6 +64,11 @@ export class SPARQL {
 				Accept: "application/sparql-results+json",
 			},
 		}); */
+		if (result.status != 200) {
+			const error_message = await result.text();
+			throw new Error(`SPARQL query failed: ${error_message}`);
+		}
+
 		const json = await result.json();
 
 		const bindings: T[] = [];
@@ -261,7 +266,7 @@ export class SPARQL {
 			new_nodes.forEach((node) => requests.push(SPARQL.fetch_relations(node, other_nodes)));
 			relations.push(...(await (await Promise.all(requests)).flat()));
 		}
-		return relations
+		return relations;
 	}
 
 	public static async fetch_relations(subject: URI, other_nodes: URI[]) {

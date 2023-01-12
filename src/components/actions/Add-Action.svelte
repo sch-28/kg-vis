@@ -9,6 +9,7 @@
 	import { add } from 'svelte-french-toast/core/store';
 	import { Settings } from '../../settings';
 	import ActionMenu from '../Action-Menu.svelte';
+	import { Button } from 'flowbite-svelte';
 
 	export let graph: Graph;
 
@@ -21,21 +22,29 @@
 
 	let nodes: Node[] = [];
 
-	let sparql_query: HTMLTextAreaElement;
+	let sparql_query_area: HTMLTextAreaElement;
+	let sparql_query: string = '';
 
 	function submit_query() {
 		if (loading) return;
 		loading = true;
-		SPARQL.query(sparql_query.value).then(async (results) => {
-			loading = false;
-			if (results.length === 0) {
-				return;
-			}
-			nodes = await graph.load_nodes(
-				results.flatMap((b) => Object.values(b).map((n) => n.value)),
-				false
-			);
-		});
+		SPARQL.query(sparql_query)
+			.then(async (results) => {
+				loading = false;
+				error = '';
+				if (results.length === 0) {
+					return;
+				}
+				nodes = await graph.load_nodes(
+					results.flatMap((b) => Object.values(b).map((n) => n.value)),
+					false
+				);
+			})
+			.catch((e) => {
+				loading = false;
+				console.log(e.message);
+				error = e.message;
+			});
 	}
 
 	function show_advanced() {
@@ -121,19 +130,19 @@
 	}
 
 	function handle_resize() {
-		if (sparql_query) $Settings.advanced_settings_height = sparql_query.clientHeight;
+		if (sparql_query_area) $Settings.advanced_settings_height = sparql_query_area.clientHeight;
 	}
 
 	onMount(() => {
 		if ($Settings.advanced_settings) {
 			if ($Settings.advanced_settings_height)
-				sparql_query.style.height = $Settings.advanced_settings_height + 'px';
+				sparql_query_area.style.height = $Settings.advanced_settings_height + 'px';
 			advanced_container.style.height = 'fit-content';
 			advanced_container.style.overflow = 'visible';
 		}
 	});
 
-	$: sparql_query && new ResizeObserver(handle_resize).observe(sparql_query);
+	$: sparql_query_area && new ResizeObserver(handle_resize).observe(sparql_query_area);
 </script>
 
 <div class="p-2 flex flex-col w-[450px]">
@@ -177,8 +186,10 @@
 				<div class="px-4 py-2 bg-white rounded-t-lg dark:bg-gray-800">
 					<label for="sparql-query" class="block mb-2 text-sm font-medium">SPARQL Query</label>
 					<textarea
+						data-gramm="false"
 						on:resize={handle_resize}
-						bind:this={sparql_query}
+						bind:this={sparql_query_area}
+						bind:value={sparql_query}
 						id="sparql-query"
 						rows="4"
 						class="w-full px-0 text-sm text-gray-900 bg-white border-0 dark:bg-gray-800 focus:ring-0 dark:text-light dark:placeholder-gray-400"
@@ -187,13 +198,12 @@
 					/>
 				</div>
 				<div class="flex items-center justify-between px-3 py-2 border-t dark:border-gray-600">
-					<button
+					<Button
 						on:click={submit_query}
 						type="submit"
-						class="inline-flex items-center py-2 px-4 text-xs font-semibold text-center text-white bg-primary rounded-lg"
+						size="sm"
+						disabled={sparql_query.length == 0}>Fetch</Button
 					>
-						Fetch data
-					</button>
 				</div>
 			</div>
 		</div>
@@ -232,7 +242,7 @@
 			</div>
 			{#if error && error.length > 0}
 				<p class="mt-2 text-sm text-error dark:text-error-dark">
-					<span class="font-medium">Invalid URL</span>
+					<span class="font-medium">{error}</span>
 				</p>
 			{/if}
 		</div>
@@ -256,10 +266,7 @@
 		{/if}
 	</div>
 	<div class="flex gap-2">
-		<button
-			on:click={add_nodes}
-			class="p-2 bg-primary rounded-lg w-20 font-semibold text-sm text-white">Add</button
-		>
+		<Button on:click={add_nodes} disabled={loading || nodes.length === 0} size="sm">Add</Button>
 		<button on:click={close}>Cancel</button>
 	</div>
 </div>
