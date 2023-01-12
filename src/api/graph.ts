@@ -1,6 +1,8 @@
+import { Settings } from '../settings';
 import { DataSet } from 'vis-data';
 import type { Network } from 'vis-network';
 import { SPARQL } from './sparql';
+import { get } from 'svelte/store';
 
 export type URI = string;
 
@@ -261,14 +263,21 @@ export class Graph {
 
 	async load_node(uri: URI, visible: boolean = true) {
 		const label_promise = SPARQL.fetch_label(uri);
-		const image_promise = SPARQL.fetch_image(uri);
+		let image_promise: Promise<string | undefined> = Promise.resolve(undefined);
+		if (get(Settings).fetch_image) {
+			image_promise = SPARQL.fetch_image(uri);
+		}
+
 		const [label, image] = await Promise.all([label_promise, image_promise]);
 		return this.find_or_create_node(uri, label, 'uri', visible, image);
 	}
 
 	async load_nodes(uris: URI[], visible: boolean = true) {
 		const label_promises = SPARQL.fetch_labels(uris);
-		const image_promises = SPARQL.fetch_images(uris);
+		let image_promises: Promise<{ image: string; uri: string }[]> = Promise.resolve([]);
+		if (get(Settings).fetch_image) {
+			image_promises = SPARQL.fetch_images(uris);
+		}
 		const [labels, images] = await Promise.all([label_promises, image_promises]);
 		const new_nodes = [];
 		for (const uri of uris) {
@@ -339,16 +348,17 @@ export class Graph {
 			}
 			this.update_data();
 		}
-
-		SPARQL.fetch_images(new_nodes.map((n) => n.id)).then((images) => {
-			for (const image of images) {
-				const node = this.nodes.find((n) => n.id == image.uri);
-				if (node) {
-					node.update_image(image.image);
-					if (node.visible) this.data.nodes.update(node);
+		if (get(Settings).fetch_image) {
+			SPARQL.fetch_images(new_nodes.map((n) => n.id)).then((images) => {
+				for (const image of images) {
+					const node = this.nodes.find((n) => n.id == image.uri);
+					if (node) {
+						node.update_image(image.image);
+						if (node.visible) this.data.nodes.update(node);
+					}
 				}
-			}
-		});
+			});
+		}
 
 		return new_nodes.concat(already_exists);
 	}
