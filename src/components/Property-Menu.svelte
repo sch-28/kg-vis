@@ -45,8 +45,23 @@
 
 	let wrapper: HTMLElement;
 
+	const menu_offset = 30;
+
 	$: {
 		if (wrapper) {
+			if (menu_position.x + wrapper.offsetWidth + menu_offset > window.innerWidth) {
+				menu_position.x = window.innerWidth - wrapper.offsetWidth;
+			} else {
+				menu_position.x += menu_offset;
+			}
+			if (menu_position.y + wrapper.offsetHeight / 2 > window.innerHeight) {
+				menu_position.y = window.innerHeight - wrapper.offsetHeight;
+			} else if (menu_position.y - wrapper.offsetHeight / 2 < 0) {
+				menu_position.y = 0;
+			} else {
+				menu_position.y -= wrapper.offsetHeight / 2;
+			}
+
 			wrapper.style.top = menu_position.y + 'px';
 			wrapper.style.left = menu_position.x + 'px';
 		}
@@ -223,7 +238,7 @@
 
 {#if selected_node}
 	<div
-		class="wrapper border dark:border-dark-muted dark:bg-dark-bg bg-white shadow-md z-40 -translate-y-1/2 translate-x-12 rounded-2xl flex flex-col"
+		class="wrapper border dark:border-dark-muted dark:bg-dark-bg bg-white shadow-md z-40 rounded-2xl flex flex-col"
 		on:mouseover={() => document.addEventListener('keydown', search)}
 		on:focus={() => document.addEventListener('keydown', search)}
 		on:mouseout={() => document.removeEventListener('keydown', search, false)}
