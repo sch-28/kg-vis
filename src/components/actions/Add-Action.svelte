@@ -145,8 +145,8 @@
 	$: sparql_query_area && new ResizeObserver(handle_resize).observe(sparql_query_area);
 </script>
 
-<div class="p-2 flex flex-col w-[450px]">
-	<h1 class="text-lg font-bold mb-2">Add Node(s)</h1>
+<div class="flex flex-col w-[450px]">
+	<h1 class="text-lg font-bold mb-2">Add Nodes</h1>
 
 	<button
 		class="border-b border-dark-muted flex justify-center items-center text-dark-muted dark:text-light-muted pb-1 relative"
