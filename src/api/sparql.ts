@@ -1,4 +1,6 @@
 import isUrl from 'is-url';
+import { Settings } from '../settings';
+import { get } from 'svelte/store';
 import type { Property, URI } from './graph';
 export interface Triple extends Binding {
 	subject: Node;
@@ -16,39 +18,23 @@ export interface Binding {
 }
 
 export class SPARQL {
-	private static _rate_limit: number = 5;
-	private static _size_limit: number = 100;
-	private static _endpoint: URI = 'https://query.wikidata.org/sparql';
-
-	public static set_rate_limit(rate_limit: number) {
-		this._rate_limit = rate_limit;
-	}
-
-	public static set_endpoint(endpoint: URI) {
-		this._endpoint = endpoint;
-	}
-
-	public static set_size_limit(size_limit: number) {
-		this._size_limit = size_limit;
-	}
-
 	public static get rate_limit() {
-		return this._rate_limit;
+		return get(Settings).rate_limit;
 	}
 
 	public static get size_limit() {
-		return this._size_limit;
+		return get(Settings).size_limit;
 	}
 
 	public static get endpoint() {
-		return this._endpoint;
+		return get(Settings).endpoint_url;
 	}
 
 	public static async query<T extends Binding>(body: string) {
 		const urlencoded = new URLSearchParams();
 		urlencoded.append('query', body);
 
-		const result = await fetch(this._endpoint, {
+		const result = await fetch(this.endpoint, {
 			method: 'POST',
 
 			headers: {

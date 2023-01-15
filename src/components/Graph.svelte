@@ -25,19 +25,13 @@
 	let context_selection: Node | undefined = undefined;
 
 	export let value: string;
-	export let endpoint: string = 'https://query.wikidata.org/sparql';
-	export let rate_limit: number = 5;
-	export let size_limit: number = 100;
 
-	$: {
-		endpoint, size_limit, rate_limit;
-		if (value && value.length > 0) {
-			create_graph(value);
-		}
+	$: if (value) {
+		create_graph(value);
 	}
 
 	async function create_graph(starting_point: string) {
-		graph = new Graph(+rate_limit, +size_limit, endpoint);
+		graph = new Graph();
 
 		await graph.load_node(starting_point);
 		graph.update_data();

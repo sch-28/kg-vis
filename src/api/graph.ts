@@ -106,16 +106,12 @@ export class Graph {
 
 	data: { nodes: DataSet<any>; edges: DataSet<any> };
 
-	constructor(rate_limit = 5, size_limit = 100, endpoint = 'https://query.wikidata.org/sparql') {
+	constructor() {
 		this.nodes = [];
 		this.edges = [];
 		const data_nodes = new DataSet([]);
 		const data_edges = new DataSet([]);
 		this.data = { nodes: data_nodes, edges: data_edges };
-
-		SPARQL.set_endpoint(endpoint);
-		SPARQL.set_rate_limit(rate_limit);
-		SPARQL.set_size_limit(size_limit);
 
 		this.update_data();
 	}
