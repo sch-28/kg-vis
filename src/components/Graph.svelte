@@ -66,7 +66,8 @@
 				barnesHut: {
 					springLength: 175
 				},
-				timestep: 0.5
+				timestep: 0.5,
+				
 			}
 		};
 		network = new vis.Network(container, graph.data, options);

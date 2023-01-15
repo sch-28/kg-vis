@@ -98,6 +98,7 @@
 		{:else if selected_setting === 'graph'}
 			<Toggle bind:checked={$Settings.fetch_image}>Show images</Toggle>
 			<Toggle bind:checked={$Settings.fetch_related}>Fetch relations</Toggle>
+			<Toggle bind:checked={$Settings.animations}>Animations</Toggle>
 		{:else if selected_setting === 'documentation'}
 			<!-- <DocumentationSettings /> -->
 		{/if}

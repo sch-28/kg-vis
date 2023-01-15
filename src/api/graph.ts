@@ -134,7 +134,7 @@ export class Graph {
 		this.network = network;
 	}
 
-	update_data() {
+	update_data(visible = true) {
 		const nodes = this.nodes.filter((node) => node.visible);
 		const edges = this.edges.filter((edge) => this.is_edge_visible(edge));
 
@@ -177,6 +177,8 @@ export class Graph {
 		for (const edge of deleted_edges) {
 			old_edges.remove(edge);
 		}
+
+		if (!get(Settings).animations && visible) this.network?.stabilize(2000);
 
 		return this.data;
 	}
@@ -342,8 +344,8 @@ export class Graph {
 					);
 				}
 			}
-			this.update_data();
 		}
+		this.update_data(visible);
 		if (get(Settings).fetch_image) {
 			SPARQL.fetch_images(new_nodes.map((n) => n.id)).then((images) => {
 				for (const image of images) {
