@@ -8,6 +8,7 @@
 	import AddAction from './actions/Add-Action.svelte';
 	import Modal from './actions/Modal.svelte';
 	import Settings from './actions/Settings.svelte';
+	import PlusCircleOutline from 'svelte-material-icons/PlusCircleOutline.svelte';
 
 	export let graph: Graph;
 
@@ -29,7 +30,10 @@
 	class="absolute top-0 left-1/2 -translate-x-1/2 shadow-lg rounded-b-lg flex gap-10 bg-white/5 py-4 px-6"
 >
 	<button class="flex items-center gap-2 cursor-pointer" on:click={() => open(AddAction)}>
-		<Icon src={PlusCircle} class="w-6 h-6" />Add
+		<div class="w-6 h-6">
+			<PlusCircleOutline width="100%" height="100%" />
+		</div>
+		Add
 	</button>
 	<button class="flex items-center gap-2 cursor-pointer">
 		<Icon src={PencilSquare} class="w-6 h-6" />Edit
