@@ -56,6 +56,7 @@
 		selected_node;
 		selected_property = undefined;
 		selected_property_nodes = [];
+		selected_nodes = [];
 	}
 
 	function sort(sort_option: SortOptions) {
