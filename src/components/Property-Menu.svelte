@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { createEventDispatcher } from 'svelte';
 	import type { Property, Node, Graph, URI } from '../api/graph';
 	import { Icon } from '@steeze-ui/svelte-icon';
 	import {
@@ -13,8 +12,6 @@
 	import { click_outside, dark_mode } from '../util';
 	import toast from 'svelte-french-toast';
 	import LoadingCircle from './Loading-Circle.svelte';
-
-	const dispatch = createEventDispatcher();
 
 	export let selected_node: Node | undefined = undefined;
 	export let menu_position = { x: 0, y: 0 };

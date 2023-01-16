@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Cog6Tooth, PencilSquare, PlusCircle } from '@steeze-ui/heroicons';
+	import { Cog6Tooth, PencilSquare } from '@steeze-ui/heroicons';
 	import { Icon } from '@steeze-ui/svelte-icon';
 	import type { Graph } from 'src/api/graph';
 	import { setContext } from 'svelte';

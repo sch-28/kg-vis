@@ -1,14 +1,12 @@
 <script lang="ts">
-	import { ChevronDown, Link, Share, XMark } from '@steeze-ui/heroicons';
+	import { ChevronDown, XMark } from '@steeze-ui/heroicons';
 	import { Icon } from '@steeze-ui/svelte-icon';
 	import isUrl from 'is-url';
 	import { SPARQL } from '../../api/sparql';
 	import type { Graph, Node, URI } from 'src/api/graph';
 	import { getContext, onMount } from 'svelte';
 	import LoadingCircle from '../Loading-Circle.svelte';
-	import { add } from 'svelte-french-toast/core/store';
 	import { Settings } from '../../settings';
-	import ActionMenu from '../Action-Menu.svelte';
 	import { Button } from 'flowbite-svelte';
 
 	export let graph: Graph;

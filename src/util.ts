@@ -26,7 +26,6 @@ export function change_theme(dark: boolean) {
 	}
 }
 
-
 export const get_theme = () => {
 	if (
 		localStorage.theme === 'dark' ||

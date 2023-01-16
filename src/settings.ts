@@ -39,7 +39,7 @@ export interface Settings {
 	endpoint_url: string;
 	rate_limit: number;
 	size_limit: number;
-    fetch_image: boolean;
+	fetch_image: boolean;
 	animations: boolean;
 }
 
@@ -50,6 +50,6 @@ export const Settings = storage<Settings>('settings', {
 	endpoint_url: 'https://skynet.coypu.org/wikidata/',
 	rate_limit: 20,
 	size_limit: 100,
-    fetch_image: false,
-	animations: true,
+	fetch_image: false,
+	animations: true
 });

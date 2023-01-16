@@ -1,11 +1,10 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import type { Network, Options } from 'vis-network';
 	import * as vis from 'vis-network';
 	import ContextMenu from './Context-Menu.svelte';
 	import Menu from './Property-Menu.svelte';
-	import { Graph, Property, type URI, type Node } from '../api/graph';
-	import toast, { Toaster } from 'svelte-french-toast';
+	import { Graph, type URI, type Node } from '../api/graph';
+	import { Toaster } from 'svelte-french-toast';
 	import { dark_mode } from '../util';
 	import ActionMenu from './Action-Menu.svelte';
 
@@ -16,8 +15,6 @@
 
 	let selected_node: Node | undefined;
 	let menu_position = { x: 0, y: 0 };
-
-	let last_click = { x: 0, y: 0 };
 
 	let progress = 0;
 
@@ -66,8 +63,7 @@
 				barnesHut: {
 					springLength: 175
 				},
-				timestep: 0.5,
-				
+				timestep: 0.5
 			}
 		};
 		network = new vis.Network(container, graph.data, options);
@@ -114,7 +110,6 @@
 			selected_node = node;
 			const node_position = network.canvasToDOM(network.getPosition(uri));
 			menu_position = node_position;
-			last_click = event.pointer.canvas;
 
 			graph.get_properties(uri, set_progress).then((node) => {
 				if (hide_context_menu) selected_node = node;

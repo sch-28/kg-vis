@@ -1,3 +1,3 @@
-import type { SvelteComponent } from "svelte";
+import type { SvelteComponent } from 'svelte';
 
-export type Action = new (...args: any[]) => SvelteComponent
+export type Action = new (...args: any[]) => SvelteComponent;
