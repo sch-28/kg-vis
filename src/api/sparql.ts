@@ -292,6 +292,7 @@ export class SPARQL {
 			PREFIX bd: <http://www.bigdata.com/rdf#>
 			PREFIX wikibase: <http://wikiba.se/ontology#>
 			PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+			PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 			SELECT DISTINCT ?object ?property ?propLabel ?subject WHERE
 			{
 				VALUES ?subject {
@@ -303,9 +304,12 @@ export class SPARQL {
 				} UNION{
 					?subject ?property ?object .
 				}
-				?claim wikibase:directClaim ?property.
-				?prop wikibase:directClaim ?property .
-				?prop rdfs:label ?propLabel 
+				${
+					this.endpoint.includes('wikidata')
+						? '?prop wikibase:directClaim ?property . ?prop rdfs:label ?propLabel .'
+						: '?property rdf:type rdf:Property . ?property rdfs:label ?propLabel .'
+				}
+				
 				FILTER (lang(?propLabel) = 'en')
 				
 			}`
@@ -331,6 +335,7 @@ export class SPARQL {
 			PREFIX wdt: <http://www.wikidata.org/prop/direct/>
 			PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 			PREFIX wd: <http://www.wikidata.org/entity/>
+			PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 			SELECT DISTINCT ?propLabel (COUNT(?outObject) AS ?outCount) (COUNT(?inObject) AS ?inCount)    WHERE {
 			{
 				SELECT DISTINCT ?outObject WHERE {
@@ -346,11 +351,15 @@ export class SPARQL {
 				LIMIT ${this.size_limit}
 			}
 			OPTIONAL {
-				?prop wikibase:directClaim <${property}> .
+				${
+					this.endpoint.includes('wikidata')
+						? `?prop wikibase:directClaim <${property}> . ?prop rdfs:label ?propLabel .`
+						: `<${property}> rdf:type rdf:Property . <${property}> rdfs:label ?propLabel .`
 				}
-			?prop rdfs:label ?propLabel 
+			}
+			
 			FILTER (lang(?propLabel) = 'en')
-			} GROUP BY ?propLabel `
+			} GROUP BY ?propLabel`
 		);
 
 		if (result.length > 0) {
@@ -374,13 +383,18 @@ export class SPARQL {
 			`
 			PREFIX wikibase: <http://wikiba.se/ontology#>
 			PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+			PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 			SELECT DISTINCT ?property  WHERE {
 				{
 				  ?o ?property <${subject}> .
 				} UNION{
 					<${subject}> ?property ?o
 				}
-				?claim wikibase:directClaim ?property.
+				${
+					this.endpoint.includes('wikidata')
+						? '?prop wikibase:directClaim ?property .'
+						: '?property rdf:type rdf:Property .'
+				}
 				}`
 		);
 

@@ -12,6 +12,7 @@
 	import { click_outside, dark_mode } from '../util';
 	import toast from 'svelte-french-toast';
 	import LoadingCircle from './Loading-Circle.svelte';
+	import { Settings } from '../settings';
 
 	export let selected_node: Node | undefined = undefined;
 	export let menu_position = { x: 0, y: 0 };
@@ -379,7 +380,9 @@
 						{/if}
 						<span
 							class="ml-auto w-6 bg-dark-muted text-light rounded-full inline-flex items-center justify-center -mb-0.5 text-xs font-semibold  p-1 "
-							>{property.property.in_count + property.property.out_count}</span
+							>{property.property.in_count + property.property.out_count > $Settings.size_limit * 2
+								? $Settings.size_limit
+								: property.property.in_count + property.property.out_count}</span
 						>
 					</button>
 				{/each}
