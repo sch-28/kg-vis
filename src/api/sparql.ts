@@ -96,7 +96,18 @@ export class SPARQL {
 		for (let i = 0; i < result.length; i += this.rate_limit) {
 			const new_nodes = result.slice(i, i + this.rate_limit).map((c) => c.object.value);
 
-			const requests: { uri: URI; type: 'uri' | 'literal'; relations: any }[] = [];
+			const requests: {
+				uri: URI;
+				type: 'uri' | 'literal';
+				relations: Promise<
+					{
+						subject: Node;
+						property: Node;
+						object: Node;
+						propLabel: Node;
+					}[]
+				>;
+			}[] = [];
 			new_nodes.forEach((node) =>
 				requests.push({
 					uri: node,
