@@ -57,13 +57,14 @@
 			},
 			physics: {
 				solver: 'forceAtlas2Based',
-				maxVelocity: 25,
-				minVelocity: 1.5,
-
-				barnesHut: {
-					springLength: 175
+				forceAtlas2Based: {
+					gravitationalConstant: -75,
+					springLength: 100,
+					springConstant: 0.02
 				},
-				timestep: 0.5
+				maxVelocity: 50,
+				minVelocity: 5,
+				timestep: 0.35
 			}
 		};
 		network = new vis.Network(container, graph.data, options);

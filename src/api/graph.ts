@@ -178,7 +178,9 @@ export class Graph {
 			old_edges.remove(edge);
 		}
 
-		if (!get(Settings).animations && visible) this.network?.stabilize(2000);
+		if (!get(Settings).animations && visible) {
+			this.network?.stabilize();
+		}
 
 		return this.data;
 	}
@@ -305,12 +307,8 @@ export class Graph {
 			y: number;
 		} = { x: 0, y: 0 }
 	) {
-		const raw_new_nodes = await SPARQL.fetch_data(
-			uri,
-			property.uri,
-			this.nodes.map((n) => n.id)
-		);
-
+		const raw_new_nodes = await SPARQL.fetch_data(uri, property.uri);
+		const old_nodes = this.nodes.map((n) => n.id);
 		const new_nodes: Node[] = [];
 		const already_exists: Node[] = [];
 
@@ -332,10 +330,18 @@ export class Graph {
 				already_exists.push(node);
 			}
 
-			if (new_node.relations.length == 0) {
-				this.create_edge(uri, property.uri, new_node.uri, property.label ?? 'label');
-			} else {
-				for (const relation of new_node.relations) {
+			this.create_edge(uri, property.uri, new_node.uri, property.label ?? 'label');
+
+		
+		}
+		this.update_data(visible);
+
+		if (get(Settings).fetch_related) {
+			SPARQL.fetch_multiple_relations(
+				new_nodes.map((n) => n.id),
+				this.nodes.map((n) => n.id)
+			).then((relations) => {
+				for (const relation of relations) {
 					this.create_edge(
 						relation.subject.value,
 						relation.property.value,
@@ -343,9 +349,9 @@ export class Graph {
 						relation.propLabel.value
 					);
 				}
-			}
+				this.update_data(visible);
+			});
 		}
-		this.update_data(visible);
 		if (get(Settings).fetch_image) {
 			SPARQL.fetch_images(new_nodes.map((n) => n.id)).then((images) => {
 				for (const image of images) {

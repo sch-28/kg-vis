@@ -66,7 +66,7 @@ export class SPARQL {
 		return bindings;
 	}
 
-	public static async fetch_data(subject: URI, property: URI, nodes: URI[]) {
+	public static async fetch_data(subject: URI, property: URI) {
 		const result = await this.query<Triple>(
 			`PREFIX wikibase: <http://wikiba.se/ontology#>
 			PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -83,15 +83,8 @@ export class SPARQL {
 			uri: URI;
 			label: string;
 			type: 'literal' | 'uri';
-			relations: {
-				subject: Node;
-				property: Node;
-				object: Node;
-				propLabel: Node;
-			}[];
 		}[] = [];
 
-		const all_new_nodes = result.map((c) => c.object.value);
 
 		for (let i = 0; i < result.length; i += this.rate_limit) {
 			const new_nodes = result.slice(i, i + this.rate_limit).map((c) => c.object.value);
@@ -99,30 +92,20 @@ export class SPARQL {
 			const requests: {
 				uri: URI;
 				type: 'uri' | 'literal';
-				relations: Promise<
-					{
-						subject: Node;
-						property: Node;
-						object: Node;
-						propLabel: Node;
-					}[]
-				>;
+				
 			}[] = [];
 			new_nodes.forEach((node) =>
 				requests.push({
 					uri: node,
 					type: result[i].object.type,
-					relations: SPARQL.fetch_relations(node, [...nodes, ...all_new_nodes])
+					
 				})
 			);
-			// results.push(...(await Promise.all(requests.map(r => [r.label, r.relations]))));
 			for (let i = 0; i < requests.length; i++) {
 				const request = requests[i];
-				const r = await request.relations;
 				results.push({
 					uri: request.uri,
 					type: request.type,
-					relations: r,
 					label: ''
 				});
 			}
