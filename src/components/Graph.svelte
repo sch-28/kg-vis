@@ -63,7 +63,7 @@
 					springConstant: 0.02
 				},
 				maxVelocity: 50,
-				minVelocity: 5,
+				minVelocity: 3,
 				timestep: 0.35
 			}
 		};

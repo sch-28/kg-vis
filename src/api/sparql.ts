@@ -1,6 +1,7 @@
 import isUrl from 'is-url';
 import { Settings } from '../settings';
 import { get } from 'svelte/store';
+import { TypedEmitter } from 'tiny-typed-emitter';
 import type { Property, URI } from './graph';
 export interface Triple extends Binding {
 	subject: Node;
@@ -17,22 +18,46 @@ export interface Binding {
 	[key: string]: Node;
 }
 
-export class SPARQL {
-	public static get rate_limit() {
+export declare interface SPARQL_Events {
+	'progress'(progress: number): void;
+}
+
+export class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
+	private readonly prefix = `
+			PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+			PREFIX bd: <http://www.bigdata.com/rdf#>
+			PREFIX wd: <http://www.wikidata.org/entity/>
+			PREFIX wikibase: <http://wikiba.se/ontology#>
+			PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+			PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>`;
+
+	private current_progress: number | undefined = undefined;
+
+	public get rate_limit() {
 		return get(Settings).rate_limit;
 	}
 
-	public static get size_limit() {
+	public get size_limit() {
 		return get(Settings).size_limit;
 	}
 
-	public static get endpoint() {
+	public get endpoint() {
 		return get(Settings).endpoint_url;
 	}
 
-	public static async query<T extends Binding>(body: string) {
+	public get progress() {
+		return this.current_progress;
+	}
+
+	private emitter = new TypedEmitter<SPARQL_Events>();
+
+	constructor() {
+		super();
+	}
+
+	public async query<T extends Binding>(body: string) {
 		const urlencoded = new URLSearchParams();
-		urlencoded.append('query', body);
+		urlencoded.append('query', this.prefix + body);
 
 		const result = await fetch(this.endpoint, {
 			method: 'POST',
@@ -66,70 +91,38 @@ export class SPARQL {
 		return bindings;
 	}
 
-	public static async fetch_data(subject: URI, property: URI) {
-		const result = await this.query<Triple>(
-			`PREFIX wikibase: <http://wikiba.se/ontology#>
-			PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-			SELECT DISTINCT ?object  WHERE {
+	public async fetch_related_nodes(subject: URI, property: URI) {
+		const result = await this.query<{ object: Node; objectLabel?: Node }>(
+			`
+			SELECT DISTINCT ?object ?objectLabel  WHERE {
 				{
 				  ?object <${property}> <${subject}> .
 				} UNION{
 					<${subject}> <${property}> ?object
 				}
+				OPTIONAL {
+				?object rdfs:label ?objectLabel 
+				FILTER (lang(?objectLabel) = 'en')
+				}
 				} LIMIT ${this.size_limit}`
 		);
 
-		const results: {
-			uri: URI;
-			label: string;
-			type: 'literal' | 'uri';
-		}[] = [];
-
-
-		for (let i = 0; i < result.length; i += this.rate_limit) {
-			const new_nodes = result.slice(i, i + this.rate_limit).map((c) => c.object.value);
-
-			const requests: {
-				uri: URI;
-				type: 'uri' | 'literal';
-				
-			}[] = [];
-			new_nodes.forEach((node) =>
-				requests.push({
-					uri: node,
-					type: result[i].object.type,
-					
-				})
-			);
-			for (let i = 0; i < requests.length; i++) {
-				const request = requests[i];
-				results.push({
-					uri: request.uri,
-					type: request.type,
-					label: ''
-				});
-			}
-		}
-
-		const labels = await SPARQL.fetch_labels(results.map((r) => r.uri));
-
-		for (const node of results) {
-			node.label = labels.find((l) => l.uri == node.uri)?.label ?? '';
-		}
+		const results = result.map((r) => ({
+			uri: r.object.value,
+			type: r.object.type,
+			label: r.objectLabel?.value ?? r.object.value
+		}));
 
 		return results;
 	}
 
-	public static async fetch_image(subject: URI) {
+	public async fetch_image(subject: URI) {
 		if (!isUrl(subject)) return undefined;
-		const result = await SPARQL.query<{
+		const result = await this.query<{
 			image: Node;
 		}>(
 			`
-			PREFIX bd: <http://www.bigdata.com/rdf#>
-			PREFIX wikibase: <http://wikiba.se/ontology#>
-			PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-			PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+			
 			SELECT DISTINCT ?image WHERE {
 			  VALUES ?subject {
 				<${subject}>
@@ -147,16 +140,13 @@ export class SPARQL {
 		return undefined;
 	}
 
-	public static async fetch_images(subjects: URI[]) {
-		const result = await SPARQL.query<{
+	public async fetch_images(subjects: URI[]) {
+		const result = await this.query<{
 			image: Node;
 			subject: Node;
 		}>(
 			`
-			PREFIX bd: <http://www.bigdata.com/rdf#>
-			PREFIX wikibase: <http://wikiba.se/ontology#>
-			PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-			PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+			
 			SELECT DISTINCT ?subject ?image WHERE {
 			  VALUES ?subject {
 				${subjects
@@ -175,15 +165,12 @@ export class SPARQL {
 		});
 	}
 
-	public static async fetch_labels(subjects: URI[]) {
-		const result = await SPARQL.query<{
+	public async fetch_labels(subjects: URI[]) {
+		const result = await this.query<{
 			subject: Node;
 			subjectLabel: Node;
 		}>(
 			`
-			PREFIX bd: <http://www.bigdata.com/rdf#>
-			PREFIX wikibase: <http://wikiba.se/ontology#>
-			PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 			SELECT DISTINCT ?subject ?subjectLabel  WHERE {
 			  VALUES ?subject {
 				${subjects
@@ -207,16 +194,13 @@ export class SPARQL {
 		return subjects.map((s) => ({ uri: s, label: s }));
 	}
 
-	public static async fetch_label(subject: URI) {
+	public async fetch_label(subject: URI) {
 		if (!isUrl(subject)) return subject;
 
-		const result = await SPARQL.query<{
+		const result = await this.query<{
 			subjectLabel: Node;
 		}>(
 			`
-			PREFIX bd: <http://www.bigdata.com/rdf#>
-			PREFIX wikibase: <http://wikiba.se/ontology#>
-			PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 			SELECT DISTINCT ?subjectLabel WHERE {
 			  VALUES ?subject {
 				<${subject}>
@@ -236,7 +220,7 @@ export class SPARQL {
 		return subject;
 	}
 
-	public static async fetch_multiple_relations(subjects: URI[], other_nodes: URI[]) {
+	public async fetch_multiple_relations(subjects: URI[], other_nodes: URI[]) {
 		const relations: {
 			subject: Node;
 			property: Node;
@@ -253,13 +237,13 @@ export class SPARQL {
 					propLabel: Node;
 				}[]
 			>[] = [];
-			new_nodes.forEach((node) => requests.push(SPARQL.fetch_relations(node, other_nodes)));
+			new_nodes.forEach((node) => requests.push(this.fetch_relations(node, other_nodes)));
 			relations.push(...(await (await Promise.all(requests)).flat()));
 		}
 		return relations;
 	}
 
-	public static async fetch_relations(subject: URI, other_nodes: URI[]) {
+	public async fetch_relations(subject: URI, other_nodes: URI[]) {
 		if (!isUrl(subject)) return Promise.resolve([]);
 
 		let relations = `VALUES ?object {\n`;
@@ -270,12 +254,9 @@ export class SPARQL {
 		}
 		relations += '}';
 
-		const result = await SPARQL.query(
+		const result = await this.query(
 			`
-			PREFIX bd: <http://www.bigdata.com/rdf#>
-			PREFIX wikibase: <http://wikiba.se/ontology#>
-			PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-			PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+			
 			SELECT DISTINCT ?object ?property ?propLabel ?subject WHERE
 			{
 				VALUES ?subject {
@@ -306,19 +287,14 @@ export class SPARQL {
 		}[];
 	}
 
-	public static async fetch_property(subject: URI, property: URI): Promise<Property> {
+	public async fetch_property_count(subject: URI, property: URI): Promise<Property> {
 		const result = await this.query<{
 			propLabel: Node;
 			outCount: Node;
 			inCount: Node;
 		}>(
 			`
-			PREFIX wikibase: <http://wikiba.se/ontology#>
-			PREFIX bd: <http://www.bigdata.com/rdf#>
-			PREFIX wdt: <http://www.wikidata.org/prop/direct/>
-			PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-			PREFIX wd: <http://www.wikidata.org/entity/>
-			PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+			
 			SELECT DISTINCT ?propLabel (COUNT(?outObject) AS ?outCount) (COUNT(?inObject) AS ?inCount)    WHERE {
 			{
 				SELECT DISTINCT ?outObject WHERE {
@@ -358,15 +334,10 @@ export class SPARQL {
 		throw new Error('Unable to fetch Property: ' + result);
 	}
 
-	public static async fetch_properties(
-		subject: URI,
-		progress_function?: (progress: number) => void
-	) {
+	public async fetch_properties(subject: URI, progress_function?: (progress: number) => void) {
 		const result = await this.query<{ property: Node }>(
 			`
-			PREFIX wikibase: <http://wikiba.se/ontology#>
-			PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-			PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+			
 			SELECT DISTINCT ?property  WHERE {
 				{
 				  ?o ?property <${subject}> .
@@ -386,7 +357,7 @@ export class SPARQL {
 			const properties = result.slice(i, i + this.rate_limit).map((c) => c.property.value);
 
 			const requests: Promise<Property>[] = [];
-			properties.forEach((prop) => requests.push(this.fetch_property(subject, prop)));
+			properties.forEach((prop) => requests.push(this.fetch_property_count(subject, prop)));
 			results.push(...((await Promise.all(requests)) as Property[]));
 			if (progress_function) progress_function(Math.floor((i / result.length) * 100));
 		}
@@ -394,3 +365,4 @@ export class SPARQL {
 		return results;
 	}
 }
+export const SPARQL = new SPARQL_Queries();

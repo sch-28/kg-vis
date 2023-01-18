@@ -307,8 +307,7 @@ export class Graph {
 			y: number;
 		} = { x: 0, y: 0 }
 	) {
-		const raw_new_nodes = await SPARQL.fetch_data(uri, property.uri);
-		const old_nodes = this.nodes.map((n) => n.id);
+		const raw_new_nodes = await SPARQL.fetch_related_nodes(uri, property.uri);
 		const new_nodes: Node[] = [];
 		const already_exists: Node[] = [];
 
@@ -331,8 +330,6 @@ export class Graph {
 			}
 
 			this.create_edge(uri, property.uri, new_node.uri, property.label ?? 'label');
-
-		
 		}
 		this.update_data(visible);
 
