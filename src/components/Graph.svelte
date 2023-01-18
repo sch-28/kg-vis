@@ -113,7 +113,7 @@
 			menu_position = node_position;
 
 			graph.get_properties(uri, set_progress).then((node) => {
-				if (hide_context_menu) selected_node = node;
+				if (hide_context_menu && selected_node !== undefined) selected_node = node;
 			});
 		} else {
 			selected_node = undefined;
