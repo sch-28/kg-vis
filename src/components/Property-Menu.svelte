@@ -67,8 +67,22 @@
 
 	$: {
 		selected_node;
+		reset();
+	}
+
+	$: {
+		selected_property;
+		property_reset();
+	}
+
+	function reset() {
 		selected_property = undefined;
 		selected_property_nodes = [];
+		selected_nodes = [];
+		sorted_nodes = [];
+	}
+
+	function property_reset() {
 		selected_nodes = [];
 	}
 
@@ -416,6 +430,7 @@
 					<li
 						class="px-3 rounded-lg bg-transparent flex transition-all duration-200 ease-in-out"
 						on:click={() => {
+							console.log('hi');
 							if (selected_nodes.find((n) => n.id === node.node.id)) {
 								selected_nodes = selected_nodes.filter((n) => n.id !== node.node.id);
 							} else selected_nodes = selected_nodes.concat([node.node]);
