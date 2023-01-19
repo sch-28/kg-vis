@@ -17,8 +17,6 @@
 	let selected_node: Node | undefined;
 	let menu_position = { x: 0, y: 0 };
 
-	let progress = 0;
-
 	let hide_context_menu = true;
 	let context_selection: Node | undefined = undefined;
 
@@ -104,7 +102,6 @@
 	function show_properties(event: Click_Event) {
 		hide_context_menu = true;
 		if (network.getSelectedNodes().length > 0) {
-			progress = 0;
 			const uri = event.nodes[0];
 			const node = graph.get_node(uri);
 			if (!node || node.type === 'literal') return;
@@ -120,16 +117,12 @@
 			selected_node = undefined;
 		}
 	}
-
-	function set_progress(new_progress: number) {
-		progress = new_progress;
-	}
 </script>
 
 <Toaster />
 <ToastManager />
 <div bind:this={container} class="w-full h-full" />
-<Menu {menu_position} {selected_node} {progress} {graph} />
+<Menu {menu_position} {selected_node} {graph} />
 <ContextMenu
 	{menu_position}
 	bind:hidden={hide_context_menu}

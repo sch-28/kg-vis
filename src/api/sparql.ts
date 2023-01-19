@@ -18,13 +18,14 @@ export interface Binding {
 	[key: string]: Node;
 }
 
-export declare interface SPARQL_Events {
+declare interface SPARQL_Events {
 	'loading_related'(promise: Promise<void>): void;
 	'loading_properties'(promise: Promise<void>): void;
 	'loading_relations'(promise: Promise<void>): void;
+	'progress'(progress: number): void;
 }
 
-export class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
+class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 	private readonly prefix = `
 			PREFIX wdt: <http://www.wikidata.org/prop/direct/>
 			PREFIX bd: <http://www.bigdata.com/rdf#>
@@ -53,6 +54,7 @@ export class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 
 	constructor() {
 		super();
+		this.setMaxListeners(1);
 	}
 
 	public async query<T extends Binding>(body: string) {
@@ -371,6 +373,7 @@ export class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 			const requests: Promise<Property>[] = [];
 			properties.forEach((prop) => requests.push(this.fetch_property_count(subject, prop)));
 			results.push(...((await Promise.all(requests)) as Property[]));
+			this.emit('progress', Math.floor((i / result.length) * 100));
 		}
 		resolve();
 

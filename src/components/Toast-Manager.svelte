@@ -2,6 +2,7 @@
 	import { SPARQL } from '../api/sparql';
 	import { dark_mode } from '../util';
 	import toast from 'svelte-french-toast';
+	import { onMount } from 'svelte';
 
 	function show_toast(message: string, promise: Promise<void>) {
 		toast.promise(
@@ -13,18 +14,24 @@
 			},
 			{
 				position: 'top-right',
-				style: `${dark_mode ? 'background: #1f2937; color: #fff;' : 'background: #fff; color: #000;'} min-width: 200px;`
+				style: `${
+					dark_mode ? 'background: #1f2937; color: #fff;' : 'background: #fff; color: #000;'
+				} min-width: 200px;`
 			}
 		);
 	}
 
-	SPARQL.on('loading_properties', (promise) => {
+	/* SPARQL.on('loading_properties', (promise) => {
 		show_toast('Properties', promise);
-	});
-	SPARQL.on('loading_related', (promise) => {
-		show_toast('Related', promise);
-	});
-	SPARQL.on('loading_relations', (promise) => {
-		show_toast('Relations', promise);
+	}); */
+
+	onMount(() => {
+		if (SPARQL.listenerCount('loading_related') > 0) return;
+		SPARQL.on('loading_related', (promise) => {
+			show_toast('Related', promise);
+		});
+		SPARQL.on('loading_relations', (promise) => {
+			show_toast('Relations', promise);
+		});
 	});
 </script>

@@ -13,10 +13,11 @@
 	import toast from 'svelte-french-toast';
 	import LoadingCircle from './Loading-Circle.svelte';
 	import { Settings } from '../settings';
+	import { SPARQL } from '../api/sparql';
 
 	export let selected_node: Node | undefined = undefined;
 	export let menu_position = { x: 0, y: 0 };
-	export let progress = 0;
+	let progress = 0;
 	export let graph: Graph;
 
 	type SortDirection = 1 | -1;
@@ -45,6 +46,12 @@
 
 	const menu_offset = 30;
 
+	if (SPARQL.listenerCount('progress') === 0) {
+		SPARQL.on('progress', (p) => {
+			progress = p;
+		});
+	}
+
 	$: {
 		if (wrapper) {
 			if (menu_position.x + wrapper.offsetWidth + menu_offset > window.innerWidth) {
@@ -62,6 +69,7 @@
 
 			wrapper.style.top = menu_position.y + 'px';
 			wrapper.style.left = menu_position.x + 'px';
+			progress = 0;
 		}
 	}
 
