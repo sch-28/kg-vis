@@ -19,7 +19,9 @@ export interface Binding {
 }
 
 export declare interface SPARQL_Events {
-	'progress'(progress: number): void;
+	'loading_related'(promise: Promise<void>): void;
+	'loading_properties'(promise: Promise<void>): void;
+	'loading_relations'(promise: Promise<void>): void;
 }
 
 export class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
@@ -48,8 +50,6 @@ export class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 	public get progress() {
 		return this.current_progress;
 	}
-
-	private emitter = new TypedEmitter<SPARQL_Events>();
 
 	constructor() {
 		super();
@@ -92,6 +92,10 @@ export class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 	}
 
 	public async fetch_related_nodes(subject: URI, property: URI) {
+		let resolve!: () => void;
+		const promise = new Promise<void>((res) => (resolve = res));
+		this.emit('loading_related', promise);
+
 		const result = await this.query<{ object: Node; objectLabel?: Node }>(
 			`
 			SELECT DISTINCT ?object ?objectLabel  WHERE {
@@ -106,6 +110,7 @@ export class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 				}
 				} LIMIT ${this.size_limit}`
 		);
+		resolve();
 
 		const results = result.map((r) => ({
 			uri: r.object.value,
@@ -227,6 +232,9 @@ export class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 			object: Node;
 			propLabel: Node;
 		}[] = [];
+		let resolve!: () => void;
+		const promise = new Promise<void>((res) => (resolve = res));
+		this.emit('loading_relations', promise);
 		for (let i = 0; i < subjects.length; i += this.rate_limit) {
 			const new_nodes = subjects.slice(i, i + this.rate_limit);
 			const requests: Promise<
@@ -240,6 +248,7 @@ export class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 			new_nodes.forEach((node) => requests.push(this.fetch_relations(node, other_nodes)));
 			relations.push(...(await (await Promise.all(requests)).flat()));
 		}
+		resolve();
 		return relations;
 	}
 
@@ -334,7 +343,7 @@ export class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 		throw new Error('Unable to fetch Property: ' + result);
 	}
 
-	public async fetch_properties(subject: URI, progress_function?: (progress: number) => void) {
+	public async fetch_properties(subject: URI) {
 		const result = await this.query<{ property: Node }>(
 			`
 			
@@ -353,14 +362,17 @@ export class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 		);
 
 		const results: Property[] = [];
+		let resolve!: () => void;
+		const promise = new Promise<void>((res) => (resolve = res));
+		this.emit('loading_properties', promise);
 		for (let i = 0; i < result.length; i += this.rate_limit) {
 			const properties = result.slice(i, i + this.rate_limit).map((c) => c.property.value);
 
 			const requests: Promise<Property>[] = [];
 			properties.forEach((prop) => requests.push(this.fetch_property_count(subject, prop)));
 			results.push(...((await Promise.all(requests)) as Property[]));
-			if (progress_function) progress_function(Math.floor((i / result.length) * 100));
 		}
+		resolve();
 
 		return results;
 	}

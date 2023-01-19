@@ -252,8 +252,8 @@ export class Graph {
 		return true;
 	}
 
-	async load_properties(uri: URI, progress_function?: (progress: number) => void) {
-		const properties = await SPARQL.fetch_properties(uri, progress_function);
+	async load_properties(uri: URI) {
+		const properties = await SPARQL.fetch_properties(uri);
 		if (properties.length > 0) {
 			const node = this.find_or_create_node(uri, uri);
 			node.is_fetched = true;
@@ -289,10 +289,10 @@ export class Graph {
 		return new_nodes;
 	}
 
-	async get_properties(uri: URI, progress_function?: (progress: number) => void) {
+	async get_properties(uri: URI) {
 		const node = this.find_or_create_node(uri, '');
 		if (!node.is_fetched) {
-			await this.load_properties(node.id, progress_function);
+			await this.load_properties(node.id);
 		}
 
 		return node;

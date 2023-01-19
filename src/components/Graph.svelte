@@ -7,6 +7,7 @@
 	import { Toaster } from 'svelte-french-toast';
 	import { dark_mode } from '../util';
 	import ActionMenu from './Action-Menu.svelte';
+	import ToastManager from './Toast-Manager.svelte';
 
 	let container: HTMLElement;
 
@@ -112,7 +113,7 @@
 			const node_position = network.canvasToDOM(network.getPosition(uri));
 			menu_position = node_position;
 
-			graph.get_properties(uri, set_progress).then((node) => {
+			graph.get_properties(uri).then((node) => {
 				if (hide_context_menu && selected_node !== undefined) selected_node = node;
 			});
 		} else {
@@ -126,6 +127,7 @@
 </script>
 
 <Toaster />
+<ToastManager />
 <div bind:this={container} class="w-full h-full" />
 <Menu {menu_position} {selected_node} {progress} {graph} />
 <ContextMenu
