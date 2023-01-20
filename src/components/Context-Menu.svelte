@@ -15,9 +15,14 @@
 	let wrapper: HTMLElement;
 
 	$: {
+		wrapper;
+		set_position(menu_position);
+	}
+
+	function set_position(position: { x: number; y: number }) {
 		if (wrapper) {
-			wrapper.style.top = menu_position.y + 'px';
-			wrapper.style.left = menu_position.x + 'px';
+			wrapper.style.top = position.y + 'px';
+			wrapper.style.left = position.x + 'px';
 		}
 	}
 

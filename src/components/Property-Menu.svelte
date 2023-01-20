@@ -54,21 +54,22 @@
 
 	$: {
 		if (wrapper) {
-			if (menu_position.x + wrapper.offsetWidth + menu_offset > window.innerWidth) {
-				menu_position.x = window.innerWidth - wrapper.offsetWidth;
+			const new_position = { x: menu_position.x, y: menu_position.y };
+			if (new_position.x + wrapper.offsetWidth + menu_offset > window.innerWidth) {
+				new_position.x = window.innerWidth - wrapper.offsetWidth;
 			} else {
-				menu_position.x += menu_offset;
+				new_position.x += menu_offset;
 			}
-			if (menu_position.y + wrapper.offsetHeight / 2 > window.innerHeight) {
-				menu_position.y = window.innerHeight - wrapper.offsetHeight;
-			} else if (menu_position.y - wrapper.offsetHeight / 2 < 0) {
-				menu_position.y = 0;
+			if (new_position.y + wrapper.offsetHeight / 2 > window.innerHeight) {
+				new_position.y = window.innerHeight - wrapper.offsetHeight;
+			} else if (new_position.y - wrapper.offsetHeight / 2 < 0) {
+				new_position.y = 0;
 			} else {
-				menu_position.y -= wrapper.offsetHeight / 2;
+				new_position.y -= wrapper.offsetHeight / 2;
 			}
 
-			wrapper.style.top = menu_position.y + 'px';
-			wrapper.style.left = menu_position.x + 'px';
+			wrapper.style.top = new_position.y + 'px';
+			wrapper.style.left = new_position.x + 'px';
 			progress = 0;
 		}
 	}
