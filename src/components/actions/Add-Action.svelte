@@ -7,14 +7,14 @@
 	import { getContext, onMount } from 'svelte';
 	import LoadingCircle from '../Loading-Circle.svelte';
 	import { Settings } from '../../settings';
-	import { Button } from 'flowbite-svelte';
+	import { Button, Hr, Toggle } from 'flowbite-svelte';
 
 	export let graph: Graph;
 
 	const close = getContext('close') as () => void;
 
 	let advanced_container: HTMLDivElement;
-	let container_height: number = 258;
+	let container_height: number = 201;
 	let error: string = '';
 	let loading: boolean = false;
 
@@ -147,7 +147,7 @@
 	<h1 class="text-lg font-bold mb-2">Add Nodes</h1>
 
 	<button
-		class="border-b border-dark-muted flex justify-center items-center text-dark-muted dark:text-light-muted pb-1 relative"
+		class="flex justify-center items-center text-dark-muted dark:text-light-muted pb-1 relative"
 		on:click={toggle_advanced}
 	>
 		Advanced <Icon
@@ -157,52 +157,32 @@
 				: '-rotate-180'}"
 		/>
 	</button>
-
+	<Hr divClass="mb-2" />
 	<div
 		bind:this={advanced_container}
 		class="h-0 overflow-hidden transition-all duration-200 flex gap-2 flex-col mb-2"
 	>
-		<div class="flex items-center mt-2">
-			<input
-				checked
-				id="checked-checkbox"
-				type="checkbox"
-				value=""
-				class="w-4 h-4 text-primary bg-gray-100 rounded border-gray-300 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-			/>
-			<label
-				for="checked-checkbox"
-				class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">Fetch relations</label
-			>
-		</div>
-
-		<hr class="border-dark-muted my-2" />
-		<div>
-			<div
-				class="w-full border border-gray-200 rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600"
-			>
-				<div class="px-4 py-2 bg-white rounded-t-lg dark:bg-gray-800">
-					<label for="sparql-query" class="block mb-2 text-sm font-medium">SPARQL Query</label>
-					<textarea
-						data-gramm="false"
-						on:resize={handle_resize}
-						bind:this={sparql_query_area}
-						bind:value={sparql_query}
-						id="sparql-query"
-						rows="4"
-						class="w-full px-0 text-sm text-gray-900 bg-white border-0 dark:bg-gray-800 focus:ring-0 dark:text-light dark:placeholder-gray-400"
-						placeholder={`SELECT ?cat WHERE\n{\n	?cat wdt:P31 wd:Q146.\n}`}
-						required
-					/>
-				</div>
-				<div class="flex items-center justify-between px-3 py-2 border-t dark:border-gray-600">
-					<Button
-						on:click={submit_query}
-						type="submit"
-						size="sm"
-						disabled={sparql_query.length == 0}>Fetch</Button
-					>
-				</div>
+		<div
+			class="mt-2 w-full border border-gray-200 rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600"
+		>
+			<div class="px-4 py-2 bg-white rounded-t-lg dark:bg-gray-800">
+				<label for="sparql-query" class="block mb-2 text-sm font-medium">SPARQL Query</label>
+				<textarea
+					data-gramm="false"
+					on:resize={handle_resize}
+					bind:this={sparql_query_area}
+					bind:value={sparql_query}
+					id="sparql-query"
+					rows="4"
+					class="w-full px-0 text-sm text-gray-900 bg-white border-0 dark:bg-gray-800 focus:ring-0 dark:text-light dark:placeholder-gray-400"
+					placeholder={`SELECT ?cat WHERE\n{\n	?cat wdt:P31 wd:Q146.\n}`}
+					required
+				/>
+			</div>
+			<div class="flex items-center justify-between px-3 py-2 border-t dark:border-gray-600">
+				<Button on:click={submit_query} type="submit" size="sm" disabled={sparql_query.length == 0}
+					>Fetch</Button
+				>
 			</div>
 		</div>
 	</div>
@@ -263,7 +243,11 @@
 			</div>
 		{/if}
 	</div>
-	<div class="flex gap-2">
+	<Hr divClass="mb-2" />
+	<div class="mb-2">
+		<Toggle checked={$Settings.fetch_related}>Fetch relations</Toggle>
+	</div>
+	<div class="flex gap-2 items-center">
 		<Button on:click={add_nodes} disabled={loading || nodes.length === 0} size="sm">Add</Button>
 		<button on:click={close}>Cancel</button>
 	</div>

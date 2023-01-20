@@ -19,6 +19,7 @@
 				} min-width: 200px;`
 			}
 		);
+		document.querySelector('.toaster .message')?.setAttribute('title', message);
 	}
 
 	/* SPARQL.on('loading_properties', (promise) => {
@@ -33,5 +34,17 @@
 		SPARQL.on('loading_relations', (promise) => {
 			show_toast('Relations', promise);
 		});
+		SPARQL.on('error', (error) => {
+			show_toast(error.message, Promise.reject());
+		});
 	});
 </script>
+
+<style>
+	:global(.toaster .message) {
+		overflow: hidden;
+		display: -webkit-box !important;
+		-webkit-line-clamp: 3;
+		-webkit-box-orient: vertical;
+	}
+</style>

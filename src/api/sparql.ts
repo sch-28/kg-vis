@@ -23,6 +23,7 @@ declare interface SPARQL_Events {
 	'loading_properties'(promise: Promise<void>): void;
 	'loading_relations'(promise: Promise<void>): void;
 	'progress'(progress: number): void;
+	'error'(error: Error): void;
 }
 
 class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
@@ -45,7 +46,11 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 	}
 
 	public get endpoint() {
-		return get(Settings).endpoint_url;
+		let endpoint = get(Settings).endpoint_url;
+		if (!isUrl(endpoint) || endpoint.length === 0) {
+			endpoint = 'https://query.wikidata.org/sparql';
+		}
+		return endpoint;
 	}
 
 	public get progress() {
@@ -61,36 +66,41 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 		const urlencoded = new URLSearchParams();
 		urlencoded.append('query', this.prefix + body);
 
-		const result = await fetch(this.endpoint, {
-			method: 'POST',
+		try {
+			const result = await fetch(this.endpoint, {
+				method: 'POST',
 
-			headers: {
-				'Content-Type': 'application/x-www-form-urlencoded',
-				Accept: 'application/sparql-results+json'
-			},
-
-			body: urlencoded
-		});
-		/* const content = `?query=${encodeURIComponent(body)}`;
+				headers: {
+					'Content-Type': 'application/x-www-form-urlencoded',
+					Accept: 'application/sparql-results+json'
+				},
+				body: urlencoded
+			});
+			/* const content = `?query=${encodeURIComponent(body)}`;
 		const result = await fetch(endpoint + content, {
 			method: "GET",
 			headers: {
 				Accept: "application/sparql-results+json",
 			},
 		}); */
-		if (result.status != 200) {
-			const error_message = await result.text();
-			throw new Error(`SPARQL query failed: ${error_message}`);
+			if (result.status != 200) {
+				const error_message = await result.text();
+				throw new Error(`SPARQL query: ${error_message}`);
+			}
+
+			const json = await result.json();
+
+			const bindings: T[] = [];
+			for (const binding of json.results.bindings) {
+				bindings.push(binding);
+			}
+
+			return bindings;
+		} catch (e) {
+			console.log(e);
+			if (e instanceof Error) this.emit('error', e);
+			return [];
 		}
-
-		const json = await result.json();
-
-		const bindings: T[] = [];
-		for (const binding of json.results.bindings) {
-			bindings.push(binding);
-		}
-
-		return bindings;
 	}
 
 	public async fetch_related_nodes(subject: URI, property: URI) {
