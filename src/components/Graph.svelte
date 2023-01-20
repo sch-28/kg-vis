@@ -8,6 +8,7 @@
 	import { dark_mode } from '../util';
 	import ActionMenu from './Action-Menu.svelte';
 	import ToastManager from './Toast-Manager.svelte';
+	import InformationMenu from './Information-Menu.svelte';
 
 	let container: HTMLElement;
 
@@ -19,6 +20,8 @@
 
 	let hide_context_menu = true;
 	let context_selection: Node | undefined = undefined;
+
+	let show_node_information: Node | undefined = undefined;
 
 	export let value: string;
 
@@ -121,9 +124,16 @@
 
 <Toaster />
 <ToastManager />
+<InformationMenu node={show_node_information} />
 <div bind:this={container} class="w-full h-full" />
-<Menu {menu_position} {selected_node} {graph} />
+<Menu
+	{menu_position}
+	{selected_node}
+	{graph}
+	information_tab_visible={show_node_information !== undefined}
+/>
 <ContextMenu
+	on_information={(node) => (show_node_information = node)}
 	{menu_position}
 	bind:hidden={hide_context_menu}
 	selection={context_selection}

@@ -17,9 +17,10 @@
 
 	export let selected_node: Node | undefined = undefined;
 	export let menu_position = { x: 0, y: 0 };
-	let progress = 0;
 	export let graph: Graph;
+	export let information_tab_visible: boolean = false;
 
+	let progress = 0;
 	type SortDirection = 1 | -1;
 	type SortOptions = 'name' | 'count' | 'direction';
 	const sort_options: SortOptions[] = ['direction', 'name', 'count'];
@@ -45,6 +46,7 @@
 	let wrapper: HTMLElement;
 
 	const menu_offset = 30;
+	const menu_gap = 16;
 
 	if (SPARQL.listenerCount('progress') === 0) {
 		SPARQL.on('progress', (p) => {
@@ -55,15 +57,19 @@
 	$: {
 		if (wrapper) {
 			const new_position = { x: menu_position.x, y: menu_position.y };
-			if (new_position.x + wrapper.offsetWidth + menu_offset > window.innerWidth) {
-				new_position.x = window.innerWidth - wrapper.offsetWidth;
+			let window_width = window.innerWidth;
+			if (information_tab_visible) {
+				window_width -= 336;
+			}
+			if (new_position.x + wrapper.offsetWidth + menu_offset > window_width) {
+				new_position.x = window_width - wrapper.offsetWidth - menu_gap;
 			} else {
 				new_position.x += menu_offset;
 			}
 			if (new_position.y + wrapper.offsetHeight / 2 > window.innerHeight) {
-				new_position.y = window.innerHeight - wrapper.offsetHeight;
+				new_position.y = window.innerHeight - wrapper.offsetHeight - menu_gap;
 			} else if (new_position.y - wrapper.offsetHeight / 2 < 0) {
-				new_position.y = 0;
+				new_position.y = menu_gap;
 			} else {
 				new_position.y -= wrapper.offsetHeight / 2;
 			}

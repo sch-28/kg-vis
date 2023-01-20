@@ -12,6 +12,7 @@
 	export let hidden = true;
 	export let selection: Node | undefined = undefined;
 	export let graph: Graph;
+	export let on_information: (node: Node) => void;
 	let wrapper: HTMLElement;
 
 	$: {
@@ -55,7 +56,7 @@
 
 	function handle_information() {
 		if (selection) {
-			console.log(selection);
+			on_information(selection);
 		}
 		hidden = true;
 	}
