@@ -116,6 +116,13 @@ export class Graph {
 		this.update_data();
 	}
 
+	reset() {
+		this.nodes = [];
+		this.edges = [];
+		this.data.nodes.clear();
+		this.data.edges.clear();
+	}
+
 	is_edge_visible(edge: Edge) {
 		for (const node_one of this.nodes) {
 			if (node_one.id == edge.from && node_one.visible) {

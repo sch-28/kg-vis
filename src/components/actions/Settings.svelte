@@ -10,11 +10,13 @@
 		SidebarWrapper,
 		Toggle
 	} from 'flowbite-svelte';
-	import Graph from 'svelte-material-icons/GraphOutline.svelte';
-	import { CircleStack, QuestionMarkCircle } from '@steeze-ui/heroicons';
+	import GraphIcon from 'svelte-material-icons/GraphOutline.svelte';
+	import { ArrowPath, CircleStack, QuestionMarkCircle } from '@steeze-ui/heroicons';
 	import { Settings } from '../../settings';
+	import type { Graph } from '../../api/graph';
 
 	const close = getContext('close') as () => void;
+	export let graph: Graph;
 
 	let selected_setting: 'endpoint' | 'graph' | 'documentation' = 'endpoint';
 </script>
@@ -41,7 +43,7 @@
 					>
 						<svelte:fragment slot="icon">
 							<div class="w-6 h-6">
-								<Graph width="100%" height="100%" />
+								<GraphIcon width="100%" height="100%" />
 							</div>
 						</svelte:fragment>
 					</SidebarItem>
@@ -54,6 +56,18 @@
 					>
 						<svelte:fragment slot="icon">
 							<Icon src={QuestionMarkCircle} class="w-6 h-6" />
+						</svelte:fragment>
+					</SidebarItem>
+					<SidebarItem
+						label="Reset Graph"
+						on:click={() => {
+							graph.reset();
+							close();
+						}}
+						spanClass="dark:text-error-dark text-error ml-3"
+					>
+						<svelte:fragment slot="icon">
+							<Icon src={ArrowPath} class="w-6 h-6 text-error dark:text-error-dark" />
 						</svelte:fragment>
 					</SidebarItem>
 				</SidebarGroup>
