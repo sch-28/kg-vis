@@ -103,6 +103,20 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 		}
 	}
 
+	public async fetch_description(subject: URI) {
+		const result = await this.query<{ description: Node }>(`
+
+		SELECT DISTINCT ?description WHERE {
+			VALUES ?subject {
+				<${subject}>
+			}
+			?subject schema:description ?description
+			FILTER (lang(?description) = 'en')
+		} LIMIT 1`);
+
+		return result[0]?.description.value ?? '';
+	}
+
 	public async fetch_related_nodes(subject: URI, property: URI) {
 		let resolve!: () => void;
 		const promise = new Promise<void>((res) => (resolve = res));
@@ -350,7 +364,7 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 				out_count: +res.outCount.value,
 				in_count: +res.inCount.value
 			};
-		}else{
+		} else {
 			return {
 				label: property,
 				uri: property,
