@@ -226,30 +226,38 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 		return subjects.map((s) => ({ uri: s, label: s }));
 	}
 
-	public async fetch_label(subject: URI) {
-		if (!isUrl(subject)) return subject;
+	public async fetch_info(subject: URI) {
 
 		const result = await this.query<{
-			subjectLabel: Node;
+			label: Node;
+			description: Node;
 		}>(
 			`
-			SELECT DISTINCT ?subjectLabel WHERE {
+			SELECT DISTINCT ?label ?description WHERE {
 			  VALUES ?subject {
 				<${subject}>
 				  }
 	
-			 
-			?subject rdfs:label ?subjectLabel 
-			FILTER (lang(?subjectLabel) = 'en')
+			OPTIONAL {
+			?subject rdfs:label ?label 
+			FILTER (lang(?label) = 'en')
+			}
+			OPTIONAL {
+				?subject schema:description ?description
+				FILTER (lang(?description) = 'en')
+			}
 			
 			}
 				`
 		);
 		if (result.length > 0) {
-			return result[0].subjectLabel.value;
+			return {
+				label: result[0].label?.value ?? subject,
+				description: result[0].description?.value ?? ''
+			};
 		}
 
-		return subject;
+		return { label: subject, description: '' };
 	}
 
 	public async fetch_multiple_relations(subjects: URI[], other_nodes: URI[]) {

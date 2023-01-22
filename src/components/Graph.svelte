@@ -124,7 +124,7 @@
 
 <Toaster />
 <ToastManager />
-<InformationMenu node={show_node_information} />
+<InformationMenu node={show_node_information} {graph} />
 <div bind:this={container} class="w-full h-full" />
 <Menu
 	{menu_position}

@@ -3,6 +3,7 @@ import { DataSet } from 'vis-data';
 import type { Network } from 'vis-network';
 import { SPARQL } from './sparql';
 import { get } from 'svelte/store';
+import isUrl from 'is-url';
 
 export type URI = string;
 
@@ -26,6 +27,7 @@ export class Property {
 export class Node {
 	id: URI;
 	label: string;
+	description: string;
 	visible: boolean;
 	is_fetched: boolean;
 	fixed: boolean;
@@ -54,7 +56,8 @@ export class Node {
 		visible = false,
 		image?: URI,
 		position: { x: number; y: number } = { x: 0, y: 0 },
-		fixed = false
+		fixed = false,
+		description = ''
 	) {
 		this.id = uri;
 		this.label = label;
@@ -64,6 +67,7 @@ export class Node {
 		this.x = position.x;
 		this.y = position.y;
 		this.fixed = fixed;
+		this.description = description;
 		if (image) {
 			this.update_image(image);
 		}
@@ -201,11 +205,12 @@ export class Graph {
 		position: {
 			x: number;
 			y: number;
-		} = { x: 0, y: 0 }
+		} = { x: 0, y: 0 },
+		description: string = ''
 	) {
 		let node = this.nodes.find((node) => node.id == uri);
 		if (!node) {
-			node = new Node(uri, label, type, visible, image, position);
+			node = new Node(uri, label, type, visible, image, position, false, description);
 			this.nodes.push(node);
 		}
 		return node;
@@ -269,14 +274,26 @@ export class Graph {
 	}
 
 	async load_node(uri: URI, visible: boolean = true) {
-		const label_promise = SPARQL.fetch_label(uri);
+		if (!isUrl(uri)) {
+			return this.find_or_create_node(uri, uri, 'literal', visible);
+		}
+
+		const info_promise = SPARQL.fetch_info(uri);
 		let image_promise: Promise<string | undefined> = Promise.resolve(undefined);
 		if (get(Settings).fetch_image) {
 			image_promise = SPARQL.fetch_image(uri);
 		}
 
-		const [label, image] = await Promise.all([label_promise, image_promise]);
-		return this.find_or_create_node(uri, label, 'uri', visible, image);
+		const [info, image] = await Promise.all([info_promise, image_promise]);
+		return this.find_or_create_node(
+			uri,
+			info.label,
+			'uri',
+			visible,
+			image,
+			undefined,
+			info.description
+		);
 	}
 
 	async load_nodes(uris: URI[], visible: boolean = true) {
