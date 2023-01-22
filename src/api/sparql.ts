@@ -28,6 +28,7 @@ declare interface SPARQL_Events {
 
 class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 	private readonly prefix = `
+			PREFIX schema: <http://schema.org/>
 			PREFIX wdt: <http://www.wikidata.org/prop/direct/>
 			PREFIX bd: <http://www.bigdata.com/rdf#>
 			PREFIX wd: <http://www.wikidata.org/entity/>
