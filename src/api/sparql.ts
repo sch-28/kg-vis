@@ -350,9 +350,14 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 				out_count: +res.outCount.value,
 				in_count: +res.inCount.value
 			};
+		}else{
+			return {
+				label: property,
+				uri: property,
+				out_count: 0,
+				in_count: 0
+			};
 		}
-
-		throw new Error('Unable to fetch Property: ' + result);
 	}
 
 	public async fetch_properties(subject: URI) {
