@@ -82,7 +82,7 @@
 						<p class="text-sm absolute top-0 left-1 px-1 bg-white dark:bg-dark-bg">
 							{property.label}
 						</p>
-						<div class="w-full border-dark-muted rounded-lg border p-2">
+						<div class="w-full border-light dark:border-dark-muted rounded-lg border p-2">
 							{#if property.related && property.related.length > 0}
 								{#each property.related.slice(0, 5) as node}
 									<div class="truncate" title={node.label}>
