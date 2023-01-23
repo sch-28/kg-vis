@@ -1,16 +1,33 @@
 <script lang="ts">
 	import { Heading, Hr } from 'flowbite-svelte';
 	import { SPARQL } from '../api/sparql';
-	import type { Graph, Node } from '../api/graph';
+	import type { Graph, Node, Property } from '../api/graph';
 	import LoadingCircle from './Loading-Circle.svelte';
 	export let node: Node | undefined;
 	export let graph: Graph;
 
 	let loading: boolean = false;
+	let loading_related: boolean = false;
 	let page: number = 0;
 	const page_size: number = 8;
 
+	let properties: Property[] = [];
 	$: node && load_properties();
+
+	$: page && load_related();
+
+	async function load_related() {
+		if (node) {
+			properties = node.properties.slice(page * page_size, page * page_size + page_size);
+			loading_related = true;
+			for (const property of properties) {
+				await graph.load_related_nodes(node.id, property, false, undefined, false);
+				properties = properties;
+			}
+			loading_related = false;
+			
+		}
+	}
 
 	async function load_properties() {
 		if (node) {
@@ -19,6 +36,7 @@
 				await graph.get_properties(node.id);
 			}
 			loading = false;
+			await load_related();
 		}
 	}
 </script>
@@ -32,12 +50,24 @@
 		<p class="mb-2">{node.description}</p>
 		<div class="w-full max-h-full overflow-auto flex-grow flex flex-col gap-2">
 			{#if node.properties.length > 0}
-				{#each node.properties.slice(page * page_size, page * page_size + page_size) as property}
+				{#each properties as property}
 					<div class="flex flex-col relative pt-3">
 						<p class="text-sm absolute top-0 left-1 px-1 bg-white dark:bg-dark-bg">
 							{property.label}
 						</p>
-						<div class="w-full border-dark-muted rounded-lg border p-2">No entries found</div>
+						<div class="w-full border-dark-muted rounded-lg border p-2">
+							{#if property.related && property.related.length > 0}
+								{#each property.related as node}
+									{node.label}
+								{/each}
+							{:else if loading_related}
+								<div class="h-4 w-4 m-auto">
+									<LoadingCircle />
+								</div>
+							{:else}
+								No related nodes
+							{/if}
+						</div>
 					</div>
 				{/each}
 			{:else if loading}

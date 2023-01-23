@@ -334,7 +334,7 @@ export class Graph {
 			x: number;
 			y: number;
 		} = { x: 0, y: 0 },
-		fetch_relations = true
+		notify = true
 	) {
 		const node = this.find_or_create_node(uri, uri);
 		let existing_property = node.properties.find((p) => p.uri == property.uri);
@@ -348,7 +348,7 @@ export class Graph {
 			existing_property.related = [];
 		}
 
-		const raw_new_nodes = await SPARQL.fetch_related_nodes(uri, property.uri);
+		const raw_new_nodes = await SPARQL.fetch_related_nodes(uri, property.uri, notify);
 		const new_nodes: Node[] = [];
 		const already_exists: Node[] = [];
 
@@ -376,7 +376,7 @@ export class Graph {
 		this.update_data(visible);
 
 		// fetch all interconnections
-		if (fetch_relations && get(Settings).fetch_related) {
+		if (get(Settings).fetch_related) {
 			SPARQL.fetch_multiple_relations(
 				new_nodes.map((n) => n.id),
 				this.nodes.map((n) => n.id)

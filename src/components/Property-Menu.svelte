@@ -19,6 +19,7 @@
 	export let menu_position = { x: 0, y: 0 };
 	export let graph: Graph;
 	export let information_tab_visible: boolean = false;
+	export let loading: boolean = false;
 
 	let progress = 0;
 	type SortDirection = 1 | -1;
@@ -415,6 +416,11 @@
 						>
 					</button>
 				{/each}
+				{#if loading}
+					<div class="w-8 h-8 mx-auto mt-2">
+						<LoadingCircle />
+					</div>
+				{/if}
 			</div>
 		{:else if selected_property_nodes.length > 0}
 			<div class="flex justify-between items-center mb-1 mx-2">

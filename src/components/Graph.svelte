@@ -23,6 +23,8 @@
 
 	let show_node_information: Node | undefined = undefined;
 
+	let loading_properties: boolean = false;
+
 	export let value: string;
 
 	$: if (value) {
@@ -113,8 +115,10 @@
 			const node_position = network.canvasToDOM(network.getPosition(uri));
 			menu_position = node_position;
 
+			loading_properties = true;
 			graph.get_properties(uri).then((node) => {
 				if (hide_context_menu && selected_node !== undefined) selected_node = node;
+				loading_properties = false;
 			});
 		} else {
 			selected_node = undefined;
@@ -130,6 +134,7 @@
 	{menu_position}
 	{selected_node}
 	{graph}
+	loading={loading_properties}
 	information_tab_visible={show_node_information !== undefined}
 />
 <ContextMenu

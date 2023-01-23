@@ -118,10 +118,10 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 		return result[0]?.description.value ?? '';
 	}
 
-	public async fetch_related_nodes(subject: URI, property: URI) {
+	public async fetch_related_nodes(subject: URI, property: URI, notify?: boolean) {
 		let resolve!: () => void;
 		const promise = new Promise<void>((res) => (resolve = res));
-		this.emit('loading_related', promise);
+		notify && this.emit('loading_related', promise);
 
 		const result = await this.query<{ object: Node; objectLabel?: Node }>(
 			`
@@ -227,7 +227,6 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 	}
 
 	public async fetch_info(subject: URI) {
-
 		const result = await this.query<{
 			label: Node;
 			description: Node;
@@ -260,7 +259,7 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 		return { label: subject, description: '' };
 	}
 
-	public async fetch_multiple_relations(subjects: URI[], other_nodes: URI[]) {
+	public async fetch_multiple_relations(subjects: URI[], other_nodes: URI[], notify?: boolean) {
 		const relations: {
 			subject: Node;
 			property: Node;
@@ -269,7 +268,7 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 		}[] = [];
 		let resolve!: () => void;
 		const promise = new Promise<void>((res) => (resolve = res));
-		this.emit('loading_relations', promise);
+		notify && this.emit('loading_relations', promise);
 		for (let i = 0; i < subjects.length; i += this.rate_limit) {
 			const new_nodes = subjects.slice(i, i + this.rate_limit);
 			const requests: Promise<
@@ -371,14 +370,14 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 				label: res.propLabel?.value,
 				uri: property,
 				out_count: +res.outCount.value,
-				in_count: +res.inCount.value,
+				in_count: +res.inCount.value
 			};
 		} else {
 			return {
 				label: property,
 				uri: property,
 				out_count: 0,
-				in_count: 0,
+				in_count: 0
 			};
 		}
 	}
