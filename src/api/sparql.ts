@@ -371,14 +371,14 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 				label: res.propLabel?.value,
 				uri: property,
 				out_count: +res.outCount.value,
-				in_count: +res.inCount.value
+				in_count: +res.inCount.value,
 			};
 		} else {
 			return {
 				label: property,
 				uri: property,
 				out_count: 0,
-				in_count: 0
+				in_count: 0,
 			};
 		}
 	}
