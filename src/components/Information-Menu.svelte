@@ -28,7 +28,6 @@
 				current_page * page_size,
 				current_page * page_size + page_size
 			);
-			console.log(properties);
 			loading_related = true;
 			for (const property of properties) {
 				await graph.load_related_nodes(node.id, property, false, undefined, false);

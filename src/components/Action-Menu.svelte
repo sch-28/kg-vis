@@ -27,7 +27,7 @@
 </script>
 
 <div
-	class="absolute top-0 left-1/2 -translate-x-1/2 shadow-lg rounded-b-lg flex gap-10  py-4 px-6 border dark:border-dark-muted dark:bg-dark-bg bg-white z-50"
+	class="absolute top-4 left-1/2 -translate-x-1/2 shadow-lg rounded-lg flex gap-10  py-4 px-6 border dark:border-dark-muted dark:bg-dark-bg bg-white z-50"
 >
 	<button class="flex items-center gap-2 cursor-pointer" on:click={() => open(AddAction)}>
 		<div class="w-6 h-6">
