@@ -38,6 +38,10 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 
 	private current_progress: number | undefined = undefined;
 
+	private last_fetch: number = 0;
+	private queue: string[] = [];
+	private last_queue: number = 0;
+
 	public get rate_limit() {
 		return +get(Settings).rate_limit ?? 10;
 	}
@@ -63,7 +67,28 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 		this.setMaxListeners(1);
 	}
 
-	public async query<T extends Binding>(body: string) {
+	public async query<T extends Binding>(body?: string) {
+		const now = Date.now();
+		const diff = now - this.last_fetch;
+		if (diff < this.rate_limit && body) {
+			this.queue.push(body);
+			const timeout = Math.max(this.last_queue, this.last_fetch) + this.rate_limit - now;
+			this.last_queue = timeout + now;
+
+			return new Promise<T[]>((res) =>
+				setTimeout(async () => {
+					res(await this.query<T>());
+				}, timeout)
+			);
+		}
+
+		this.last_fetch = now;
+
+
+		if (this.queue.length > 0 && !body) {
+			body = this.queue.shift();
+		}
+
 		const urlencoded = new URLSearchParams();
 		urlencoded.append('query', this.prefix + body);
 
@@ -77,13 +102,7 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 				},
 				body: urlencoded
 			});
-			/* const content = `?query=${encodeURIComponent(body)}`;
-		const result = await fetch(endpoint + content, {
-			method: "GET",
-			headers: {
-				Accept: "application/sparql-results+json",
-			},
-		}); */
+
 			if (result.status != 200) {
 				const error_message = await result.text();
 				throw new Error(`SPARQL query: ${error_message}`);
@@ -98,7 +117,7 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 
 			return bindings;
 		} catch (e) {
-			console.log(e);
+			console.error(e);
 			if (e instanceof Error) this.emit('error', e);
 			return [];
 		}
@@ -259,7 +278,11 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 		return { label: subject, description: '' };
 	}
 
-	public async fetch_multiple_relations(subjects: URI[], other_nodes: URI[], notify?: boolean) {
+	public async fetch_multiple_relations(
+		subjects: URI[],
+		other_nodes: URI[],
+		notify: boolean = true
+	) {
 		const relations: {
 			subject: Node;
 			property: Node;
@@ -269,19 +292,16 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 		let resolve!: () => void;
 		const promise = new Promise<void>((res) => (resolve = res));
 		notify && this.emit('loading_relations', promise);
-		for (let i = 0; i < subjects.length; i += this.rate_limit) {
-			const new_nodes = subjects.slice(i, i + this.rate_limit);
-			const requests: Promise<
-				{
-					subject: Node;
-					property: Node;
-					object: Node;
-					propLabel: Node;
-				}[]
-			>[] = [];
-			new_nodes.forEach((node) => requests.push(this.fetch_relations(node, other_nodes)));
-			relations.push(...(await (await Promise.all(requests)).flat()));
-		}
+		const requests: Promise<
+			{
+				subject: Node;
+				property: Node;
+				object: Node;
+				propLabel: Node;
+			}[]
+		>[] = [];
+		subjects.forEach((node) => requests.push(this.fetch_relations(node, other_nodes)));
+		relations.push(...(await (await Promise.all(requests)).flat()));
 		resolve();
 		return relations;
 	}
@@ -404,17 +424,14 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 		let resolve!: () => void;
 		const promise = new Promise<void>((res) => (resolve = res));
 		this.emit('loading_properties', promise);
-		for (let i = 0; i < result.length; i += this.rate_limit) {
-			const properties = result.slice(i, i + this.rate_limit).map((c) => c.property.value);
-			console.log(i)
-			const requests: Promise<Property>[] = [];
-			properties.forEach((prop) => requests.push(this.fetch_property_count(subject, prop)));
-			results.push(...((await Promise.all(requests)) as Property[]));
-			console.log(properties.length)
-			this.emit('progress', Math.floor((i / result.length) * 100));
+		const properties = result.map((c) => c.property.value);
+		const requests: Promise<Property>[] = [];
+		properties.forEach((prop) => requests.push(this.fetch_property_count(subject, prop)));
+		for(let i = 0; i < requests.length; i++){
+			results.push(await requests[i]);
+			this.emit('progress', Math.floor((i / requests.length) * 100));
 		}
 		resolve();
-
 		return results;
 	}
 }
