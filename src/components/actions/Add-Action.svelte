@@ -104,6 +104,7 @@
 	}
 
 	function remove_node(node: Node) {
+		graph.nodes = graph.nodes.filter((n) => n !== node);
 		nodes = nodes.filter((n) => n !== node);
 	}
 
