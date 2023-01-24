@@ -39,11 +39,11 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 	private current_progress: number | undefined = undefined;
 
 	public get rate_limit() {
-		return get(Settings).rate_limit;
+		return +get(Settings).rate_limit ?? 10;
 	}
 
 	public get size_limit() {
-		return get(Settings).size_limit;
+		return +get(Settings).size_limit ?? 100;
 	}
 
 	public get endpoint() {
@@ -406,10 +406,11 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 		this.emit('loading_properties', promise);
 		for (let i = 0; i < result.length; i += this.rate_limit) {
 			const properties = result.slice(i, i + this.rate_limit).map((c) => c.property.value);
-
+			console.log(i)
 			const requests: Promise<Property>[] = [];
 			properties.forEach((prop) => requests.push(this.fetch_property_count(subject, prop)));
 			results.push(...((await Promise.all(requests)) as Property[]));
+			console.log(properties.length)
 			this.emit('progress', Math.floor((i / result.length) * 100));
 		}
 		resolve();
