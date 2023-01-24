@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Cog6Tooth, PencilSquare } from '@steeze-ui/heroicons';
+	import { CheckCircle, Cog6Tooth, PencilSquare } from '@steeze-ui/heroicons';
 	import { Icon } from '@steeze-ui/svelte-icon';
 	import type { Graph } from 'src/api/graph';
 	import { setContext } from 'svelte';
@@ -24,6 +24,15 @@
 		if (current_action === action) current_action = null;
 		else current_action = bind(action as any, { graph }) as unknown as Action;
 	}
+
+	let physics_enabled: boolean = true;
+
+	function toggle_edit() {
+		physics_enabled = !physics_enabled;
+		graph.network?.setOptions({
+			physics: physics_enabled
+		});
+	}
 </script>
 
 <div
@@ -35,8 +44,8 @@
 		</div>
 		Add
 	</button>
-	<button class="flex items-center gap-2 cursor-pointer">
-		<Icon src={PencilSquare} class="w-6 h-6" />Edit
+	<button class="flex items-center gap-2 cursor-pointer min-w-[70px] justify-center" on:click={toggle_edit}>
+		<Icon src={physics_enabled ? PencilSquare : CheckCircle} class="w-6 h-6" />{physics_enabled ? 'Edit' : 'Done'}
 	</button>
 	<button class="flex items-center gap-2 cursor-pointer" on:click={() => open(Settings)}>
 		<Icon src={Cog6Tooth} class="w-6 h-6" />Settings

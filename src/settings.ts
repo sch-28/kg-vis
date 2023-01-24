@@ -41,6 +41,7 @@ export interface Settings {
 	size_limit: number;
 	fetch_image: boolean;
 	animations: boolean;
+	hide_edges_on_drag: boolean;
 }
 
 export const Settings = storage<Settings>('settings', {
@@ -51,5 +52,6 @@ export const Settings = storage<Settings>('settings', {
 	rate_limit: 20,
 	size_limit: 100,
 	fetch_image: false,
-	animations: true
+	animations: true,
+	hide_edges_on_drag: true,
 });

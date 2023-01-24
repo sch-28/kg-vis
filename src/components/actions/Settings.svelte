@@ -18,6 +18,14 @@
 	const close = getContext('close') as () => void;
 	export let graph: Graph;
 
+	$: {
+		graph.network?.setOptions({
+			interaction: {
+				hideEdgesOnDrag: $Settings.hide_edges_on_drag
+			}
+		});
+	}
+
 	let selected_setting: 'endpoint' | 'graph' | 'documentation' = 'endpoint';
 </script>
 
@@ -113,6 +121,7 @@
 			<Toggle bind:checked={$Settings.fetch_image}>Show images</Toggle>
 			<Toggle bind:checked={$Settings.fetch_related}>Fetch relations</Toggle>
 			<Toggle bind:checked={$Settings.animations}>Animations</Toggle>
+			<Toggle bind:checked={$Settings.hide_edges_on_drag}>Hide edges on drag</Toggle>
 		{:else if selected_setting === 'documentation'}
 			<!-- <DocumentationSettings /> -->
 		{/if}

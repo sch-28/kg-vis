@@ -9,6 +9,7 @@
 	import ActionMenu from './Action-Menu.svelte';
 	import ToastManager from './Toast-Manager.svelte';
 	import InformationMenu from './Information-Menu.svelte';
+	import { Settings } from '../settings';
 
 	let container: HTMLElement;
 
@@ -38,6 +39,9 @@
 		graph.update_data();
 
 		const options: Options = {
+			interaction: {
+				hideEdgesOnDrag: $Settings.hide_edges_on_drag,
+			},
 			nodes: {
 				color: dark_mode ? '#6a7e9d' : '#74a0e9',
 				shape: 'dot',
