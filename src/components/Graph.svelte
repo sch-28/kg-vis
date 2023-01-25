@@ -40,7 +40,7 @@
 
 		const options: Options = {
 			interaction: {
-				hideEdgesOnDrag: $Settings.hide_edges_on_drag,
+				hideEdgesOnDrag: $Settings.hide_edges_on_drag
 			},
 			nodes: {
 				color: dark_mode ? '#6a7e9d' : '#74a0e9',
@@ -49,9 +49,15 @@
 					color: dark_mode ? 'white' : 'black'
 				},
 				borderWidth: 3,
-				chosen: false
+				chosen: false,
+				widthConstraint: {
+					maximum: 125
+				}
 			},
 			edges: {
+				widthConstraint: {
+					maximum: 125
+				},
 				font: {
 					strokeWidth: 0,
 					color: dark_mode ? 'white' : 'black',
