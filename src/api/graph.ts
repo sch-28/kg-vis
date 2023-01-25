@@ -379,7 +379,8 @@ export class Graph {
 		if (get(Settings).fetch_related) {
 			SPARQL.fetch_multiple_relations(
 				new_nodes.map((n) => n.id),
-				this.nodes.map((n) => n.id)
+				this.nodes.map((n) => n.id),
+				notify
 			).then((relations) => {
 				for (const relation of relations) {
 					this.create_edge(
