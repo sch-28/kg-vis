@@ -84,7 +84,6 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 
 		this.last_fetch = now;
 
-
 		if (this.queue.length > 0 && !body) {
 			body = this.queue.shift();
 		}
@@ -229,9 +228,13 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 					.map((s) => `<${s}>`)
 					.join('\n')}
 				  }
-	
+				  ${
+						this.endpoint.includes('wikidata')
+							? '?prop wikibase:directClaim ?subject . ?prop rdfs:label ?subjectLabel  '
+							: '?subject rdf:type rdf:Property .  ?subject rdfs:label ?subjectLabel '
+					}
 			 
-				  ?subject rdfs:label ?subjectLabel 
+				  
 				  FILTER (lang(?subjectLabel) = 'en')
 			}
 				`
@@ -283,71 +286,75 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 		other_nodes: URI[],
 		notify: boolean = true
 	) {
-		const relations: {
-			subject: Node;
-			property: Node;
-			object: Node;
-			propLabel: Node;
-		}[] = [];
 		let resolve!: () => void;
+
 		const promise = new Promise<void>((res) => (resolve = res));
 		notify && this.emit('loading_relations', promise);
-		const requests: Promise<
-			{
-				subject: Node;
-				property: Node;
-				object: Node;
-				propLabel: Node;
-			}[]
-		>[] = [];
-		subjects.forEach((node) => requests.push(this.fetch_relations(node, other_nodes)));
-		relations.push(...(await (await Promise.all(requests)).flat()));
+
+		const relations = (await this.fetch_relations(subjects, other_nodes)).map((r) => {
+			const outgoing_property = r.dir.value === 'out';
+
+			return {
+				subject: outgoing_property ? r.subject : r.object,
+				property: r.property,
+				object: outgoing_property ? r.object : r.subject,
+				property_label: r.property.value
+			};
+		});
+
+		const labels = await this.fetch_labels(relations.map((r) => r.property.value));
+
+		for (let i = 0; i < relations.length; i++) {
+			const relation = relations[i];
+			const label = labels.find((l) => l.uri === relation.property.value);
+			if (label) relation.property_label = label.label;
+		}
+
 		resolve();
 		return relations;
 	}
 
-	public async fetch_relations(subject: URI, other_nodes: URI[]) {
-		if (!isUrl(subject)) return Promise.resolve([]);
+	public async fetch_relations(subjects: URI[], other_nodes: URI[]) {
+		let subjects_string = `VALUES ?subject {\n`;
 
-		let relations = `VALUES ?object {\n`;
+		for (let i = 0; i < subjects.length; i++) {
+			const node = subjects[i];
+			if (isUrl(node)) subjects_string += `<${node}>\n`;
+		}
+		subjects_string += '}';
+
+		let objects_string = `VALUES ?object {\n`;
 
 		for (let i = 0; i < other_nodes.length; i++) {
 			const node = other_nodes[i];
-			if (isUrl(node)) relations += `<${node}>\n`;
+			if (isUrl(node)) objects_string += `<${node}>\n`;
 		}
-		relations += '}';
+		objects_string += '}';
 
-		const result = await this.query(
+		const result = await this.query<{
+			subject: Node;
+			property: Node;
+			object: Node;
+			dir: Node;
+		}>(
 			`
 			
-			SELECT DISTINCT ?object ?property ?propLabel ?subject WHERE
+			SELECT DISTINCT ?object ?property ?subject ?dir WHERE
 			{
-				VALUES ?subject {
-					<${subject}>
+				${subjects_string}
+				${objects_string}
+				{
+					BIND("in" as ?dir) . ?object ?property ?subject .
 				}
-				${relations}
+				UNION
 				{	
-					?object ?property ?subject .
-				} UNION{
-					?subject ?property ?object .
+					BIND("out" as ?dir) . ?subject ?property ?object . 
 				}
-				${
-					this.endpoint.includes('wikidata')
-						? '?prop wikibase:directClaim ?property . ?prop rdfs:label ?propLabel .'
-						: '?property rdf:type rdf:Property . ?property rdfs:label ?propLabel .'
-				}
-				
-				FILTER (lang(?propLabel) = 'en')
 				
 			}`
 		);
 
-		return result as {
-			subject: Node;
-			property: Node;
-			object: Node;
-			propLabel: Node;
-		}[];
+		return result;
 	}
 
 	public async fetch_property_count(subject: URI, property: URI): Promise<Property> {
@@ -427,7 +434,7 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 		const properties = result.map((c) => c.property.value);
 		const requests: Promise<Property>[] = [];
 		properties.forEach((prop) => requests.push(this.fetch_property_count(subject, prop)));
-		for(let i = 0; i < requests.length; i++){
+		for (let i = 0; i < requests.length; i++) {
 			results.push(await requests[i]);
 			this.emit('progress', Math.floor((i / requests.length) * 100));
 		}

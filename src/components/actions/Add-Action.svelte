@@ -119,7 +119,7 @@
 					relation.subject.value,
 					relation.property.value,
 					relation.object.value,
-					relation.propLabel.value
+					relation.property_label
 				);
 			}
 			graph.update_data();

@@ -55,6 +55,12 @@
 				}
 			},
 			edges: {
+				arrows: {
+					to: {
+						enabled: true,
+						type: 'arrow'
+					}
+				},
 				widthConstraint: {
 					maximum: 125
 				},

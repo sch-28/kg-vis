@@ -49,9 +49,9 @@ export const Settings = storage<Settings>('settings', {
 	advanced_settings_height: 258,
 	fetch_related: true,
 	endpoint_url: 'https://skynet.coypu.org/wikidata/',
-	rate_limit: 20,
+	rate_limit: 5,
 	size_limit: 100,
-	fetch_image: false,
+	fetch_image: true,
 	animations: true,
 	hide_edges_on_drag: true,
 });

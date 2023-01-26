@@ -387,7 +387,7 @@ export class Graph {
 						relation.subject.value,
 						relation.property.value,
 						relation.object.value,
-						relation.propLabel.value
+						relation.property_label
 					);
 					const node = this.nodes.find((n) => n.id == relation.subject.value);
 					const property = node?.properties.find((p) => p.uri == relation.property.value);
@@ -401,7 +401,7 @@ export class Graph {
 					} else if (!property && node) {
 						node.properties.push({
 							uri: relation.property.value,
-							label: relation.propLabel.value,
+							label: relation.property_label,
 							related: related ? [related] : undefined,
 							in_count: 0,
 							out_count: 1
