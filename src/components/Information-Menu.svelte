@@ -36,6 +36,7 @@
 			});
 			loading_related = true;
 			for (const property of paginated_properties) {
+				if (!node) return;
 				await graph.load_related_nodes(node.id, property, false, undefined, false);
 				paginated_properties = paginated_properties;
 			}
@@ -50,7 +51,7 @@
 				await graph.get_properties(node.id);
 			}
 			loading = false;
-			properties = node.properties;
+			properties = node?.properties;
 		}
 	}
 </script>

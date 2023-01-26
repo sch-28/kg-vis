@@ -60,7 +60,7 @@
 			const new_position = { x: menu_position.x, y: menu_position.y };
 			let window_width = window.innerWidth;
 			if (information_tab_visible) {
-				window_width -= 336;
+				window_width -= 400;
 			}
 			if (new_position.x + wrapper.offsetWidth + menu_offset > window_width) {
 				new_position.x = window_width - wrapper.offsetWidth - menu_gap;
@@ -451,7 +451,6 @@
 					<li
 						class="px-3 rounded-lg bg-transparent flex transition-all duration-200 ease-in-out"
 						on:click={() => {
-							console.log('hi');
 							if (selected_nodes.find((n) => n.id === node.node.id)) {
 								selected_nodes = selected_nodes.filter((n) => n.id !== node.node.id);
 							} else selected_nodes = selected_nodes.concat([node.node]);

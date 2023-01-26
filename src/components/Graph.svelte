@@ -2,7 +2,7 @@
 	import type { Network, Options } from 'vis-network';
 	import * as vis from 'vis-network';
 	import ContextMenu from './Context-Menu.svelte';
-	import Menu from './Property-Menu.svelte';
+	import PropertyMenu from './Property-Menu.svelte';
 	import { Graph, type URI, type Node } from '../api/graph';
 	import { Toaster } from 'svelte-french-toast';
 	import { dark_mode } from '../util';
@@ -138,9 +138,9 @@
 
 <Toaster />
 <ToastManager />
-<InformationMenu node={show_node_information} {graph} />
+<InformationMenu bind:node={show_node_information} {graph} />
 <div bind:this={container} class="w-full h-full" />
-<Menu
+<PropertyMenu
 	{menu_position}
 	{selected_node}
 	{graph}
