@@ -1,11 +1,10 @@
 <script lang="ts">
-	import { Heading, Hr, Pagination, PaginationItem } from 'flowbite-svelte';
-	import { SPARQL } from '../api/sparql';
+	import { Heading, Hr } from 'flowbite-svelte';
+	import { Icon } from '@steeze-ui/svelte-icon';
 	import type { Graph, Node, Property } from '../api/graph';
 	import LoadingCircle from './Loading-Circle.svelte';
-	import type { LinkType } from 'flowbite-svelte/types';
-	import { page } from '$app/stores';
 	import { paginate, DarkPaginationNav } from 'svelte-paginate';
+	import { XMark } from '@steeze-ui/heroicons';
 
 	export let node: Node | undefined;
 	export let graph: Graph;
@@ -60,7 +59,12 @@
 	<div
 		class="p-4 h-4/5 top-1/2 flex flex-col -translate-y-1/2 absolute right-4 w-96 shadow-lg rounded-lg border dark:border-dark-muted dark:bg-dark-bg bg-white z-50"
 	>
-		<h1 class="text-lg font-bold">{node.label}</h1>
+		<div class="flex justify-between items-center">
+			<h1 class="text-lg font-bold">{node.label}</h1>
+			<button on:click={() => (node = undefined)}>
+				<Icon src={XMark} size="24" />
+			</button>
+		</div>
 		<Hr divClass="my-2" />
 		<p class="mb-2">{node.description}</p>
 		<div class="w-full max-h-full overflow-y-auto overflow-x-hidden flex-grow flex flex-col gap-2">
