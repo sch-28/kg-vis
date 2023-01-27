@@ -46,7 +46,7 @@
 
 	async function load_properties() {
 		if (node) {
-			if (node.properties.length === 0) {
+			if (!node.is_fetched) {
 				loading = true;
 				await graph.get_properties(node.id);
 			}
