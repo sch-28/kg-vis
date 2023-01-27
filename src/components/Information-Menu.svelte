@@ -46,8 +46,16 @@
 
 	async function load_properties() {
 		if (node) {
+			current_page = 1;
+			paginated_properties = paginate({
+				items: node.properties,
+				pageSize: page_size,
+				currentPage: current_page
+			});
+
 			if (!node.is_fetched) {
 				loading = true;
+				graph.load_node(node.id).then(() => (node = node));
 				await graph.get_properties(node.id);
 			}
 			loading = false;
@@ -61,13 +69,13 @@
 		class="p-4 h-4/5 top-1/2 flex flex-col -translate-y-1/2 absolute right-4 w-96 shadow-lg rounded-lg border dark:border-dark-muted dark:bg-dark-bg bg-white z-50"
 	>
 		<div class="flex justify-between items-center">
-			<h1 class="text-lg font-bold">{node.label}</h1>
+			<h1 class="text-lg font-bold truncate">{node.label}</h1>
 			<button on:click={() => (node = undefined)}>
 				<Icon src={XMark} size="24" />
 			</button>
 		</div>
 		<Hr divClass="my-2" />
-		<p class="mb-2">{node.description}</p>
+		<p class="mb-2">{node.description.length > 0 ? node.description : 'No description'}</p>
 		<div class="w-full max-h-full overflow-y-auto overflow-x-hidden flex-grow flex flex-col gap-2">
 			{#if node.properties.length > 0}
 				{#each paginated_properties as property}
@@ -95,11 +103,12 @@
 						</div>
 					</div>
 				{/each}
-			{:else if loading}
+			{/if}
+			{#if loading}
 				<div class="w-8 h-8 m-auto">
 					<LoadingCircle />
 				</div>
-			{:else}
+			{:else if properties.length === 0 && !loading && node.is_fetched}
 				<Heading text="No properties found" />
 			{/if}
 		</div>

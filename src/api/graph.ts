@@ -216,6 +216,13 @@ export class Graph {
 		if (!node) {
 			node = new Node(uri, label, type, visible, image, position, false, description);
 			this.nodes.push(node);
+		} else {
+			if (label !== uri && label.length > node.label.length) {
+				node.label = label;
+			}
+			if (description.length > node.description.length) {
+				node.description = description;
+			}
 		}
 		return node;
 	}
@@ -309,7 +316,7 @@ export class Graph {
 		const [labels, images] = await Promise.all([label_promises, image_promises]);
 		const new_nodes = [];
 		for (const uri of uris) {
-			const label = labels.find((label) => label.uri === uri)?.label ?? '';
+			const label = labels.find((label) => label.uri === uri)?.label ?? uri;
 			const image = images.find((image) => image.uri === uri)?.image;
 			const node = this.find_or_create_node(uri, label, 'uri', visible, image);
 			new_nodes.push(node);

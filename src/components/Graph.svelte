@@ -40,7 +40,7 @@
 
 		const options: Options = {
 			interaction: {
-				hideEdgesOnDrag: $Settings.hide_edges_on_drag
+				hideEdgesOnDrag: $Settings.hide_edges_on_drag ?? false
 			},
 			nodes: {
 				color: dark_mode ? '#6a7e9d' : '#74a0e9',

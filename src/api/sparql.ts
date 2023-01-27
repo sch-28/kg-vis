@@ -143,15 +143,15 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 
 		const result = await this.query<{ object: Node; objectLabel?: Node }>(
 			`
-			SELECT DISTINCT ?object ?objectLabel  WHERE {
+			SELECT DISTINCT ?object ?objectLabel ?objectDescription  WHERE {
 				{
 				  ?object <${property}> <${subject}> .
 				} UNION{
 					<${subject}> <${property}> ?object
 				}
 				OPTIONAL {
-				?object rdfs:label ?objectLabel 
-				FILTER (lang(?objectLabel) = 'en')
+					?object rdfs:label ?objectLabel 
+					FILTER (lang(?objectLabel) = 'en')
 				}
 				} LIMIT ${this.size_limit}`
 		);
@@ -227,21 +227,25 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 					.filter((s) => isUrl(s))
 					.map((s) => `<${s}>`)
 					.join('\n')}
-				  }
+				  }		
+				OPTIONAL{
 				  ${
 						this.endpoint.includes('wikidata')
 							? '?prop wikibase:directClaim ?subject . ?prop rdfs:label ?subjectLabel  '
 							: '?subject rdf:type rdf:Property .  ?subject rdfs:label ?subjectLabel '
 					}
-			 
+					FILTER (lang(?subjectLabel) = 'en')
+				}
 				  
-				  FILTER (lang(?subjectLabel) = 'en')
 			}
 				`
 		);
 		if (result.length > 0) {
 			return result.map((r) => {
-				return { uri: r.subject.value, label: r.subjectLabel.value };
+				return {
+					uri: r.subject.value,
+					label: r.subjectLabel?.value ?? r.subject
+				};
 			});
 		}
 
@@ -302,12 +306,15 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 			};
 		});
 
-		const labels = await this.fetch_labels(relations.map((r) => r.property.value));
+		const infos = await this.fetch_labels(relations.map((r) => r.property.value));
 
 		for (let i = 0; i < relations.length; i++) {
 			const relation = relations[i];
-			const label = labels.find((l) => l.uri === relation.property.value);
-			if (label) relation.property_label = label.label;
+			const info = infos.find((l) => l.uri === relation.property.value);
+			if (info) {
+				relation.property_label = info.label;
+				/* relation.property_description = info.description; */
+			}
 		}
 
 		resolve();

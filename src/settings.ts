@@ -53,5 +53,5 @@ export const Settings = storage<Settings>('settings', {
 	size_limit: 100,
 	fetch_image: true,
 	animations: true,
-	hide_edges_on_drag: true,
+	hide_edges_on_drag: false,
 });
