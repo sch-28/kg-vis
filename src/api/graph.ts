@@ -378,7 +378,10 @@ export class Graph {
 			}
 
 			this.create_edge(uri, property.uri, new_node.uri, property.label ?? 'label');
-			existing_property.related.push(n);
+			if (existing_property.related.find((node) => node.id == n.id) == undefined) {
+				existing_property.related.push(n);
+				existing_property.out_count++;
+			}
 		}
 		this.update_data(visible);
 
@@ -402,8 +405,10 @@ export class Graph {
 					if (property) {
 						if (related) {
 							if (!property.related) property.related = [];
-							property.related.push(related);
-							property.out_count++;
+							if (property.related.find((node) => node.id == related.id) == undefined) {
+								property.related.push(related);
+								property.out_count++;
+							}
 						}
 					} else if (!property && node) {
 						node.properties.push({
