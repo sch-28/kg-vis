@@ -5,9 +5,15 @@
 	import LoadingCircle from './Loading-Circle.svelte';
 	import { paginate, DarkPaginationNav } from 'svelte-paginate';
 	import { XMark } from '@steeze-ui/heroicons';
+	import Modal from './actions/Modal.svelte';
+	import type { Action } from './actions/action';
+	import InformationMenuMore from './actions/Information-Menu-More.svelte';
+	import { bind } from 'svelte-simple-modal';
 
 	export let node: Node | undefined;
 	export let graph: Graph;
+
+	let node_description: string = '';
 
 	let loading: boolean = false;
 	let loading_related: boolean = false;
@@ -20,12 +26,15 @@
 	$: node && load_properties();
 
 	let paginated_properties: Property[] = [];
+
 	$: {
 		properties;
-		page_size;
 		current_page;
+		page_size;
 		load_related();
 	}
+
+	let show_more: Action | undefined = undefined;
 
 	async function load_related() {
 		if (node) {
@@ -46,6 +55,7 @@
 
 	async function load_properties() {
 		if (node) {
+			node_description = node.description;
 			current_page = 1;
 			paginated_properties = paginate({
 				items: node.properties,
@@ -55,12 +65,16 @@
 
 			if (!node.is_fetched) {
 				loading = true;
-				graph.load_node(node.id).then(() => (node = node));
+				if (node_description.length === 0)
+					graph.load_node(node.id).then(() => (node_description = node?.description || ''));
 				await graph.get_properties(node.id);
 			}
 			loading = false;
 			properties = node?.properties;
 		}
+	}
+	function show_more_handler(property: Property) {
+		show_more = bind(InformationMenuMore as any, { property }) as unknown as Action;
 	}
 </script>
 
@@ -75,7 +89,7 @@
 			</button>
 		</div>
 		<Hr divClass="my-2" />
-		<p class="mb-2">{node.description.length > 0 ? node.description : 'No description'}</p>
+		<p class="mb-2">{node_description.length > 0 ? node_description : 'No description'}</p>
 		<div class="w-full max-h-full overflow-y-auto overflow-x-hidden flex-grow flex flex-col gap-2">
 			{#if node.properties.length > 0}
 				{#each paginated_properties as property}
@@ -91,7 +105,11 @@
 									</div>
 								{/each}
 								{#if property.related.length > 5}
-									<div class="truncate" title="... and more">... and more</div>
+									<button
+										on:click={() => show_more_handler(property)}
+										class="truncate"
+										title="... and more">... and more</button
+									>
 								{/if}
 							{:else if loading_related}
 								<div class="h-4 w-4 m-auto">
@@ -124,6 +142,8 @@
 		</div>
 	</div>
 {/if}
+
+<Modal content={show_more} />
 
 <style lang="postcss" global>
 	.pagination :global(.pagination-nav) {
