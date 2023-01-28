@@ -4,11 +4,12 @@
 	import type { Graph, Node, Property } from '../api/graph';
 	import LoadingCircle from './Loading-Circle.svelte';
 	import { paginate, DarkPaginationNav } from 'svelte-paginate';
-	import { XMark } from '@steeze-ui/heroicons';
+	import { ArrowTopRightOnSquare, Plus, XMark } from '@steeze-ui/heroicons';
 	import Modal from './actions/Modal.svelte';
 	import type { Action } from './actions/action';
 	import InformationMenuMore from './actions/Information-Menu-More.svelte';
 	import { bind } from 'svelte-simple-modal';
+	import { setContext } from 'svelte';
 
 	export let node: Node | undefined;
 	export let graph: Graph;
@@ -22,6 +23,11 @@
 
 	let current_page: number = 1;
 	const page_size: number = 8;
+	setContext('close', close_modal);
+
+	function close_modal() {
+		show_more = undefined;
+	}
 
 	$: node && load_properties();
 
@@ -74,7 +80,10 @@
 		}
 	}
 	function show_more_handler(property: Property) {
-		show_more = bind(InformationMenuMore as any, { property }) as unknown as Action;
+		show_more = bind(InformationMenuMore as any, { property, graph }) as unknown as Action;
+	}
+	function add_node(node: Node) {
+		graph.show_node(node);
 	}
 </script>
 
@@ -100,15 +109,34 @@
 						<div class="w-full border-light dark:border-dark-muted rounded-lg border p-2">
 							{#if property.related && property.related.length > 0}
 								{#each property.related.slice(0, 5) as node}
-									<div class="truncate" title={node.label}>
-										{node.label}
+									<div
+										class="flex gap-2 items-center px-2 rounded-lg min-h-[35px] group hover:bg-black/5 dark:hover:bg-black/30 transition-all duration-200 ease-in-out"
+									>
+										<div class="truncate w-10/12" title={node.label}>
+											{node.label}
+										</div>
+										<div
+											class="w-2/12 group-hover:opacity-100 flex opacity-0 items-center justify-end transition-all duration-200 ease-in-out"
+										>
+											<button
+												class="p-1 rounded-lg hover:bg-black/5 dark:hover:bg-black/30 transition-all duration-200 ease-in-out"
+											>
+												<Icon src={ArrowTopRightOnSquare} size={'20'} />
+											</button>
+											<button
+												class="p-1 rounded-lg bg-transparent hover:bg-black/5 dark:hover:bg-black/30 transition-all duration-200 ease-in-out"
+												on:click={() => add_node(node)}
+											>
+												<Icon src={Plus} size={'20'} />
+											</button>
+										</div>
 									</div>
 								{/each}
 								{#if property.related.length > 5}
 									<button
 										on:click={() => show_more_handler(property)}
 										class="truncate"
-										title="... and more">... and more</button
+										title="... and {property.related.length - 5} more">... and {property.related.length - 5} more</button
 									>
 								{/if}
 							{:else if loading_related}
@@ -143,7 +171,7 @@
 	</div>
 {/if}
 
-<Modal content={show_more} />
+<Modal bind:content={show_more} />
 
 <style lang="postcss" global>
 	.pagination :global(.pagination-nav) {
