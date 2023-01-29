@@ -11,7 +11,7 @@ const config = {
 	kit: {
 		adapter: adapter(),
 		paths: {
-			base: dev ? '' : '/rdf-vis'
+			base: dev ? '' : '/kg-vis'
 		}
 	}
 };
