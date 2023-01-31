@@ -6,7 +6,8 @@
 		Link,
 		ArrowRightOnRectangle,
 		ArrowLeftOnRectangle,
-		XMark
+		XMark,
+		Plus
 	} from '@steeze-ui/heroicons';
 	import Fuse from 'fuse.js';
 	import { click_outside, dark_mode } from '../util';
@@ -14,6 +15,7 @@
 	import LoadingCircle from './Loading-Circle.svelte';
 	import { Settings } from '../settings';
 	import { SPARQL } from '../api/sparql';
+	import { Button } from 'flowbite-svelte';
 
 	export let selected_node: Node | undefined = undefined;
 	export let menu_position = { x: 0, y: 0 };
@@ -236,6 +238,11 @@
 		);
 	}
 
+	function add_node(node: Node) {
+		graph.show_node(node);
+		selected_property_nodes = selected_property_nodes;
+	}
+
 	function search(event: KeyboardEvent) {
 		if (
 			event.key !== 'Escape' &&
@@ -255,7 +262,7 @@
 
 	function toggle_all_nodes(event: Event) {
 		const target: HTMLInputElement = event.target as HTMLInputElement;
-		selected_nodes = target.checked ? selected_property_nodes : [];
+		selected_nodes = target.checked ? selected_property_nodes.filter((n) => !n.visible) : [];
 	}
 
 	function add_selected() {
@@ -442,37 +449,55 @@
 					</div>
 				</div>
 				<div>
-					{selected_nodes.length} / {sorted_nodes.length}
+					{selected_nodes.length} / {sorted_nodes.length -
+						sorted_nodes.filter((n) => n.node.visible).length}
 				</div>
 			</div>
 			<ul class=" rounded-lg mx-2  overflow-y-auto  flex flex-col gap-2 flex-grow">
 				{#each sorted_nodes as node}
 					<!-- svelte-ignore a11y-click-events-have-key-events -->
 					<li
-						class="px-3 rounded-lg bg-transparent flex transition-all duration-200 ease-in-out"
+						class="px-3 rounded-lg bg-transparent flex transition-all duration-200 ease-in-out {node
+							.node.visible
+							? 'text-dark-muted'
+							: 'text-gray-900 dark:text-gray-300'}"
 						on:click={() => {
+							if (node.node.visible) return;
 							if (selected_nodes.find((n) => n.id === node.node.id)) {
 								selected_nodes = selected_nodes.filter((n) => n.id !== node.node.id);
 							} else selected_nodes = selected_nodes.concat([node.node]);
 						}}
 					>
 						<div class="flex items-center cursor-pointer min-w-0 flex-grow select-none">
-							<input
-								on:click={(e) => {
-									e.stopPropagation();
-								}}
-								id={node.node.id}
-								type="checkbox"
-								value={node.node}
-								bind:group={selected_nodes}
-								class="w-4 h-4 text-primary bg-gray-100 rounded border-gray-300 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-							/>
+							{#if !node.node.visible}
+								<input
+									on:click={(e) => {
+										e.stopPropagation();
+									}}
+									id={node.node.id}
+									type="checkbox"
+									value={node.node}
+									bind:group={selected_nodes}
+									class="w-4 h-4 bg-gray-100 rounded border-gray-300 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+								/>
+							{:else}
+								<input
+									on:click={(e) => {
+										e.stopPropagation();
+									}}
+									id={node.node.id}
+									type="checkbox"
+									checked={true}
+									disabled={true}
+									class="w-4 h-4 text-dark-muted bg-gray-100 rounded border-gray-300 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+								/>
+							{/if}
 							<label
 								on:click={(e) => {
 									e.stopPropagation();
 								}}
 								for={node.node.id}
-								class="cursor-pointer ml-2 font-medium text-gray-900 dark:text-gray-300 select-none truncate"
+								class="cursor-pointer ml-2 font-medium  select-none truncate"
 								>{#if node.node.label}
 									<span class="" title={node.node.label}>
 										{#if node.matches && node.matches.length > 0}
@@ -498,13 +523,19 @@
 								{/if}
 							</label>
 						</div>
+						<button
+							class="ml-auto p-1 rounded-lg bg-transparent {!node.node.visible
+								? 'hover:bg-black/5 dark:hover:bg-black/30'
+								: ''} transition-all duration-200 ease-in-out"
+							on:click={() => add_node(node.node)}
+						>
+							<Icon src={Plus} size={'20'} />
+						</button>
 					</li>
 				{/each}
 			</ul>
-			<button
-				on:click={add_selected}
-				class="ml-auto gr-button-primary gr-button !block mt-2 mr-2 h-8 flex-shrink-0 !text-base "
-				>Add selected</button
+			<Button on:click={add_selected} disabled={selected_nodes.length == 0} class=""
+				>Add selected</Button
 			>
 		{:else}
 			<div class="properties m-auto w-full items-center justify-center p-5">
