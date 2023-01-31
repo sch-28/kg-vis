@@ -2,12 +2,20 @@ import { browser } from '$app/environment';
 import type { Writable } from 'svelte/store';
 import { writable, get } from 'svelte/store';
 
-const storage = <T>(key: string, initValue: T): Writable<T> => {
+const storage = <T extends { [key: string]: any }>(key: string, initValue: T): Writable<T> => {
 	const store = writable(initValue);
 	if (!browser) return store;
 	const local_store_str = localStorage.getItem(key);
 
-	if (local_store_str != null) store.set(JSON.parse(local_store_str));
+	if (local_store_str != null) {
+		let value = JSON.parse(local_store_str);
+		Object.keys(initValue).forEach((key) => {
+			if (value[key] === undefined || value[key] === null) {
+				value = { ...value, [key]: initValue[key] };
+			}
+		});
+		store.set(value);
+	}
 
 	store.subscribe((val) => {
 		if (val == null || val == undefined) {
@@ -22,9 +30,16 @@ const storage = <T>(key: string, initValue: T): Writable<T> => {
 
 		if (local_store_str == null) return;
 
-		const local_value: T = JSON.parse(local_store_str);
+		let value: T = JSON.parse(local_store_str);
 
-		if (local_value !== get(store)) store.set(local_value);
+		if (value !== get(store)) {
+			Object.keys(initValue).forEach((key) => {
+				if (value[key] === undefined || value[key] === null) {
+					value = { ...value, [key]: initValue[key] };
+				}
+			});
+			store.set(value);
+		}
 	});
 
 	return store;
@@ -53,5 +68,5 @@ export const Settings = storage<Settings>('settings', {
 	size_limit: 100,
 	fetch_image: true,
 	animations: true,
-	hide_edges_on_drag: false,
+	hide_edges_on_drag: false
 });

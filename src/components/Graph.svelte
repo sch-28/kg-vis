@@ -38,6 +38,9 @@
 		await graph.load_node(starting_point);
 		graph.update_data();
 
+		// hacky fix to remove error on hot-reload that causes multiple reloads because of the settings store
+		if(!container) return;
+
 		const options: Options = {
 			interaction: {
 				hideEdgesOnDrag: $Settings.hide_edges_on_drag ?? false
