@@ -39,12 +39,3 @@
 		});
 	});
 </script>
-
-<style>
-	:global(.toaster .message) {
-		overflow: hidden;
-		display: -webkit-box !important;
-		-webkit-line-clamp: 3;
-		-webkit-box-orient: vertical;
-	}
-</style>

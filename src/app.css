@@ -18,3 +18,10 @@ html.dark {
 	color-scheme: dark;
 	@apply bg-gray-900 text-light font-sans;
 }
+
+.toaster .message {
+	overflow: hidden;
+	display: -webkit-box !important;
+	-webkit-line-clamp: 3;
+	-webkit-box-orient: vertical;
+}
