@@ -376,7 +376,11 @@
 				{#each sorted_properties as property}
 					<button
 						on:click={() => selected_node && property_clicked(selected_node.id, property.property)}
-						class="button flex px-2 rounded-lg bg-transparent h-10 hover:bg-black/5 dark:hover:bg-black/30 transition-all duration-200 ease-in-out"
+						class="button flex px-2 rounded-lg bg-transparent h-10 hover:bg-black/5 dark:hover:bg-black/30 transition-all duration-200 ease-in-out {property.property.related?.every(
+							(r) => r.visible
+						)
+							? 'opacity-50 cursor-default'
+							: 'opacity-100 cursor-pointer'}"
 					>
 						<div
 							title={`${
