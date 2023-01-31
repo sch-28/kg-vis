@@ -89,12 +89,16 @@ export class Edge {
 	uri: URI;
 	to: URI;
 	label: string;
+	hidden_label: string;
 
 	constructor(source: URI, uri: URI, target: URI, label: string) {
 		this.from = source;
 		this.uri = uri;
 		this.to = target;
-		this.label = label;
+		this.hidden_label = label;
+		if (!get(Settings).hide_edge_labels) {
+			this.label = label;
+		} else this.label = '';
 	}
 
 	compare(other: Edge) {
@@ -322,6 +326,15 @@ export class Graph {
 			new_nodes.push(node);
 		}
 		return new_nodes;
+	}
+
+	update_edge_labels() {
+		const hide = get(Settings).hide_edge_labels;
+		this.edges.forEach((edge) => {
+			if (hide) edge.label = "​"; // zero-width space to hide the edges.. doesn't work otherwise 
+			else edge.label = edge.hidden_label;
+		});
+		this.data.edges.update(this.edges);
 	}
 
 	async get_properties(uri: URI) {

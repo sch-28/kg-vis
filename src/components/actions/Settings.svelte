@@ -27,6 +27,10 @@
 	}
 
 	let selected_setting: 'endpoint' | 'graph' | 'documentation' = 'endpoint';
+
+	function update_labels() {
+		graph.update_edge_labels();
+	}
 </script>
 
 <h1 class="text-lg font-bold mb-2">Settings</h1>
@@ -121,6 +125,9 @@
 			<Toggle bind:checked={$Settings.fetch_image}>Show images</Toggle>
 			<Toggle bind:checked={$Settings.fetch_related}>Fetch relations</Toggle>
 			<Toggle bind:checked={$Settings.animations}>Animations</Toggle>
+			<Toggle bind:checked={$Settings.hide_edge_labels} on:change={update_labels}
+				>Hide edge labels</Toggle
+			>
 			<Toggle bind:checked={$Settings.hide_edges_on_drag}>Hide edges on drag</Toggle>
 		{:else if selected_setting === 'documentation'}
 			<!-- <DocumentationSettings /> -->
