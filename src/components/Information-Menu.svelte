@@ -58,8 +58,8 @@
 						paginated_properties = paginated_properties;
 						res(result);
 					});
-					results.push(promise);
 				});
+				results.push(promise);
 			}
 			await Promise.all(results);
 			loading_related = false;
