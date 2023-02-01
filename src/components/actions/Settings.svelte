@@ -39,6 +39,15 @@
 			name: languages[lang as keyof typeof languages]
 		};
 	});
+
+	$: {
+		$Settings.endpoint_url;
+		if ($Settings.endpoint_url.includes('wikidata')) {
+			$Settings.endpoint_type = 'wikidata';
+		} else {
+			$Settings.endpoint_type = 'dbpedia';
+		}
+	}
 </script>
 
 <h1 class="text-lg font-bold mb-2">Settings</h1>

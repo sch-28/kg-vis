@@ -238,7 +238,7 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 				  }		
 				OPTIONAL{
 				  ${
-						this.endpoint.includes('wikidata')
+						this.endpoint_type === 'wikidata'
 							? '?prop wikibase:directClaim ?property . ?prop rdfs:label ?propertyLabel  '
 							: '?property rdf:type rdf:Property .  ?property rdfs:label ?propertyLabel '
 					}
@@ -429,7 +429,7 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 			}
 			OPTIONAL {
 				${
-					this.endpoint.includes('wikidata')
+					this.endpoint_type === 'wikidata'
 						? `?prop wikibase:directClaim <${property}> . ?prop rdfs:label ?propLabel .`
 						: `<${property}> rdf:type rdf:Property . <${property}> rdfs:label ?propLabel .`
 				}
@@ -472,7 +472,7 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 					<${subject}> ?property ?o
 				}
 				${
-					this.endpoint.includes('wikidata')
+					this.endpoint_type === 'wikidata'
 						? '?prop wikibase:directClaim ?property .'
 						: '?property rdf:type rdf:Property .'
 				}
