@@ -50,11 +50,18 @@
 				currentPage: current_page
 			});
 			loading_related = true;
+			const results: Promise<Node[]>[] = [];
 			for (const property of paginated_properties) {
-				if (!node) return;
-				await graph.load_related_nodes(node.id, property, false, undefined, false);
-				paginated_properties = paginated_properties;
+				const promise = new Promise<Node[]>((res) => {
+					if (!node) return res([]);
+					graph.load_related_nodes(node.id, property, false, undefined, false).then((result) => {
+						paginated_properties = paginated_properties;
+						res(result);
+					});
+					results.push(promise);
+				});
 			}
+			await Promise.all(results);
 			loading_related = false;
 		}
 	}
@@ -136,7 +143,8 @@
 									<button
 										on:click={() => show_more_handler(property)}
 										class="truncate"
-										title="... and {property.related.length - 5} more">... and {property.related.length - 5} more</button
+										title="... and {property.related.length - 5} more"
+										>... and {property.related.length - 5} more</button
 									>
 								{/if}
 							{:else if loading_related}
