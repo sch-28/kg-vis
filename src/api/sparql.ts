@@ -51,11 +51,19 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 	}
 
 	public get endpoint() {
-		let endpoint = get(Settings).endpoint_url;
+		const endpoint = get(Settings).endpoint_url;
 		if (!isUrl(endpoint) || endpoint.length === 0) {
-			endpoint = 'https://query.wikidata.org/sparql';
+			console.error('Invalid endpoint URL');
 		}
 		return endpoint;
+	}
+
+	public get endpoint_type() {
+		return get(Settings).endpoint_type ?? 'wikidata';
+	}
+
+	public get endpoint_lang() {
+		return get(Settings).endpoint_lang ?? 'en';
 	}
 
 	public get progress() {
@@ -130,7 +138,7 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 				<${subject}>
 			}
 			?subject schema:description ?description
-			FILTER (lang(?description) = 'en')
+			FILTER (lang(?description) = '${this.endpoint_lang}')
 		} LIMIT 1`);
 
 		return result[0]?.description.value ?? '';
@@ -151,7 +159,7 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 				}
 				OPTIONAL {
 					?object rdfs:label ?objectLabel 
-					FILTER (lang(?objectLabel) = 'en')
+					FILTER (lang(?objectLabel) = '${this.endpoint_lang}')
 				}
 				} LIMIT ${this.size_limit}`
 		);
@@ -234,7 +242,7 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 							? '?prop wikibase:directClaim ?property . ?prop rdfs:label ?propertyLabel  '
 							: '?property rdf:type rdf:Property .  ?property rdfs:label ?propertyLabel '
 					}
-					FILTER (lang(?propertyLabel) = 'en')
+					FILTER (lang(?propertyLabel) = '${this.endpoint_lang}')
 				}
 			}
 				`
@@ -267,7 +275,7 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 				
 				OPTIONAL{
 					?subject rdfs:label ?subjectLabel
-					FILTER (lang(?subjectLabel) = 'en')
+					FILTER (lang(?subjectLabel) = '${this.endpoint_lang}')
 				  }
 				  
 			}
@@ -298,11 +306,11 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 	
 			OPTIONAL {
 			?subject rdfs:label ?label 
-			FILTER (lang(?label) = 'en')
+			FILTER (lang(?label) = '${this.endpoint_lang}')
 			}
 			OPTIONAL {
 				?subject schema:description ?description
-				FILTER (lang(?description) = 'en')
+				FILTER (lang(?description) = '${this.endpoint_lang}')
 			}
 			
 			}
@@ -427,7 +435,7 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 				}
 			}
 			
-			FILTER (lang(?propLabel) = 'en')
+			FILTER (lang(?propLabel) = '${this.endpoint_lang}')
 			} GROUP BY ?propLabel`
 		);
 
@@ -439,7 +447,7 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 				out_count: +res.outCount.value,
 				in_count: +res.inCount.value,
 				related: [],
-				fetched: false,
+				fetched: false
 			};
 		} else {
 			return {
@@ -448,7 +456,7 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 				out_count: 0,
 				in_count: 0,
 				related: [],
-				fetched: false,
+				fetched: false
 			};
 		}
 	}

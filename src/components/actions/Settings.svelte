@@ -4,6 +4,7 @@
 	import {
 		Input,
 		Label,
+		Select,
 		Sidebar,
 		SidebarGroup,
 		SidebarItem,
@@ -12,7 +13,7 @@
 	} from 'flowbite-svelte';
 	import GraphIcon from 'svelte-material-icons/GraphOutline.svelte';
 	import { ArrowPath, CircleStack, QuestionMarkCircle } from '@steeze-ui/heroicons';
-	import { Settings } from '../../settings';
+	import { languages, Settings } from '../../settings';
 	import type { Graph } from '../../api/graph';
 
 	const close = getContext('close') as () => void;
@@ -31,10 +32,17 @@
 	function update_labels() {
 		graph.update_edge_labels();
 	}
+
+	const language_items = Object.keys(languages).map((lang) => {
+		return {
+			value: lang,
+			name: languages[lang as keyof typeof languages]
+		};
+	});
 </script>
 
 <h1 class="text-lg font-bold mb-2">Settings</h1>
-<div class="flex gap-4 w-[450px]">
+<div class="flex gap-4 w-[475px] h-[230px]">
 	<div>
 		<Sidebar asideClass="w-48">
 			<SidebarWrapper divClass="">
@@ -98,6 +106,35 @@
 					placeholder="https://skynet.coypu.org/wikidata/"
 					required
 				/>
+			</div>
+			<div class="flex gap-2">
+				<div>
+					<Label for="endpoint_type" class="mb-2">Endpoint type</Label>
+					<Select
+						items={[
+							{
+								value: 'wikidata',
+								name: 'Wikidata'
+							},
+							{
+								value: 'dbpedia',
+								name: 'DBpedia'
+							}
+						]}
+						bind:value={$Settings.endpoint_type}
+						id="endpoint_type"
+						required
+					/>
+				</div>
+				<div>
+					<Label for="endpoint_lang" class="mb-2">Endpoint language</Label>
+					<Select
+						items={language_items}
+						bind:value={$Settings.endpoint_lang}
+						id="endpoint_lang"
+						required
+					/>
+				</div>
 			</div>
 			<div class="flex gap-2">
 				<div>

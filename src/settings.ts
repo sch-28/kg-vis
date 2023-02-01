@@ -47,11 +47,26 @@ const storage = <T extends { [key: string]: any }>(key: string, initValue: T): W
 
 export default storage;
 
+export const languages = {
+	en: 'English',
+	de: 'Deutsch',
+	fr: 'Français',
+	es: 'Español',
+	it: 'Italiano',
+	nl: 'Nederlands',
+	pl: 'Polski',
+	ru: 'Русский',
+	ja: '日本語',
+	zh: '中文'
+};
+
 export interface Settings {
 	advanced_settings: boolean;
 	advanced_settings_height: number;
 	fetch_related: boolean;
 	endpoint_url: string;
+	endpoint_type: 'wikidata' | 'dbpedia';
+	endpoint_lang: keyof typeof languages;
 	rate_limit: number;
 	size_limit: number;
 	fetch_image: boolean;
@@ -65,10 +80,12 @@ export const Settings = storage<Settings>('settings', {
 	advanced_settings_height: 258,
 	fetch_related: true,
 	endpoint_url: 'https://skynet.coypu.org/wikidata/',
+	endpoint_type: 'wikidata',
+	endpoint_lang: 'en',
 	rate_limit: 5,
 	size_limit: 100,
 	fetch_image: true,
 	animations: true,
 	hide_edges_on_drag: false,
-	hide_edge_labels: false,
+	hide_edge_labels: false
 });
