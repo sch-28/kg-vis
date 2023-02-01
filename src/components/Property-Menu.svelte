@@ -361,7 +361,8 @@
 		{#if selected_node.properties.length > 0 && selected_property === undefined}
 			<button
 				on:click={add_all}
-				class="mx-2 px-2 button flex  rounded-lg  h-10 bg-transparent hover:bg-black/5 dark:hover:bg-black/30 transition-all duration-200 ease-in-out "
+				class="mx-2 px-2 button flex  rounded-lg  h-10 bg-transparent hover:bg-black/5 dark:hover:bg-black/30 transition-all duration-200 ease-in-out {selected_node.properties.every(p => p.fetched && p.related.every(r => r.visible)) ? 'opacity-50 cursor-default' : 'opacity-100 cursor-pointer'}"
+					
 			>
 				<Icon src={ListBullet} theme="solid" class="h-5 w-5  mr-3" />
 				<span class="truncate" title={'Add all related properties (max 100 of each property)'}>
@@ -406,7 +407,9 @@
 					<button
 						on:click={() => selected_node && property_clicked(selected_node.id, property.property)}
 						class="button flex px-2 rounded-lg bg-transparent h-10 hover:bg-black/5 dark:hover:bg-black/30 transition-all duration-200 ease-in-out {property
-							.property.related.length > 0 && property.property.related.every((r) => r.visible)
+							.property.related.length > 0 &&
+						property.property.fetched &&
+						property.property.related.every((r) => r.visible)
 							? 'opacity-50 cursor-default'
 							: 'opacity-100 cursor-pointer'}"
 					>
