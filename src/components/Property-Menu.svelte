@@ -7,7 +7,8 @@
 		ArrowRightOnRectangle,
 		ArrowLeftOnRectangle,
 		XMark,
-		Plus
+		Plus,
+		ListBullet
 	} from '@steeze-ui/heroicons';
 	import Fuse from 'fuse.js';
 	import { click_outside, dark_mode } from '../util';
@@ -177,16 +178,20 @@
 			selected_property &&
 			selected_property_nodes.length > 0
 		) {
-			let nodes = [...selected_property_nodes].map(
-				(
-					node
-				): {
-					node: Node;
-					matches?: readonly Fuse.FuseResultMatch[];
-				} => {
-					return { node: node, matches: [] };
-				}
-			);
+			let nodes = [...selected_property_nodes]
+				.map(
+					(
+						node
+					): {
+						node: Node;
+						matches?: readonly Fuse.FuseResultMatch[];
+					} => {
+						return { node: node, matches: [] };
+					}
+				)
+				.sort((a, b) => {
+					return a.node.label.toLocaleLowerCase() <= b.node.label.toLocaleLowerCase() ? -1 : 1;
+				});
 			if (search_string.length > 0) {
 				const fuse = new Fuse(selected_property_nodes, {
 					keys: ['label'],
@@ -201,28 +206,6 @@
 			}
 			sorted_nodes = nodes;
 		}
-	}
-
-	async function property_click_load_all(uri: URI, property: Property) {
-		selected_node = undefined;
-		const data_promise = graph.load_related_nodes(
-			uri,
-			property,
-			true,
-			graph.network?.DOMtoCanvas(menu_position)
-		);
-		toast.promise(
-			data_promise,
-			{
-				loading: 'Loading...',
-				success: 'Loaded!',
-				error: 'Error!'
-			},
-			{
-				position: 'bottom-center',
-				style: `${dark_mode ? 'background: #1f2937; color: #fff' : 'background: #fff; color: #000'}`
-			}
-		);
 	}
 
 	async function property_clicked(uri: URI, property: Property) {
@@ -268,6 +251,37 @@
 	function add_selected() {
 		graph.show_nodes(selected_nodes);
 		selected_node = undefined;
+	}
+
+	async function add_all() {
+		selected_property = {
+			label: 'All',
+			in_count: 0,
+			out_count: 0,
+			uri: '',
+			fetched: true,
+			related: []
+		};
+		selected_property_nodes = [];
+		const promises = sorted_properties.map((p) => {
+			return new Promise<Node[]>((res) => {
+				if (!selected_node) return res([]);
+				graph
+					.load_related_nodes(selected_node.id, p.property, false, undefined, false, false)
+					.then((nodes) => {
+						for (let node of nodes) {
+							if (!selected_property_nodes.find((n) => n.id === node.id)) {
+								selected_property_nodes.push(node);
+							}
+						}
+						selected_property_nodes = selected_property_nodes;
+						return res(nodes);
+					});
+			});
+		});
+
+		const new_nodes = [...new Set((await Promise.all(promises)).flat())];
+		graph.load_relations(new_nodes, false, true);
 	}
 </script>
 
@@ -344,8 +358,23 @@
 				/>
 			</div>
 		</div>
-
 		{#if selected_node.properties.length > 0 && selected_property === undefined}
+			<button
+				on:click={add_all}
+				class="mx-2 px-2 button flex  rounded-lg  h-10 bg-transparent hover:bg-black/5 dark:hover:bg-black/30 transition-all duration-200 ease-in-out "
+			>
+				<Icon src={ListBullet} theme="solid" class="h-5 w-5  mr-3" />
+				<span class="truncate" title={'Add all related properties (max 100 of each property)'}>
+					Add all
+				</span>
+				<span
+					class="ml-auto w-6 bg-dark-muted text-light rounded-full inline-flex items-center justify-center -mb-0.5 text-xs font-semibold  p-1 "
+					>{sorted_properties.reduce(
+						(sum, p) => sum + p.property.in_count + p.property.out_count,
+						0
+					)}</span
+				>
+			</button>
 			<div class="flex mb-1">
 				{#each sort_options as sort_option}
 					<button
@@ -376,9 +405,8 @@
 				{#each sorted_properties as property}
 					<button
 						on:click={() => selected_node && property_clicked(selected_node.id, property.property)}
-						class="button flex px-2 rounded-lg bg-transparent h-10 hover:bg-black/5 dark:hover:bg-black/30 transition-all duration-200 ease-in-out {property.property.related?.every(
-							(r) => r.visible
-						)
+						class="button flex px-2 rounded-lg bg-transparent h-10 hover:bg-black/5 dark:hover:bg-black/30 transition-all duration-200 ease-in-out {property
+							.property.related.length > 0 && property.property.related.every((r) => r.visible)
 							? 'opacity-50 cursor-default'
 							: 'opacity-100 cursor-pointer'}"
 					>
@@ -393,7 +421,6 @@
 									: ArrowLeftOnRectangle}
 								theme="solid"
 								class="h-5 w-5  mr-3"
-								title="test"
 							/>
 						</div>
 						{#if property.property.label}

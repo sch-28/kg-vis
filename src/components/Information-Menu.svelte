@@ -50,18 +50,19 @@
 				currentPage: current_page
 			});
 			loading_related = true;
-			const results: Promise<Node[]>[] = [];
-			for (const property of paginated_properties) {
-				const promise = new Promise<Node[]>((res) => {
+			const promises = paginated_properties.map((p) => {
+				return new Promise<Node[]>((res) => {
 					if (!node) return res([]);
-					graph.load_related_nodes(node.id, property, false, undefined, false).then((result) => {
+					graph.load_related_nodes(node.id, p, false, undefined, false, false).then((nodes) => {
 						paginated_properties = paginated_properties;
-						res(result);
+						return res(nodes);
 					});
 				});
-				results.push(promise);
-			}
-			await Promise.all(results);
+			});
+
+			const new_nodes = [...new Set((await Promise.all(promises)).flat())];
+			graph.load_relations(new_nodes, false, false);
+
 			loading_related = false;
 		}
 	}

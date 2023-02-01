@@ -110,20 +110,7 @@
 
 	async function add_nodes() {
 		graph.show_nodes(nodes);
-		SPARQL.fetch_multiple_relations(
-			nodes.map((n) => n.id),
-			graph.nodes.map((n) => n.id)
-		).then((relations) => {
-			for (let relation of relations) {
-				graph.create_edge(
-					relation.subject.value,
-					relation.property.value,
-					relation.object.value,
-					relation.property_label
-				);
-			}
-			graph.update_data();
-		});
+		graph.load_relations(nodes);
 
 		close();
 	}

@@ -215,6 +215,42 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 		});
 	}
 
+	public async fetch_property_labels(properties: URI[]) {
+		const result = await this.query<{
+			property: Node;
+			propertyLabel: Node;
+		}>(
+			`
+			SELECT DISTINCT ?property ?propertyLabel  WHERE {
+			  VALUES ?property {
+				${properties
+					.filter((p) => isUrl(p))
+					.map((p) => `<${p}>`)
+					.join('\n')}
+				  }		
+				OPTIONAL{
+				  ${
+						this.endpoint.includes('wikidata')
+							? '?prop wikibase:directClaim ?property . ?prop rdfs:label ?propertyLabel  '
+							: '?property rdf:type rdf:Property .  ?property rdfs:label ?propertyLabel '
+					}
+					FILTER (lang(?propertyLabel) = 'en')
+				}
+			}
+				`
+		);
+		if (result.length > 0) {
+			return result.map((r) => {
+				return {
+					uri: r.property.value,
+					label: r.propertyLabel?.value ?? r.property.value
+				};
+			});
+		}
+
+		return properties.map((p) => ({ uri: p, label: p }));
+	}
+
 	public async fetch_labels(subjects: URI[]) {
 		const result = await this.query<{
 			subject: Node;
@@ -228,14 +264,11 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 					.map((s) => `<${s}>`)
 					.join('\n')}
 				  }		
+				
 				OPTIONAL{
-				  ${
-						this.endpoint.includes('wikidata')
-							? '?prop wikibase:directClaim ?subject . ?prop rdfs:label ?subjectLabel  '
-							: '?subject rdf:type rdf:Property .  ?subject rdfs:label ?subjectLabel '
-					}
+					?subject rdfs:label ?subjectLabel
 					FILTER (lang(?subjectLabel) = 'en')
-				}
+				  }
 				  
 			}
 				`
@@ -244,7 +277,7 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 			return result.map((r) => {
 				return {
 					uri: r.subject.value,
-					label: r.subjectLabel?.value ?? r.subject
+					label: r.subjectLabel?.value ?? r.subject.value
 				};
 			});
 		}
@@ -306,7 +339,7 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 			};
 		});
 
-		const infos = await this.fetch_labels(relations.map((r) => r.property.value));
+		const infos = await this.fetch_property_labels(relations.map((r) => r.property.value));
 
 		for (let i = 0; i < relations.length; i++) {
 			const relation = relations[i];
@@ -404,14 +437,18 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 				label: res.propLabel?.value,
 				uri: property,
 				out_count: +res.outCount.value,
-				in_count: +res.inCount.value
+				in_count: +res.inCount.value,
+				related: [],
+				fetched: false,
 			};
 		} else {
 			return {
 				label: property,
 				uri: property,
 				out_count: 0,
-				in_count: 0
+				in_count: 0,
+				related: [],
+				fetched: false,
 			};
 		}
 	}

@@ -16,7 +16,8 @@ export class Property {
 	uri: URI;
 	in_count: number;
 	out_count: number;
-	related?: Node[] = [];
+	related: Node[] = [];
+	fetched: boolean;
 
 	constructor(uri: URI, in_count: number, out_count: number, label?: string, related?: Node[]) {
 		this.label = label;
@@ -26,6 +27,7 @@ export class Property {
 		if (related) {
 			this.related = related;
 		}
+		this.fetched = false;
 	}
 }
 export class Node {
@@ -331,7 +333,7 @@ export class Graph {
 	update_edge_labels() {
 		const hide = get(Settings).hide_edge_labels;
 		this.edges.forEach((edge) => {
-			if (hide) edge.label = "​"; // zero-width space to hide the edges.. doesn't work otherwise 
+			if (hide) edge.label = '​'; // zero-width space to hide the edges.. doesn't work otherwise
 			else edge.label = edge.hidden_label;
 		});
 		this.data.edges.update(this.edges);
@@ -346,6 +348,43 @@ export class Graph {
 		return node;
 	}
 
+	async load_relations(new_nodes: Node[], visible: boolean = true, notify: boolean = true) {
+		SPARQL.fetch_multiple_relations(
+			new_nodes.map((n) => n.id),
+			this.nodes.map((n) => n.id),
+			notify
+		).then((relations) => {
+			for (const relation of relations) {
+				this.create_edge(
+					relation.subject.value,
+					relation.property.value,
+					relation.object.value,
+					relation.property_label
+				);
+				const node = this.nodes.find((n) => n.id == relation.subject.value);
+				const property = node?.properties.find((p) => p.uri == relation.property.value);
+				const related = this.nodes.find((n) => n.id == relation.object.value);
+				if (property) {
+					if (related) {
+						if (property.related.find((node) => node.id == related.id) == undefined) {
+							property.related.push(related);
+						}
+					}
+				} else if (!property && node) {
+					node.properties.push({
+						uri: relation.property.value,
+						label: relation.property_label,
+						related: related ? [related] : [],
+						in_count: 0,
+						out_count: 1,
+						fetched: false
+					});
+				}
+			}
+			this.update_data(visible);
+		});
+	}
+
 	async load_related_nodes(
 		uri: string,
 		property: Property,
@@ -354,18 +393,16 @@ export class Graph {
 			x: number;
 			y: number;
 		} = { x: 0, y: 0 },
-		notify = true
+		notify = true,
+		fetch_related = true
 	) {
 		const node = this.find_or_create_node(uri, uri);
 		let existing_property = node.properties.find((p) => p.uri == property.uri);
-		if (existing_property?.related) {
+		if (existing_property?.fetched) {
 			return existing_property.related;
-		} else {
-			if (!existing_property) {
-				node.properties.push(property);
-				existing_property = property;
-			}
-			existing_property.related = [];
+		} else if (!existing_property) {
+			node.properties.push(property);
+			existing_property = property;
 		}
 
 		const raw_new_nodes = await SPARQL.fetch_related_nodes(uri, property.uri, notify);
@@ -395,44 +432,12 @@ export class Graph {
 				existing_property.related.push(n);
 			}
 		}
+		existing_property.fetched = true;
 		this.update_data(visible);
 
 		// fetch all interconnections
-		if (get(Settings).fetch_related) {
-			SPARQL.fetch_multiple_relations(
-				new_nodes.map((n) => n.id),
-				this.nodes.map((n) => n.id),
-				notify
-			).then((relations) => {
-				for (const relation of relations) {
-					this.create_edge(
-						relation.subject.value,
-						relation.property.value,
-						relation.object.value,
-						relation.property_label
-					);
-					const node = this.nodes.find((n) => n.id == relation.subject.value);
-					const property = node?.properties.find((p) => p.uri == relation.property.value);
-					const related = this.nodes.find((n) => n.id == relation.object.value);
-					if (property) {
-						if (related) {
-							if (!property.related) property.related = [];
-							if (property.related.find((node) => node.id == related.id) == undefined) {
-								property.related.push(related);
-							}
-						}
-					} else if (!property && node) {
-						node.properties.push({
-							uri: relation.property.value,
-							label: relation.property_label,
-							related: related ? [related] : undefined,
-							in_count: 0,
-							out_count: 1
-						});
-					}
-				}
-				this.update_data(visible);
-			});
+		if (get(Settings).fetch_related && fetch_related) {
+			this.load_relations(new_nodes, visible, notify);
 		}
 		if (get(Settings).fetch_image) {
 			SPARQL.fetch_images(new_nodes.map((n) => n.id)).then((images) => {
