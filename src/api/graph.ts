@@ -156,6 +156,8 @@ export class Graph {
 	}
 
 	update_data(visible = true) {
+		if(!visible) return;
+
 		const nodes = this.nodes.filter((node) => node.visible);
 		const edges = this.edges.filter((edge) => this.is_edge_visible(edge));
 
