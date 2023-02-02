@@ -172,13 +172,13 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 				?item rdfs:label ?itemLabel . 
 				FILTER (lang(?itemLabel) = '${this.endpoint_lang}') . 
 				?itemLabel bif:contains '${search_text}' . 
-				?item dcterms:subject ?sub 
-	
+				?item dcterms:subject ?type 
 				OPTIONAL{
-					?item (wdt:P279|wdt:P31) ?type .
+					
 					?type rdfs:label ?typeLabel .
 					FILTER (lang(?typeLabel) = '${this.endpoint_lang}')  
 				}
+				
 				}  LIMIT 5 `,
 				'https://dbpedia.org/sparql'
 			);
