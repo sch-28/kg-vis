@@ -356,7 +356,7 @@
 							class="w-1.5 h-1.5 bg-dark-muted dark:bg-light rounded-full flex-shrink-0 place-self-center mr-2"
 						/>
 						<div class="truncate flex-grow">
-							<a href={node.id} class="text-sm text-primary leading-6 pb-[2px]">{node.label}</a>
+							<a href={node.id} class="text-sm text-primary leading-6 pb-[2px]" target="_blank" rel="noreferrer">{node.label}</a>
 						</div>
 
 						<button class="ml-2 align-middle" on:click={() => remove_node(node)}>
