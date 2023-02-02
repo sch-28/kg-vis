@@ -75,7 +75,7 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 		this.setMaxListeners(1);
 	}
 
-	public async query<T extends Binding>(body?: string) {
+	public async query<T extends Binding>(body?: string, custom_endpoint?: string): Promise<T[]> {
 		const now = Date.now();
 		const diff = now - this.last_fetch;
 		if (diff < this.rate_limit && body) {
@@ -100,7 +100,7 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 		urlencoded.append('query', this.prefix + body);
 
 		try {
-			const result = await fetch(this.endpoint, {
+			const result = await fetch(custom_endpoint || this.endpoint, {
 				method: 'POST',
 
 				headers: {
@@ -128,6 +128,48 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 			if (e instanceof Error) this.emit('error', e);
 			return [];
 		}
+	}
+
+	public async fetch_entities(search_text: string) {
+		const result = await SPARQL.query<{ item: Node; itemLabel: Node; typeLabel: Node }>(
+			`	SELECT ?item ?itemLabel ?typeLabel WHERE {
+				SERVICE wikibase:mwapi {
+				bd:serviceParam wikibase:endpoint "www.wikidata.org";
+								wikibase:api "EntitySearch";
+								mwapi:search "${search_text}";
+								mwapi:language "en".
+				?item wikibase:apiOutputItem mwapi:item.
+				?num wikibase:apiOrdinal true.
+
+				}
+				
+				OPTIONAL{
+					?item rdfs:label ?itemLabel .
+					FILTER (lang(?itemLabel) = '${this.endpoint_lang}')
+				}
+				OPTIONAL{
+					?item (wdt:P279|wdt:P31) ?type .
+					?type rdfs:label ?typeLabel .
+					FILTER (lang(?typeLabel) = 'en')  
+				}
+				} ORDER BY ASC(?num) LIMIT 5`,
+			'https://query.wikidata.org/sparql'
+		);
+
+		if (result.length === 0) {
+			return [];
+		}
+
+		const entities = [];
+		for (const item of result) {
+			entities.push({
+				uri: item.item?.value ?? '',
+				label: item.itemLabel?.value ?? '',
+				type: item.typeLabel?.value ?? ''
+			});
+		}
+
+		return entities;
 	}
 
 	public async fetch_description(subject: URI) {
@@ -297,9 +339,10 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 		const result = await this.query<{
 			label: Node;
 			description: Node;
+			typeLabel: Node;
 		}>(
 			`
-			SELECT DISTINCT ?label ?description WHERE {
+			SELECT DISTINCT ?label ?description ?typeLabel WHERE {
 			  VALUES ?subject {
 				<${subject}>
 				  }
@@ -307,6 +350,11 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 			OPTIONAL {
 			?subject rdfs:label ?label 
 			FILTER (lang(?label) = '${this.endpoint_lang}')
+			}
+			OPTIONAL{
+				?subject (wdt:P279|wdt:P31) ?type .
+				?type rdfs:label ?typeLabel .
+				FILTER (lang(?typeLabel) = '${this.endpoint_lang}')
 			}
 			OPTIONAL {
 				?subject schema:description ?description
@@ -319,11 +367,12 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 		if (result.length > 0) {
 			return {
 				label: result[0].label?.value ?? subject,
-				description: result[0].description?.value ?? ''
+				description: result[0].description?.value ?? '',
+				type: result[0].typeLabel?.value ?? ''
 			};
 		}
 
-		return { label: subject, description: '' };
+		return { label: subject, description: '', type: '' };
 	}
 
 	public async fetch_multiple_relations(

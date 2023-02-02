@@ -8,6 +8,7 @@
 	import LoadingCircle from '../Loading-Circle.svelte';
 	import { Settings } from '../../settings';
 	import { Button, Hr, Toggle } from 'flowbite-svelte';
+	import { click_outside } from '../../util';
 
 	export let graph: Graph;
 
@@ -129,6 +130,111 @@
 	});
 
 	$: sparql_query_area && new ResizeObserver(handle_resize).observe(sparql_query_area);
+
+	// smart search
+
+	type Suggestion = {
+		label: string;
+		type: string;
+		uri: string;
+		height?: number;
+		suggestion_type: 'direct' | 'search';
+	};
+
+	let suggestions: Suggestion[] = [
+		{
+			label: 'test',
+			type: 'wikidata',
+			uri: 'https://www.wikidata.org/wiki/Q42',
+			suggestion_type: 'direct'
+		},
+		{
+			label: 'test2',
+			type: 'wikidata',
+			uri: 'https://www.wikidata.org/wiki/Q42',
+			suggestion_type: 'direct'
+		}
+	];
+
+	let show_suggestsions = false;
+
+	let entity_url: string = '';
+	let debouncer: NodeJS.Timeout;
+
+	// debounce the entity input
+	$: {
+		suggestions = [];
+		if (debouncer) clearTimeout(debouncer);
+		debouncer = setTimeout(() => {
+			smart_search(entity_url);
+		}, 500);
+	}
+
+	async function smart_search(input: string) {
+		if (!input || input.length === 0) return;
+
+		let suggestion_promises: Promise<Suggestion[]> | undefined = undefined;
+		const url_promises: Promise<Suggestion>[] = [];
+		const urls: string[] = [];
+		if (isUrl(input)) {
+			urls.push(input);
+
+			if (input.startsWith('https://')) {
+				input = input.replace('https://', 'http://');
+			}
+
+			if (input.includes('/wiki/')) {
+				if (input.includes('wiki/Property:')) {
+					urls.push(input.replace('wiki/Property:', 'prop/direct/'));
+				} else {
+					urls.push(input.replace('/wiki/', '/entity/'));
+				}
+			}
+		} else {
+			// regex that filters for QIDs e.g. Q123456
+			const qid_regex = /Q\d+/g;
+			const qids = input.match(qid_regex);
+			if (qids) {
+				urls.push(...qids.map((qid) => `http://www.wikidata.org/entity/${qid}`));
+			}
+
+			// regex that filters for PIDs e.g. P123456
+			const pid_regex = /P\d+/g;
+			const pids = input.match(pid_regex);
+			if (pids) {
+				urls.push(...pids.map((pid) => `http://www.wikidata.org/prop/direct/${pid}`));
+			}
+
+			suggestion_promises = SPARQL.fetch_entities(input).then((entities) =>
+				entities.map((e) => ({
+					label: e.label,
+					type: e.type,
+					uri: e.uri,
+					suggestion_type: 'search'
+				}))
+			);
+		}
+
+		url_promises.push(
+			...urls.map((u) =>
+				SPARQL.fetch_info(u).then(
+					(i) => ({ label: i.label, type: i.type, uri: u, suggestion_type: 'direct' } as Suggestion)
+				)
+			)
+		);
+
+		show_suggestsions = true;
+		loading = true;
+		suggestions = [];
+		const [suggestion, ...url] = await Promise.all([suggestion_promises, ...url_promises]);
+		if (suggestion) {
+			suggestions = [...suggestion.filter((s) => s.label.length > 0 && s.label !== s.uri)];
+		}
+		suggestions.push(...url.filter((s) => s.label.length > 0 && s.label !== s.uri));
+		//filter duplicates based on url
+		suggestions = suggestions.filter((s, i, a) => a.findIndex((t) => t.uri === s.uri) === i);
+		loading = false;
+	}
 </script>
 
 <div class="flex flex-col w-[450px]">
@@ -177,33 +283,51 @@
 
 	<div class="flex gap-2 flex-col mb-2">
 		<div class="relative">
-			<label for="entity_url" class="block mb-2 text-sm font-medium">Entity URL</label>
+			<label for="entity_url" class="block mb-2 font-medium">Entity</label>
 			<input
-				disabled={loading}
-				on:paste={handle_paste}
-				on:keypress={(e) => {
-					if (e.key === 'Enter') {
-						const url = e.currentTarget.value;
-						if (url) {
-							fetch_url(url);
-						}
+				on:click={() => {
+					if (suggestions.length > 0) {
+						show_suggestsions = true;
 					}
 				}}
-				on:change={(e) => {
-					const url = e.currentTarget.value;
-					if (url) {
-						fetch_url(url);
-					}
-				}}
-				type="url"
+				bind:value={entity_url}
+				type="text"
 				id="entity_url"
-				class="{loading
-					? 'cursor-not-allowed'
-					: ''} bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-primary focus:border-primring-primary block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600  dark:focus:ring-primary dark:focus:border-primring-primary"
+				class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-primary focus:border-primring-primary block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600  dark:focus:ring-primary dark:focus:border-primring-primary"
 				placeholder="http://www.wikidata.org/entity/Q84263196"
 				required
 			/>
-			<div hidden={!loading} class="absolute right-2 top-[3.075rem] -translate-y-1/2 w-6 h-6">
+			<div
+				use:click_outside
+				on:click_outside={() => (show_suggestsions = false)}
+				class="{show_suggestsions && suggestions.length > 0
+					? 'opacity-100 mt-2'
+					: 'opacity-0'} flex flex-col border shadow-lg rounded-lg dark:border-dark-muted dark:bg-dark-bg bg-white z-50 w-full divide-y overflow-hidden transition-all duration-200 h-0"
+				style={`height: ${
+					show_suggestsions ? suggestions.reduce((sum, s) => sum + (s.height ?? 0), 0) : 0
+				}px`}
+			>
+				{#if suggestions.length > 0}
+					{#each suggestions as suggestion}
+						<button
+							on:click={() => {
+								show_suggestsions = false;
+								fetch_url(suggestion.uri);
+							}}
+							bind:offsetHeight={suggestion.height}
+							class="p-2 flex flex-col border-gray-200 dark:border-gray-700 hover:bg-black/5 dark:hover:bg-black/30"
+						>
+							<span class="font-medium">{suggestion.label}</span>
+							<span class="text-sm font-light">{suggestion.type}</span>
+						</button>
+					{/each}
+				{:else if !loading}
+					<div class="flex flex-col border-gray-200 dark:border-gray-700">
+						<span>No suggestions</span>
+					</div>
+				{/if}
+			</div>
+			<div hidden={!loading} class="absolute right-2 top-[3.35rem] -translate-y-1/2 w-6 h-6">
 				<LoadingCircle />
 			</div>
 			{#if error && error.length > 0}
