@@ -160,7 +160,13 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 				} ORDER BY ASC(?num) LIMIT 5`,
 				'https://query.wikidata.org/sparql'
 			);
-		else if (this.endpoint_type == 'dbpedia')
+		else if (this.endpoint_type == 'dbpedia') {
+			if (search_text.split(' ').length > 0 && search_text.split(' ').every((x) => x.length > 0)) {
+				search_text = search_text
+					.split(' ')
+					.map((x) => `"${x}"`)
+					.join(' AND ');
+			}
 			result = await SPARQL.query<{ item: Node; itemLabel: Node; typeLabel: Node }>(
 				`	SELECT DISTINCT ?item ?itemLabel ?typeLabel WHERE {
 				?item rdfs:label ?itemLabel . 
@@ -176,7 +182,7 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 				}  LIMIT 5 `,
 				'https://dbpedia.org/sparql'
 			);
-
+		}
 		if (result.length === 0) {
 			return [];
 		}
