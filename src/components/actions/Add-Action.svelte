@@ -215,7 +215,6 @@
 				urls.push(`http://dbpedia.org/resource/${input}`);
 			}
 
-			
 			suggestion_promises = SPARQL.fetch_entities(input).then((entities) =>
 				entities.map((e) => ({
 					label: e.label,
@@ -227,11 +226,12 @@
 		}
 
 		url_promises.push(
-			...urls.map((u) =>
-				SPARQL.fetch_info(u).then(
+			...urls.map((u) => {
+				u = u.replaceAll(' ', '_');
+				return SPARQL.fetch_info(u).then(
 					(i) => ({ label: i.label, type: i.type, uri: u, suggestion_type: 'direct' } as Suggestion)
-				)
-			)
+				);
+			})
 		);
 
 		show_suggestsions = true;
@@ -244,6 +244,7 @@
 		suggestions.push(...url.filter((s) => s.label.length > 0 && s.label !== s.uri));
 		//filter duplicates based on url
 		suggestions = suggestions.filter((s, i, a) => a.findIndex((t) => t.uri === s.uri) === i);
+		console.log(suggestions);
 		loading = false;
 	}
 </script>
