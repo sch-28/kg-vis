@@ -34,7 +34,9 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 			PREFIX wd: <http://www.wikidata.org/entity/>
 			PREFIX wikibase: <http://wikiba.se/ontology#>
 			PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-			PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>`;
+			PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+			PREFIX bif: <http://www.openlinksw.com/schemas/bif#>
+			PREFIX dcterms: <http://purl.org/dc/terms/>`;
 
 	private current_progress: number | undefined = undefined;
 
@@ -131,13 +133,16 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 	}
 
 	public async fetch_entities(search_text: string) {
-		const result = await SPARQL.query<{ item: Node; itemLabel: Node; typeLabel: Node }>(
-			`	SELECT ?item ?itemLabel ?typeLabel WHERE {
+		let result: { item: Node; itemLabel: Node; typeLabel: Node }[] = [];
+
+		if (this.endpoint_type == 'wikidata')
+			result = await SPARQL.query<{ item: Node; itemLabel: Node; typeLabel: Node }>(
+				`	SELECT ?item ?itemLabel ?typeLabel WHERE {
 				SERVICE wikibase:mwapi {
-				bd:serviceParam wikibase:endpoint "www.wikidata.org";
-								wikibase:api "EntitySearch";
-								mwapi:search "${search_text}";
-								mwapi:language "en".
+				bd:serviceParam wikibase:endpoint 'www.wikidata.org';
+								wikibase:api 'EntitySearch';
+								mwapi:search '${search_text}';
+								mwapi:language '${this.endpoint_lang}'.
 				?item wikibase:apiOutputItem mwapi:item.
 				?num wikibase:apiOrdinal true.
 
@@ -150,11 +155,27 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 				OPTIONAL{
 					?item (wdt:P279|wdt:P31) ?type .
 					?type rdfs:label ?typeLabel .
-					FILTER (lang(?typeLabel) = 'en')  
+					FILTER (lang(?typeLabel) = '${this.endpoint_lang}')  
 				}
 				} ORDER BY ASC(?num) LIMIT 5`,
-			'https://query.wikidata.org/sparql'
-		);
+				'https://query.wikidata.org/sparql'
+			);
+		else if (this.endpoint_type == 'dbpedia')
+			result = await SPARQL.query<{ item: Node; itemLabel: Node; typeLabel: Node }>(
+				`	SELECT DISTINCT ?item ?itemLabel ?typeLabel WHERE {
+				?item rdfs:label ?itemLabel . 
+				FILTER (lang(?itemLabel) = '${this.endpoint_lang}') . 
+				?itemLabel bif:contains '${search_text}' . 
+				?item dcterms:subject ?sub 
+	
+				OPTIONAL{
+					?item (wdt:P279|wdt:P31) ?type .
+					?type rdfs:label ?typeLabel .
+					FILTER (lang(?typeLabel) = '${this.endpoint_lang}')  
+				}
+				}  LIMIT 5 `,
+				'https://dbpedia.org/sparql'
+			);
 
 		if (result.length === 0) {
 			return [];

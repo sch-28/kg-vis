@@ -183,28 +183,39 @@
 				input = input.replace('https://', 'http://');
 			}
 
-			if (input.includes('/wiki/')) {
-				if (input.includes('wiki/Property:')) {
-					urls.push(input.replace('wiki/Property:', 'prop/direct/'));
-				} else {
-					urls.push(input.replace('/wiki/', '/entity/'));
+			if ($Settings.endpoint_type === 'wikidata') {
+				if (input.includes('/wiki/')) {
+					if (input.includes('wiki/Property:')) {
+						urls.push(input.replace('wiki/Property:', 'prop/direct/'));
+					} else {
+						urls.push(input.replace('/wiki/', '/entity/'));
+					}
+				}
+			} else if ($Settings.endpoint_type === 'dbpedia') {
+				if (input.includes('/page/')) {
+					urls.push(input.replace('/page/', '/resource/'));
 				}
 			}
 		} else {
-			// regex that filters for QIDs e.g. Q123456
-			const qid_regex = /Q\d+/g;
-			const qids = input.match(qid_regex);
-			if (qids) {
-				urls.push(...qids.map((qid) => `http://www.wikidata.org/entity/${qid}`));
+			if ($Settings.endpoint_type === 'wikidata') {
+				// regex that filters for QIDs e.g. Q123456
+				const qid_regex = /Q\d+/g;
+				const qids = input.match(qid_regex);
+				if (qids) {
+					urls.push(...qids.map((qid) => `http://www.wikidata.org/entity/${qid}`));
+				}
+
+				// regex that filters for PIDs e.g. P123456
+				const pid_regex = /P\d+/g;
+				const pids = input.match(pid_regex);
+				if (pids) {
+					urls.push(...pids.map((pid) => `http://www.wikidata.org/prop/direct/${pid}`));
+				}
+			} else if ($Settings.endpoint_type === 'dbpedia') {
+				urls.push(`http://dbpedia.org/resource/${input}`);
 			}
 
-			// regex that filters for PIDs e.g. P123456
-			const pid_regex = /P\d+/g;
-			const pids = input.match(pid_regex);
-			if (pids) {
-				urls.push(...pids.map((pid) => `http://www.wikidata.org/prop/direct/${pid}`));
-			}
-
+			
 			suggestion_promises = SPARQL.fetch_entities(input).then((entities) =>
 				entities.map((e) => ({
 					label: e.label,
