@@ -73,6 +73,7 @@ export interface Settings {
 	animations: boolean;
 	hide_edges_on_drag: boolean;
 	hide_edge_labels: boolean;
+	smart_search: boolean;
 }
 
 export const Settings = storage<Settings>('settings', {
@@ -87,5 +88,6 @@ export const Settings = storage<Settings>('settings', {
 	fetch_image: true,
 	animations: true,
 	hide_edges_on_drag: false,
-	hide_edge_labels: false
+	hide_edge_labels: false,
+	smart_search: true
 });

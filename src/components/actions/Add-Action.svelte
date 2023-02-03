@@ -172,6 +172,7 @@
 
 	async function smart_search(input: string) {
 		if (!input || input.length === 0) return;
+		loading = true;
 
 		let suggestion_promises: Promise<Suggestion[]> | undefined = undefined;
 		const url_promises: Promise<Suggestion>[] = [];
@@ -186,7 +187,7 @@
 			if ($Settings.endpoint_type === 'wikidata') {
 				if (input.includes('/wiki/')) {
 					if (input.includes('wiki/Property:')) {
-						urls.push(input.replace('wiki/Property:', 'prop/direct/'));
+						//urls.push(input.replace('wiki/Property:', 'prop/direct/'));
 					} else {
 						urls.push(input.replace('/wiki/', '/entity/'));
 					}
@@ -204,25 +205,20 @@
 				if (qids) {
 					urls.push(...qids.map((qid) => `http://www.wikidata.org/entity/${qid}`));
 				}
-
-				// regex that filters for PIDs e.g. P123456
-				const pid_regex = /P\d+/g;
-				const pids = input.match(pid_regex);
-				if (pids) {
-					urls.push(...pids.map((pid) => `http://www.wikidata.org/prop/direct/${pid}`));
-				}
 			} else if ($Settings.endpoint_type === 'dbpedia') {
 				urls.push(`http://dbpedia.org/resource/${input}`);
 			}
 
-			suggestion_promises = SPARQL.fetch_entities(input).then((entities) =>
-				entities.map((e) => ({
-					label: e.label,
-					type: e.type,
-					uri: e.uri,
-					suggestion_type: 'search'
-				}))
-			);
+			if ($Settings.smart_search) {
+				suggestion_promises = SPARQL.fetch_entities(input).then((entities) =>
+					entities.map((e) => ({
+						label: e.label,
+						type: e.type,
+						uri: e.uri,
+						suggestion_type: 'search'
+					}))
+				);
+			}
 		}
 
 		url_promises.push(
@@ -235,7 +231,6 @@
 		);
 
 		show_suggestsions = true;
-		loading = true;
 		suggestions = [];
 		const [suggestion, ...url] = await Promise.all([suggestion_promises, ...url_promises]);
 		if (suggestion) {
@@ -244,7 +239,6 @@
 		suggestions.push(...url.filter((s) => s.label.length > 0 && s.label !== s.uri));
 		//filter duplicates based on url
 		suggestions = suggestions.filter((s, i, a) => a.findIndex((t) => t.uri === s.uri) === i);
-		console.log(suggestions);
 		loading = false;
 	}
 </script>
@@ -295,7 +289,6 @@
 
 	<div class="flex gap-2 flex-col mb-2">
 		<div class="relative">
-			<label for="entity_url" class="block mb-2 font-medium">Entity</label>
 			<input
 				on:click={() => {
 					if (suggestions.length > 0) {
@@ -306,7 +299,7 @@
 				type="text"
 				id="entity_url"
 				class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-primary focus:border-primring-primary block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600  dark:focus:ring-primary dark:focus:border-primring-primary"
-				placeholder="http://www.wikidata.org/entity/Q84263196"
+				placeholder="Search {$Settings.endpoint_type == 'wikidata' ? 'Wikidata' : 'DBpedia'}"
 				required
 			/>
 			<div
@@ -339,7 +332,7 @@
 					</div>
 				{/if}
 			</div>
-			<div hidden={!loading} class="absolute right-2 top-[3.35rem] -translate-y-1/2 w-6 h-6">
+			<div hidden={!loading} class="absolute right-2 top-[1.35rem] -translate-y-1/2 w-6 h-6">
 				<LoadingCircle />
 			</div>
 			{#if error && error.length > 0}
@@ -356,7 +349,12 @@
 							class="w-1.5 h-1.5 bg-dark-muted dark:bg-light rounded-full flex-shrink-0 place-self-center mr-2"
 						/>
 						<div class="truncate flex-grow">
-							<a href={node.id} class="text-sm text-primary leading-6 pb-[2px]" target="_blank" rel="noreferrer">{node.label}</a>
+							<a
+								href={node.id}
+								class="text-sm text-primary leading-6 pb-[2px]"
+								target="_blank"
+								rel="noreferrer">{node.label}</a
+							>
 						</div>
 
 						<button class="ml-2 align-middle" on:click={() => remove_node(node)}>
@@ -368,8 +366,9 @@
 		{/if}
 	</div>
 	<Hr divClass="mb-2" />
-	<div class="mb-2">
-		<Toggle checked={$Settings.fetch_related}>Fetch relations</Toggle>
+	<div class="mb-2 flex flex-col gap-2">
+		<Toggle bind:checked={$Settings.smart_search}>Smart search</Toggle>
+		<Toggle bind:checked={$Settings.fetch_related}>Fetch relations</Toggle>
 	</div>
 	<div class="flex gap-2 items-center">
 		<Button on:click={add_nodes} disabled={loading || nodes.length === 0} size="sm">Add</Button>
