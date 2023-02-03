@@ -12,9 +12,11 @@
 		Toggle
 	} from 'flowbite-svelte';
 	import GraphIcon from 'svelte-material-icons/GraphOutline.svelte';
-	import { ArrowPath, CircleStack, QuestionMarkCircle } from '@steeze-ui/heroicons';
+	import { ArrowPath, CircleStack } from '@steeze-ui/heroicons';
 	import { languages, Settings } from '../../settings';
 	import type { Graph } from '../../api/graph';
+	import Tooltip from '../Tooltip.svelte';
+	import { HelpOutline } from '@steeze-ui/material-design-icons';
 
 	const close = getContext('close') as () => void;
 	export let graph: Graph;
@@ -84,7 +86,7 @@
 						on:click={() => (selected_setting = 'documentation')}
 					>
 						<svelte:fragment slot="icon">
-							<Icon src={QuestionMarkCircle} class="w-6 h-6" />
+							<Icon src={HelpOutline} class="w-6 h-6 fill-current" />
 						</svelte:fragment>
 					</SidebarItem>
 					<SidebarItem
@@ -147,7 +149,10 @@
 			</div>
 			<div class="flex gap-2">
 				<div>
-					<Label for="rate_limit" class="mb-2">Rate limit</Label>
+					<Label for="rate_limit" class="mb-2 flex gap-2">
+						Rate limit
+						<Tooltip text="Rate limit for the endpoint. Delay in ms." />
+					</Label>
 					<Input
 						bind:value={$Settings.rate_limit}
 						type="number"
@@ -157,7 +162,12 @@
 					/>
 				</div>
 				<div>
-					<Label for="size_limit" class="mb-2">Size limit</Label>
+					<Label for="size_limit" class="mb-2 flex gap-2">
+						Size limit
+						<Tooltip
+							text="The size controls the amount of relations that is fetched in each request."
+						/>
+					</Label>
 					<Input
 						bind:value={$Settings.size_limit}
 						type="number"
@@ -168,13 +178,36 @@
 				</div>
 			</div>
 		{:else if selected_setting === 'graph'}
-			<Toggle bind:checked={$Settings.fetch_image}>Show images</Toggle>
-			<Toggle bind:checked={$Settings.fetch_related}>Fetch relations</Toggle>
-			<Toggle bind:checked={$Settings.animations}>Animations</Toggle>
-			<Toggle bind:checked={$Settings.hide_edge_labels} on:change={update_labels}
-				>Hide edge labels</Toggle
-			>
-			<Toggle bind:checked={$Settings.hide_edges_on_drag}>Hide edges on drag</Toggle>
+			<div class="flex items-center justify-between gap-2">
+				<Toggle bind:checked={$Settings.fetch_image}>Show images</Toggle>
+				<Tooltip text="Should the graph fetch & display images of nodes" />
+			</div>
+			<div class="flex items-center justify-between gap-2">
+				<Toggle bind:checked={$Settings.fetch_related}>Fetch relations</Toggle>
+				<Tooltip text="Should the graph fetch relations between nodes" />
+			</div>
+			<div class="flex items-center justify-between gap-2">
+				<Toggle bind:checked={$Settings.animations}>Animations</Toggle>
+				<Tooltip text="The graph will try to stabilize directly" />
+			</div>
+			<div class="flex items-center justify-between gap-2">
+				<Toggle bind:checked={$Settings.hide_edge_labels} on:change={update_labels}
+					>Hide edge labels</Toggle
+				>
+				<Tooltip text="Will disable edge labels" />
+			</div>
+			<div class="flex items-center justify-between gap-2">
+				<Toggle bind:checked={$Settings.hide_edges_on_drag}>Hide edges on drag</Toggle>
+				<Tooltip
+					text="Hide edge lables only when dragging the view - this drastically improves performance "
+				/>
+			</div>
+			<div class="flex items-center justify-between gap-2">
+				<Toggle bind:checked={$Settings.smart_search}>Smart search</Toggle>
+				<Tooltip
+					text="When enabled, the search will try to find the best match for your input, by using a free-text search query on the official wikidata/dpbeida endpoints."
+				/>
+			</div>
 		{:else if selected_setting === 'documentation'}
 			<!-- <DocumentationSettings /> -->
 		{/if}

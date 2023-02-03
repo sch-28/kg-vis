@@ -9,6 +9,7 @@
 	import { Settings } from '../../settings';
 	import { Button, Hr, Toggle } from 'flowbite-svelte';
 	import { click_outside } from '../../util';
+	import Tooltip from '../Tooltip.svelte';
 
 	export let graph: Graph;
 
@@ -366,10 +367,6 @@
 		{/if}
 	</div>
 	<Hr divClass="mb-2" />
-	<div class="mb-2 flex flex-col gap-2">
-		<Toggle bind:checked={$Settings.smart_search}>Smart search</Toggle>
-		<Toggle bind:checked={$Settings.fetch_related}>Fetch relations</Toggle>
-	</div>
 	<div class="flex gap-2 items-center">
 		<Button on:click={add_nodes} disabled={loading || nodes.length === 0} size="sm">Add</Button>
 		<button on:click={close}>Cancel</button>
