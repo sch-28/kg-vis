@@ -126,11 +126,14 @@
 										<div
 											class="w-2/12 group-hover:opacity-100 flex opacity-0 items-center justify-end transition-all duration-200 ease-in-out"
 										>
-											<button
+											<a
+												target="_blank"
+												rel="noreferrer"
+												href={node.id}
 												class="p-1 rounded-lg hover:bg-black/5 dark:hover:bg-black/30 transition-all duration-200 ease-in-out"
 											>
 												<Icon src={ArrowTopRightOnSquare} size={'20'} />
-											</button>
+											</a>
 											<button
 												class="p-1 rounded-lg bg-transparent hover:bg-black/5 dark:hover:bg-black/30 transition-all duration-200 ease-in-out"
 												on:click={() => add_node(node)}
