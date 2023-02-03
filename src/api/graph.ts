@@ -1,9 +1,61 @@
 import { Settings } from '../settings';
 import { DataSet } from 'vis-data';
-import type { Network } from 'vis-network';
+import type { Network, Options } from 'vis-network';
 import { SPARQL } from './sparql';
 import { get } from 'svelte/store';
 import isUrl from 'is-url';
+import { dark_mode } from '../util';
+import * as vis from 'vis-network';
+
+const network_options: Options = {
+	interaction: {
+		hideEdgesOnDrag: get(Settings).hide_edges_on_drag ?? false
+	},
+	nodes: {
+		color: dark_mode ? '#6a7e9d' : '#74a0e9',
+		shape: 'dot',
+		font: {
+			color: dark_mode ? 'white' : 'black'
+		},
+		borderWidth: 3,
+		chosen: false,
+		widthConstraint: {
+			maximum: 125
+		}
+	},
+	edges: {
+		arrows: {
+			to: {
+				enabled: true,
+				type: 'arrow'
+			}
+		},
+		widthConstraint: {
+			maximum: 125
+		},
+		font: {
+			strokeWidth: 0,
+			color: dark_mode ? 'white' : 'black',
+			background: dark_mode ? '#111827' : 'white'
+		},
+		color: {
+			color: dark_mode ? '#4a5e7d' : '#74a0e9',
+			highlight: dark_mode ? '#4a5e7d' : '#74a0e9'
+		},
+		labelHighlightBold: false
+	},
+	physics: {
+		solver: 'forceAtlas2Based',
+		forceAtlas2Based: {
+			gravitationalConstant: -75,
+			springLength: 100,
+			springConstant: 0.02
+		},
+		maxVelocity: 50,
+		minVelocity: 3,
+		timestep: 0.35
+	}
+};
 
 export type URI = string;
 
@@ -116,18 +168,22 @@ export class Graph {
 	nodes: Node[];
 	edges: Edge[];
 
-	network: Network | undefined;
+	network: Network;
 
 	data: { nodes: DataSet<any>; edges: DataSet<any> };
 
-	constructor() {
+	constructor(container: HTMLElement, start?: URI) {
 		this.nodes = [];
 		this.edges = [];
 		const data_nodes = new DataSet([]);
 		const data_edges = new DataSet([]);
 		this.data = { nodes: data_nodes, edges: data_edges };
-
 		this.update_data();
+		this.network = new vis.Network(container, this.data, network_options);
+
+		if (start) {
+			this.load_node(start).then(() => this.update_data());
+		}
 	}
 
 	reset() {
@@ -151,12 +207,8 @@ export class Graph {
 		return false;
 	}
 
-	set_network(network: Network) {
-		this.network = network;
-	}
-
 	update_data(visible = true) {
-		if(!visible) return;
+		if (!visible) return;
 
 		const nodes = this.nodes.filter((node) => node.visible);
 		const edges = this.edges.filter((edge) => this.is_edge_visible(edge));

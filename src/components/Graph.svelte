@@ -1,106 +1,11 @@
 <script lang="ts">
-	import type { Network, Options } from 'vis-network';
-	import * as vis from 'vis-network';
 	import ContextMenu from './Context-Menu.svelte';
 	import PropertyMenu from './Property-Menu.svelte';
 	import { Graph, type URI, type Node } from '../api/graph';
 	import { Toaster } from 'svelte-french-toast';
-	import { dark_mode } from '../util';
 	import ActionMenu from './Action-Menu.svelte';
 	import ToastManager from './Toast-Manager.svelte';
 	import InformationMenu from './Information-Menu.svelte';
-	import { Settings } from '../settings';
-
-	let container: HTMLElement;
-
-	let graph: Graph;
-	let network: Network;
-
-	let selected_node: Node | undefined;
-	let menu_position = { x: 0, y: 0 };
-
-	let hide_context_menu = true;
-	let context_selection: Node | undefined = undefined;
-
-	let show_node_information: Node | undefined = undefined;
-
-	let loading_properties: boolean = false;
-
-	export let value: string;
-
-	$: if (value) {
-		create_graph(value);
-	}
-
-	async function create_graph(starting_point: string) {
-		graph = new Graph();
-
-		await graph.load_node(starting_point);
-		graph.update_data();
-
-		// hacky fix to remove error on hot-reload that causes multiple reloads because of the settings store
-		if(!container) return;
-
-		const options: Options = {
-			interaction: {
-				hideEdgesOnDrag: $Settings.hide_edges_on_drag ?? false
-			},
-			nodes: {
-				color: dark_mode ? '#6a7e9d' : '#74a0e9',
-				shape: 'dot',
-				font: {
-					color: dark_mode ? 'white' : 'black'
-				},
-				borderWidth: 3,
-				chosen: false,
-				widthConstraint: {
-					maximum: 125
-				}
-			},
-			edges: {
-				arrows: {
-					to: {
-						enabled: true,
-						type: 'arrow'
-					}
-				},
-				widthConstraint: {
-					maximum: 125
-				},
-				font: {
-					strokeWidth: 0,
-					color: dark_mode ? 'white' : 'black',
-					background: dark_mode ? '#111827' : 'white'
-				},
-				color: {
-					color: dark_mode ? '#4a5e7d' : '#74a0e9',
-					highlight: dark_mode ? '#4a5e7d' : '#74a0e9'
-				},
-				labelHighlightBold: false
-			},
-			physics: {
-				solver: 'forceAtlas2Based',
-				forceAtlas2Based: {
-					gravitationalConstant: -75,
-					springLength: 100,
-					springConstant: 0.02
-				},
-				maxVelocity: 50,
-				minVelocity: 3,
-				timestep: 0.35
-			}
-		};
-		network = new vis.Network(container, graph.data, options);
-		graph.set_network(network);
-
-		// temporary fix to center node on load
-		setTimeout(() => {
-			network.fit({ animation: { duration: 0, easingFunction: 'easeInOutQuad' } });
-		}, 4);
-
-		network.on('click', show_properties);
-		network.on('oncontext', show_context_menu);
-	}
 
 	interface Click_Event {
 		edges: [];
@@ -113,10 +18,27 @@
 		};
 	}
 
+	let container: HTMLElement;
+	let graph: Graph;
+	let selected_node: Node | undefined;
+	let menu_position = { x: 0, y: 0 };
+	let hide_context_menu = true;
+	let context_selection: Node | undefined = undefined;
+	let show_node_information: Node | undefined = undefined;
+	let loading_properties: boolean = false;
+
+	export let value: string;
+
+	$: if (value && container) {
+		graph = new Graph(container, value);
+		graph.network.on('click', show_properties);
+		graph.network.on('oncontext', show_context_menu);
+	}
+
 	function show_context_menu(event: Click_Event) {
 		event.event.preventDefault();
 		selected_node = undefined;
-		const uri = network.getNodeAt(event.pointer.DOM) as URI;
+		const uri = graph.network.getNodeAt(event.pointer.DOM) as URI;
 		const node = graph.get_node(uri);
 		node ? (context_selection = node) : (context_selection = undefined);
 		hide_context_menu = false;
@@ -125,13 +47,13 @@
 
 	function show_properties(event: Click_Event) {
 		hide_context_menu = true;
-		if (network.getSelectedNodes().length > 0) {
+		if (graph.network.getSelectedNodes().length > 0) {
 			const uri = event.nodes[0];
 			const node = graph.get_node(uri);
 			if (!node || node.type === 'literal') return;
 
 			selected_node = node;
-			const node_position = network.canvasToDOM(network.getPosition(uri));
+			const node_position = graph.network.canvasToDOM(graph.network.getPosition(uri));
 			menu_position = node_position;
 
 			loading_properties = true;
