@@ -8,11 +8,11 @@
 		ArrowLeftOnRectangle,
 		XMark,
 		Plus,
-		ListBullet
+		ListBullet,
+		ArrowLeft
 	} from '@steeze-ui/heroicons';
 	import Fuse from 'fuse.js';
-	import { click_outside, dark_mode } from '../util';
-	import toast from 'svelte-french-toast';
+	import { click_outside } from '../util';
 	import LoadingCircle from './Loading-Circle.svelte';
 	import { Settings } from '../settings';
 	import { SPARQL } from '../api/sparql';
@@ -299,7 +299,15 @@
 				class="truncate"
 				title={selected_node.label + (selected_property ? ' / ' + selected_property.label : '')}
 			>
-				<button on:click={() => (selected_property = undefined)}>{selected_node.label}</button>
+				<button
+					on:click={() => (selected_property = undefined)}
+					class="inline-flex items-baseline gap-1"
+				>
+					{#if selected_property}
+						<Icon src={ArrowLeft} class="h-4 w-4 self-center" />
+					{/if}
+					{selected_node.label}</button
+				>
 				{#if selected_property}
 					<span class="text-sm font-normal">/ {selected_property.label}</span>
 				{/if}
@@ -361,8 +369,11 @@
 		{#if selected_node.properties.length > 0 && selected_property === undefined}
 			<button
 				on:click={add_all}
-				class="mx-2 px-2 button flex  rounded-lg  h-10 bg-transparent hover:bg-black/5 dark:hover:bg-black/30 transition-all duration-200 ease-in-out {selected_node.properties.every(p => p.fetched && p.related.every(r => r.visible)) ? 'opacity-50 cursor-default' : 'opacity-100 cursor-pointer'}"
-					
+				class="mx-2 px-2 button flex  rounded-lg  h-10 bg-transparent hover:bg-black/5 dark:hover:bg-black/30 transition-all duration-200 ease-in-out {selected_node.properties.every(
+					(p) => p.fetched && p.related.every((r) => r.visible)
+				)
+					? 'opacity-50 cursor-default'
+					: 'opacity-100 cursor-pointer'}"
 			>
 				<Icon src={ListBullet} theme="solid" class="h-5 w-5  mr-3" />
 				<span class="truncate" title={'Add all related properties (max 100 of each property)'}>
