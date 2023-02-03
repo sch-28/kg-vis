@@ -115,7 +115,7 @@
 	</div>
 </div>
 
-<style>
+<style lang="postcss">
 	.context-menu {
 		display: flex;
 		flex-direction: column;
