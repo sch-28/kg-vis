@@ -44,8 +44,13 @@
 		</div>
 		Add
 	</button>
-	<button class="flex items-center gap-2 cursor-pointer min-w-[70px] justify-center" on:click={toggle_edit}>
-		<Icon src={physics_enabled ? PencilSquare : CheckCircle} class="w-6 h-6" />{physics_enabled ? 'Edit' : 'Done'}
+	<button
+		class="flex items-center gap-2 cursor-pointer min-w-[70px] justify-center"
+		on:click={toggle_edit}
+	>
+		<Icon src={physics_enabled ? PencilSquare : CheckCircle} class="w-6 h-6" />{physics_enabled
+			? 'Edit'
+			: 'Done'}
 	</button>
 	<button class="flex items-center gap-2 cursor-pointer" on:click={() => open(Settings)}>
 		<Icon src={Cog6Tooth} class="w-6 h-6" />Settings
