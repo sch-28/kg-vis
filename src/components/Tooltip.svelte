@@ -3,7 +3,7 @@
 	import { Icon } from '@steeze-ui/svelte-icon';
 	import { Tooltip } from 'flowbite-svelte';
 
-	import type { HTMLAttributes, HTMLButtonAttributes } from 'svelte/elements';
+	import type { HTMLAttributes } from 'svelte/elements';
 	interface $$Props extends HTMLAttributes<HTMLDivElement> {
 		text: string;
 	}

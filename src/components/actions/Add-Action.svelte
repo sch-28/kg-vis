@@ -7,9 +7,8 @@
 	import { getContext, onMount } from 'svelte';
 	import LoadingCircle from '../Loading-Circle.svelte';
 	import { Settings } from '../../settings';
-	import { Button, Hr, Toggle } from 'flowbite-svelte';
+	import { Button, Hr } from 'flowbite-svelte';
 	import { click_outside } from '../../util';
-	import Tooltip from '../Tooltip.svelte';
 
 	export let graph: Graph;
 

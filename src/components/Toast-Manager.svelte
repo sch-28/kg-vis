@@ -22,10 +22,6 @@
 		document.querySelector('.toaster .message')?.setAttribute('title', message);
 	}
 
-	/* SPARQL.on('loading_properties', (promise) => {
-		show_toast('Properties', promise);
-	}); */
-
 	onMount(() => {
 		if (SPARQL.listenerCount('loading_related') > 0) return;
 		SPARQL.on('loading_related', (promise) => {
