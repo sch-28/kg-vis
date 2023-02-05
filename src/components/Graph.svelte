@@ -2,10 +2,8 @@
 	import ContextMenu from './Context-Menu.svelte';
 	import PropertyMenu from './Property-Menu.svelte';
 	import { Graph, type URI, type Node } from '../api/graph';
-	import { Toaster } from 'svelte-french-toast';
 	import ActionMenu from './Header.svelte';
 	import InformationMenu from './information-menu/Information-Menu.svelte';
-	import Modal from './modal/Modal.svelte';
 
 	interface Click_Event {
 		edges: [];
@@ -27,10 +25,8 @@
 	let show_node_information: Node | undefined = undefined;
 	let loading_properties: boolean = false;
 
-	export let value: string;
-
-	$: if (value && container) {
-		graph = new Graph(container, value);
+	$: if (container) {
+		graph = new Graph(container);
 		graph.network.on('click', show_properties);
 		graph.network.on('oncontext', show_context_menu);
 	}
@@ -67,7 +63,6 @@
 	}
 </script>
 
-<Toaster />
 <InformationMenu bind:node={show_node_information} {graph} />
 <div bind:this={container} class="w-full h-full" />
 <PropertyMenu
@@ -85,4 +80,3 @@
 	{graph}
 />
 <ActionMenu {graph} />
-<Modal />

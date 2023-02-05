@@ -2,7 +2,7 @@
 	import { CheckCircle, Cog6Tooth, PencilSquare } from '@steeze-ui/heroicons';
 	import { Icon } from '@steeze-ui/svelte-icon';
 	import type { Graph } from 'src/api/graph';
-	import { setContext } from 'svelte';
+	import { onMount } from 'svelte';
 	import type { Action } from './header-actions/action';
 	import AddAction from './header-actions/Add-Action.svelte';
 	import Settings from './header-actions/Settings.svelte';
@@ -23,6 +23,8 @@
 			physics: physics_enabled
 		});
 	}
+
+	$: graph && graph.nodes.length === 0 && open(AddAction);
 </script>
 
 <div
