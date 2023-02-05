@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { ChevronDown, XMark } from '@steeze-ui/heroicons';
+	import { ChevronDown, FolderOpen, XMark } from '@steeze-ui/heroicons';
 	import { Icon } from '@steeze-ui/svelte-icon';
 	import isUrl from 'is-url';
 	import { SPARQL } from '../../api/sparql';
@@ -7,7 +7,7 @@
 	import { getContext, onMount } from 'svelte';
 	import LoadingCircle from '../util/Loading-Circle.svelte';
 	import { Settings } from '../../settings';
-	import { Button, Hr } from 'flowbite-svelte';
+	import { Button, Chevron, Dropdown, DropdownItem, Hr, Select } from 'flowbite-svelte';
 	import { click_outside } from '../../util';
 	import { Modal_Manager } from '../modal/modal-store';
 
@@ -49,15 +49,15 @@
 			});
 	}
 
-	function show_advanced() {
+	/* function show_advanced() {
 		advanced_container.style.height = container_height + 'px';
 		setTimeout(() => {
 			advanced_container.style.height = 'fit-content';
 			advanced_container.style.overflow = 'visible';
 		}, 200);
-	}
+	} */
 
-	function hide_advanced() {
+	/* function hide_advanced() {
 		advanced_container.style.overflow = 'hidden';
 		$Settings.advanced_settings_height = 0;
 		container_height = advanced_container.clientHeight;
@@ -65,12 +65,12 @@
 		setTimeout(() => (advanced_container.style.height = '0px'), 0);
 	}
 
+	*/
+
 	function toggle_advanced() {
 		if (!$Settings.advanced_settings) {
 			$Settings.advanced_settings = true;
-			show_advanced();
 		} else {
-			hide_advanced();
 			$Settings.advanced_settings = false;
 		}
 	}
@@ -119,18 +119,18 @@
 		close();
 	}
 
+	let query_resize_debouncer: NodeJS.Timeout;
+	let resizing: boolean = false;
 	function handle_resize() {
+		resizing = true;
 		if (sparql_query_area) $Settings.advanced_settings_height = sparql_query_area.clientHeight;
-	}
 
-	onMount(() => {
-		if ($Settings.advanced_settings) {
-			if ($Settings.advanced_settings_height)
-				sparql_query_area.style.height = $Settings.advanced_settings_height + 'px';
-			advanced_container.style.height = 'fit-content';
-			advanced_container.style.overflow = 'visible';
-		}
-	});
+		// debounce the resize event
+		clearTimeout(query_resize_debouncer);
+		query_resize_debouncer = setTimeout(() => {
+			resizing = false;
+		}, 100);
+	}
 
 	$: sparql_query_area && new ResizeObserver(handle_resize).observe(sparql_query_area);
 
@@ -244,10 +244,23 @@
 		suggestions = suggestions.filter((s, i, a) => a.findIndex((t) => t.uri === s.uri) === i);
 		loading = false;
 	}
+
+	let selected_example: string;
 </script>
 
 <div class="flex flex-col w-[450px]">
-	<h1 class="text-lg font-bold mb-2">Add Nodes</h1>
+	<div class="flex justify-between items-center text-center mb-2">
+		<h1 class="text-lg font-bold">Add Nodes</h1>
+		<div>
+			<Button color="light"><Icon src={FolderOpen} size="20" class="mr-2" />Examples</Button>
+			<Dropdown frameClass="[&_ul]:!w-32">
+				<DropdownItem>Dashboard</DropdownItem>
+				<DropdownItem>Settings</DropdownItem>
+				<DropdownItem>Earnings</DropdownItem>
+				<DropdownItem>Sign out</DropdownItem>
+			</Dropdown>
+		</div>
+	</div>
 
 	<button
 		class="flex justify-center items-center text-dark-muted dark:text-light-muted pb-1 relative"
@@ -262,8 +275,11 @@
 	</button>
 	<Hr divClass="mb-2" />
 	<div
+		style={`height: ${$Settings.advanced_settings ? sparql_query_area?.clientHeight + 113 : 0}px`}
 		bind:this={advanced_container}
-		class="h-0 overflow-hidden transition-all duration-200 flex gap-2 flex-col mb-2"
+		class="h-0 overflow-hidden {resizing
+			? ''
+			: 'transition-all duration-200'} flex gap-2 flex-col mb-2"
 	>
 		<div
 			class="mt-2 w-full border border-gray-200 rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600"
@@ -278,7 +294,7 @@
 					id="sparql-query"
 					rows="4"
 					class="w-full px-0 text-sm text-gray-900 bg-white border-0 dark:bg-gray-800 focus:ring-0 dark:text-light dark:placeholder-gray-400"
-					placeholder={`SELECT ?cat WHERE\n{\n	?cat wdt:P31 wd:Q146.\n}`}
+					placeholder={`Enter a SPARQL query or select an example.`}
 					required
 				/>
 			</div>
