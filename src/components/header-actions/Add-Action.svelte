@@ -19,6 +19,7 @@
 	let nodes: Node[] = [];
 	let sparql_query_area: HTMLTextAreaElement;
 	let sparql_query: string = '';
+	let dropdown_open: boolean = false;
 	const query_examples: { name: string; query: string }[] = [
 		{
 			name: 'Dogs',
@@ -40,6 +41,8 @@ WHERE
 
 	function select_query_example(example: { name: string; query: string }) {
 		sparql_query = example.query;
+		$Settings.advanced_settings = true;
+		dropdown_open = false;
 		setTimeout(update_height, 0);
 	}
 
@@ -52,7 +55,6 @@ WHERE
 		loading = true;
 		SPARQL.query(sparql_query)
 			.then(async (results) => {
-				loading = false;
 				error = '';
 				if (results.length === 0) {
 					return;
@@ -63,6 +65,7 @@ WHERE
 				);
 
 				nodes = nodes.concat(new_nodes);
+				loading = false;
 			})
 			.catch((e) => {
 				loading = false;
@@ -243,7 +246,7 @@ WHERE
 		<h1 class="text-lg font-bold">Add Nodes</h1>
 		<div>
 			<Button color="light"><Icon src={FolderOpen} size="20" class="mr-2" />Examples</Button>
-			<Dropdown frameClass="[&_ul]:!w-32">
+			<Dropdown frameClass="[&_ul]:!w-32" bind:open={dropdown_open}>
 				{#each query_examples as example}
 					<DropdownItem on:click={() => select_query_example(example)}>{example.name}</DropdownItem>
 				{/each}
