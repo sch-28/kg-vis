@@ -3,6 +3,7 @@ import { Settings } from '../settings';
 import { get } from 'svelte/store';
 import { TypedEmitter } from 'tiny-typed-emitter';
 import type { Property, URI } from './graph';
+import { show_loading_toast } from '../util';
 export interface Triple extends Binding {
 	subject: Node;
 	property: Node;
@@ -19,11 +20,7 @@ export interface Binding {
 }
 
 declare interface SPARQL_Events {
-	'loading_related'(promise: Promise<void>): void;
-	'loading_properties'(promise: Promise<void>): void;
-	'loading_relations'(promise: Promise<void>): void;
 	'progress'(progress: number): void;
-	'error'(error: Error): void;
 }
 
 class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
@@ -127,7 +124,7 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 			return bindings;
 		} catch (e) {
 			console.error(e);
-			if (e instanceof Error) this.emit('error', e);
+			if (e instanceof Error) show_loading_toast(Promise.reject(), 'query');
 			return [];
 		}
 	}
@@ -216,7 +213,7 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 	public async fetch_related_nodes(subject: URI, property: URI, notify?: boolean) {
 		let resolve!: () => void;
 		const promise = new Promise<void>((res) => (resolve = res));
-		notify && this.emit('loading_related', promise);
+		notify && show_loading_toast(promise, 'Related');
 
 		const result = await this.query<{ object: Node; objectLabel?: Node }>(
 			`
@@ -410,7 +407,7 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 		let resolve!: () => void;
 
 		const promise = new Promise<void>((res) => (resolve = res));
-		notify && this.emit('loading_relations', promise);
+		notify && show_loading_toast(promise, 'Relations');
 
 		const relations = (await this.fetch_relations(subjects, other_nodes)).map((r) => {
 			const outgoing_property = r.dir.value === 'out';
@@ -556,9 +553,6 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 		);
 
 		const results: Property[] = [];
-		let resolve!: () => void;
-		const promise = new Promise<void>((res) => (resolve = res));
-		this.emit('loading_properties', promise);
 		const properties = result.map((c) => c.property.value);
 		const requests: Promise<Property>[] = [];
 		properties.forEach((prop) => requests.push(this.fetch_property_count(subject, prop)));
@@ -566,7 +560,6 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 			results.push(await requests[i]);
 			this.emit('progress', Math.floor((i / requests.length) * 100));
 		}
-		resolve();
 		return results;
 	}
 }

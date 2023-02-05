@@ -6,7 +6,6 @@
 	let content: any = null;
 
 	Modal_Manager.store.subscribe((new_modal) => {
-		console.log('new modal', new_modal);
 		content = new_modal;
 	});
 </script>

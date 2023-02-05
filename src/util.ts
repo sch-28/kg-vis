@@ -1,4 +1,5 @@
 import type { Action } from 'svelte/types/runtime/action';
+import toast from 'svelte-french-toast';
 
 export const click_outside: Action = (node) => {
 	const handle_click = (event: MouseEvent) =>
@@ -40,3 +41,21 @@ export const get_theme = () => {
 };
 
 export let dark_mode = get_theme();
+
+export function show_loading_toast(promise: Promise<any>, message: string) {
+	toast.promise(
+		promise,
+		{
+			loading: `Loading ${message}...`,
+			success: `${message} Loaded!`,
+			error: `Error while loading ${message}!`
+		},
+		{
+			position: 'top-right',
+			style: `${
+				dark_mode ? 'background: #1f2937; color: #fff;' : 'background: #fff; color: #000;'
+			} min-width: 200px;`
+		}
+	);
+	document.querySelector('.toaster .message')?.setAttribute('title', message);
+}

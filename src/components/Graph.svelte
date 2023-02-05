@@ -4,7 +4,6 @@
 	import { Graph, type URI, type Node } from '../api/graph';
 	import { Toaster } from 'svelte-french-toast';
 	import ActionMenu from './Header.svelte';
-	import ToastManager from './util/Toast-Manager.svelte';
 	import InformationMenu from './information-menu/Information-Menu.svelte';
 	import Modal from './modal/Modal.svelte';
 
@@ -69,7 +68,6 @@
 </script>
 
 <Toaster />
-<ToastManager />
 <InformationMenu bind:node={show_node_information} {graph} />
 <div bind:this={container} class="w-full h-full" />
 <PropertyMenu
