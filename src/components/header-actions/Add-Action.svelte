@@ -14,14 +14,34 @@
 	export let graph: Graph;
 
 	let advanced_container: HTMLDivElement;
-	let container_height: number = 201;
 	let error: string = '';
 	let loading: boolean = false;
-
 	let nodes: Node[] = [];
-
 	let sparql_query_area: HTMLTextAreaElement;
 	let sparql_query: string = '';
+	const query_examples: { name: string; query: string }[] = [
+		{
+			name: 'Dogs',
+			query: `SELECT ?dog 
+WHERE 
+{
+	?dog wdt:P31 wd:Q144. 
+} LIMIT 100`
+		},
+		{
+			name: 'Cats',
+			query: `SELECT ?cat 
+WHERE 
+{
+	?cat wdt:P31 wd:Q146. 
+} LIMIT 100`
+		}
+	];
+
+	function select_query_example(example: { name: string; query: string }) {
+		sparql_query = example.query;
+		setTimeout(update_height, 0);
+	}
 
 	function close() {
 		Modal_Manager.close();
@@ -37,10 +57,12 @@
 				if (results.length === 0) {
 					return;
 				}
-				nodes = await graph.load_nodes(
+				const new_nodes = await graph.load_nodes(
 					results.flatMap((b) => Object.values(b).map((n) => n.value)),
 					false
 				);
+				
+				nodes = nodes.concat(new_nodes);
 			})
 			.catch((e) => {
 				loading = false;
@@ -49,40 +71,22 @@
 			});
 	}
 
-	/* function show_advanced() {
-		advanced_container.style.height = container_height + 'px';
-		setTimeout(() => {
-			advanced_container.style.height = 'fit-content';
-			advanced_container.style.overflow = 'visible';
-		}, 200);
-	} */
-
-	/* function hide_advanced() {
-		advanced_container.style.overflow = 'hidden';
-		$Settings.advanced_settings_height = 0;
-		container_height = advanced_container.clientHeight;
-		advanced_container.style.height = container_height + 'px';
-		setTimeout(() => (advanced_container.style.height = '0px'), 0);
-	}
-
-	*/
-
 	function toggle_advanced() {
-		if (!$Settings.advanced_settings) {
-			$Settings.advanced_settings = true;
-		} else {
-			$Settings.advanced_settings = false;
-		}
+		$Settings.advanced_settings = !$Settings.advanced_settings;
 	}
 
-	function handle_paste(e: ClipboardEvent) {
-		// paste is handled before the input value is updated, therefore we need to wait a bit
-		setTimeout(() => {
-			const url = (e.target as HTMLInputElement).value ?? e.clipboardData?.getData('text') ?? null;
-			if (url) {
-				fetch_url(url);
-			}
-		}, 0);
+	let sparql_query_area_height = 0;
+	$: {
+		sparql_query;
+		update_height();
+	}
+
+	function update_height() {
+		if (sparql_query_area) {
+			sparql_query_area.style.height = 'auto';
+			sparql_query_area_height = sparql_query_area.scrollHeight;
+			sparql_query_area.style.height = sparql_query_area_height + 'px';
+		}
 	}
 
 	async function fetch_url(url: URI) {
@@ -119,23 +123,7 @@
 		close();
 	}
 
-	let query_resize_debouncer: NodeJS.Timeout;
-	let resizing: boolean = false;
-	function handle_resize() {
-		resizing = true;
-		if (sparql_query_area) $Settings.advanced_settings_height = sparql_query_area.clientHeight;
-
-		// debounce the resize event
-		clearTimeout(query_resize_debouncer);
-		query_resize_debouncer = setTimeout(() => {
-			resizing = false;
-		}, 100);
-	}
-
-	$: sparql_query_area && new ResizeObserver(handle_resize).observe(sparql_query_area);
-
 	// smart search
-
 	type Suggestion = {
 		label: string;
 		type: string;
@@ -245,7 +233,9 @@
 		loading = false;
 	}
 
-	let selected_example: string;
+	onMount(() => {
+		update_height();
+	});
 </script>
 
 <div class="flex flex-col w-[450px]">
@@ -254,10 +244,9 @@
 		<div>
 			<Button color="light"><Icon src={FolderOpen} size="20" class="mr-2" />Examples</Button>
 			<Dropdown frameClass="[&_ul]:!w-32">
-				<DropdownItem>Dashboard</DropdownItem>
-				<DropdownItem>Settings</DropdownItem>
-				<DropdownItem>Earnings</DropdownItem>
-				<DropdownItem>Sign out</DropdownItem>
+				{#each query_examples as example}
+					<DropdownItem on:click={() => select_query_example(example)}>{example.name}</DropdownItem>
+				{/each}
 			</Dropdown>
 		</div>
 	</div>
@@ -275,11 +264,13 @@
 	</button>
 	<Hr divClass="mb-2" />
 	<div
-		style={`height: ${$Settings.advanced_settings ? sparql_query_area?.clientHeight + 113 : 0}px`}
+		style={`height: ${
+			$Settings.advanced_settings && sparql_query_area
+				? Math.min(sparql_query_area_height, 500) + 113
+				: 0
+		}px`}
 		bind:this={advanced_container}
-		class="h-0 overflow-hidden {resizing
-			? ''
-			: 'transition-all duration-200'} flex gap-2 flex-col mb-2"
+		class="h-0 overflow-hidden transition-all duration-200 flex gap-2 flex-col mb-2"
 	>
 		<div
 			class="mt-2 w-full border border-gray-200 rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600"
@@ -288,12 +279,10 @@
 				<label for="sparql-query" class="block mb-2 text-sm font-medium">SPARQL Query</label>
 				<textarea
 					data-gramm="false"
-					on:resize={handle_resize}
 					bind:this={sparql_query_area}
 					bind:value={sparql_query}
 					id="sparql-query"
-					rows="4"
-					class="w-full px-0 text-sm text-gray-900 bg-white border-0 dark:bg-gray-800 focus:ring-0 dark:text-light dark:placeholder-gray-400"
+					class="resize-none w-full px-0 text-sm text-gray-900 bg-white border-0 dark:bg-gray-800 focus:ring-0 dark:text-light dark:placeholder-gray-400 max-h-[500px]"
 					placeholder={`Enter a SPARQL query or select an example.`}
 					required
 				/>

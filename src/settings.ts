@@ -62,7 +62,6 @@ export const languages = {
 
 export interface Settings {
 	advanced_settings: boolean;
-	advanced_settings_height: number;
 	fetch_related: boolean;
 	endpoint_url: string;
 	endpoint_type: 'wikidata' | 'dbpedia';
@@ -78,7 +77,6 @@ export interface Settings {
 
 export const Settings = storage<Settings>('settings', {
 	advanced_settings: false,
-	advanced_settings_height: 258,
 	fetch_related: true,
 	endpoint_url: 'https://skynet.coypu.org/wikidata/',
 	endpoint_type: 'wikidata',
