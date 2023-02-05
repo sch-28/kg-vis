@@ -7,7 +7,8 @@ import isUrl from 'is-url';
 import { dark_mode } from '../util';
 import * as vis from 'vis-network';
 
-const network_options: Options = {
+
+const get_network_options = () => ({
 	interaction: {
 		hideEdgesOnDrag: get(Settings).hide_edges_on_drag ?? false
 	},
@@ -55,7 +56,7 @@ const network_options: Options = {
 		minVelocity: 3,
 		timestep: 0.35
 	}
-};
+} as Options);
 
 export type URI = string;
 
@@ -179,7 +180,7 @@ export class Graph {
 		const data_edges = new DataSet([]);
 		this.data = { nodes: data_nodes, edges: data_edges };
 		this.update_data();
-		this.network = new vis.Network(container, this.data, network_options);
+		this.network = new vis.Network(container, this.data, get_network_options());
 
 		if (start) {
 			this.load_node(start).then(() => this.update_data());
