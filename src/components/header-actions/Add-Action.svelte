@@ -8,7 +8,7 @@
 	import LoadingCircle from '../util/Loading-Circle.svelte';
 	import { Settings } from '../../settings';
 	import { Button, Chevron, Dropdown, DropdownItem, Hr, Select } from 'flowbite-svelte';
-	import { click_outside } from '../../util';
+	import { click_outside, scrollbar_width } from '../../util';
 	import { Modal_Manager } from '../modal/modal-store';
 
 	export let graph: Graph;
@@ -61,7 +61,7 @@ WHERE
 					results.flatMap((b) => Object.values(b).map((n) => n.value)),
 					false
 				);
-				
+
 				nodes = nodes.concat(new_nodes);
 			})
 			.catch((e) => {
@@ -350,7 +350,21 @@ WHERE
 			{/if}
 		</div>
 		{#if nodes.length > 0}
-			<div class="space-y-1 max-w-md max-h-40 overflow-auto">
+			<div class="flex flex-col gap-2" style="margin-right: {scrollbar_width}px;">
+				<div class="flex items-center justify-between">
+					<h3 class="text-sm font-medium">{nodes.length} Result{nodes.length === 1 ? '' : 's'}</h3>
+					<button
+						on:click={() => {
+							graph.nodes = graph.nodes.filter((n) => !nodes.includes(n));
+							nodes = [];
+						}}
+						class="text-sm text-error dark:text-error-dark"
+					>
+						Clear
+					</button>
+				</div>
+			</div>
+			<div class="space-y-1 max-h-40 overflow-auto">
 				{#each nodes as node}
 					<div class="flex">
 						<div
@@ -366,7 +380,7 @@ WHERE
 						</div>
 
 						<button class="ml-2 align-middle" on:click={() => remove_node(node)}>
-							<Icon src={XMark} class="w-4 h-4" />
+							<Icon src={XMark} class="w-5 h-5" />
 						</button>
 					</div>
 				{/each}

@@ -59,3 +59,18 @@ export function show_loading_toast(promise: Promise<any>, message: string) {
 	);
 	document.querySelector('.toaster .message')?.setAttribute('title', message);
 }
+
+function measure_scrollbar() {
+	const div = document.createElement('div');
+	div.style.width = '100px';
+	div.style.height = '100px';
+	div.style.overflow = 'scroll';
+	div.style.position = 'absolute';
+	div.style.top = '-9999px';
+	document.body.appendChild(div);
+	const scrollbarWidth = div.offsetWidth - div.clientWidth;
+	document.body.removeChild(div);
+	return scrollbarWidth;
+}
+
+export const scrollbar_width = measure_scrollbar();
