@@ -5,14 +5,13 @@
 	import { SPARQL } from '../../api/sparql';
 	import type { Graph, Node, URI } from 'src/api/graph';
 	import { getContext, onMount } from 'svelte';
-	import LoadingCircle from '../Loading-Circle.svelte';
+	import LoadingCircle from '../util/Loading-Circle.svelte';
 	import { Settings } from '../../settings';
 	import { Button, Hr } from 'flowbite-svelte';
 	import { click_outside } from '../../util';
+	import { Modal_Manager } from '../modal/modal-store';
 
 	export let graph: Graph;
-
-	const close = getContext('close') as () => void;
 
 	let advanced_container: HTMLDivElement;
 	let container_height: number = 201;
@@ -23,6 +22,10 @@
 
 	let sparql_query_area: HTMLTextAreaElement;
 	let sparql_query: string = '';
+
+	function close() {
+		Modal_Manager.close();
+	}
 
 	function submit_query() {
 		if (loading) return;

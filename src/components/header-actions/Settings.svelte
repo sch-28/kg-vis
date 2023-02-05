@@ -15,10 +15,10 @@
 	import { ArrowPath, CircleStack } from '@steeze-ui/heroicons';
 	import { languages, Settings } from '../../settings';
 	import type { Graph } from '../../api/graph';
-	import Tooltip from '../Tooltip.svelte';
+	import Tooltip from '../util/Tooltip.svelte';
 	import { HelpOutline } from '@steeze-ui/material-design-icons';
+	import { Modal_Manager } from '../modal/modal-store';
 
-	const close = getContext('close') as () => void;
 	export let graph: Graph;
 
 	$: {
@@ -93,7 +93,7 @@
 						label="Reset Graph"
 						on:click={() => {
 							graph.reset();
-							close();
+							Modal_Manager.close();
 						}}
 						spanClass="dark:text-error-dark text-error ml-3"
 					>

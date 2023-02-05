@@ -1,15 +1,15 @@
 <script lang="ts">
 	import { Heading, Hr } from 'flowbite-svelte';
 	import { Icon } from '@steeze-ui/svelte-icon';
-	import type { Graph, Node, Property } from '../api/graph';
-	import LoadingCircle from './Loading-Circle.svelte';
+	import type { Graph, Node, Property } from '../../api/graph';
+	import LoadingCircle from '../util/Loading-Circle.svelte';
 	import { paginate, DarkPaginationNav } from 'svelte-paginate';
 	import { ArrowTopRightOnSquare, Plus, XMark } from '@steeze-ui/heroicons';
-	import Modal from './actions/Modal.svelte';
-	import type { Action } from './actions/action';
-	import InformationMenuMore from './actions/Information-Menu-More.svelte';
+	import type { Action } from '../header-actions/action';
+	import InformationMenuMore from './Information-Menu-More.svelte';
 	import { bind } from 'svelte-simple-modal';
 	import { setContext } from 'svelte';
+	import { Modal_Manager } from '../modal/modal-store';
 
 	export let node: Node | undefined;
 	export let graph: Graph;
@@ -26,7 +26,7 @@
 	setContext('close', close_modal);
 
 	function close_modal() {
-		show_more = undefined;
+		Modal_Manager.close();
 	}
 
 	$: node && load_properties();
@@ -39,8 +39,6 @@
 		page_size;
 		load_related();
 	}
-
-	let show_more: Action | undefined = undefined;
 
 	async function load_related() {
 		if (node) {
@@ -88,7 +86,7 @@
 		}
 	}
 	function show_more_handler(property: Property) {
-		show_more = bind(InformationMenuMore as any, { property, graph }) as unknown as Action;
+		Modal_Manager.open(InformationMenuMore, { property, graph });
 	}
 	function add_node(node: Node) {
 		graph.show_node(node);
@@ -182,8 +180,6 @@
 		</div>
 	</div>
 {/if}
-
-<Modal bind:content={show_more} />
 
 <style lang="postcss" global>
 	.pagination :global(.pagination-nav) {

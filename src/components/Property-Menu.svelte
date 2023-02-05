@@ -13,7 +13,7 @@
 	} from '@steeze-ui/heroicons';
 	import Fuse from 'fuse.js';
 	import { click_outside } from '../util';
-	import LoadingCircle from './Loading-Circle.svelte';
+	import LoadingCircle from './util/Loading-Circle.svelte';
 	import { Settings } from '../settings';
 	import { SPARQL } from '../api/sparql';
 	import { Button } from 'flowbite-svelte';

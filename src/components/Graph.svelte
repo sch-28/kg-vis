@@ -3,9 +3,10 @@
 	import PropertyMenu from './Property-Menu.svelte';
 	import { Graph, type URI, type Node } from '../api/graph';
 	import { Toaster } from 'svelte-french-toast';
-	import ActionMenu from './Action-Menu.svelte';
-	import ToastManager from './Toast-Manager.svelte';
-	import InformationMenu from './Information-Menu.svelte';
+	import ActionMenu from './Header.svelte';
+	import ToastManager from './util/Toast-Manager.svelte';
+	import InformationMenu from './information-menu/Information-Menu.svelte';
+	import Modal from './modal/Modal.svelte';
 
 	interface Click_Event {
 		edges: [];
@@ -86,3 +87,4 @@
 	{graph}
 />
 <ActionMenu {graph} />
+<Modal />

@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { SPARQL } from '../api/sparql';
-	import { dark_mode } from '../util';
+	import { SPARQL } from '../../api/sparql';
+	import { dark_mode } from '../../util';
 	import toast from 'svelte-french-toast';
 	import { onMount } from 'svelte';
 
