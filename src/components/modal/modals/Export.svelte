@@ -40,8 +40,15 @@ SELECT ?nodes
 WHERE 
 {
 	VALUES ?nodes{
-        ${graph.nodes
-					.map((node) => (node.type === 'uri' ? '<' + node.id + '>' : '"' + node.id + '"'))
+        ${graph.data.nodes
+					.map((node) =>
+						node.type === 'uri'
+							? '<' + node.id + '>'
+							: '"' +
+							  node.id +
+							  '"' +
+							  (node.datatype && node.datatype.length > 0 ? '^^' + '<' + node.datatype + '>' : '')
+					)
 					.join('\n')}
     }
 }

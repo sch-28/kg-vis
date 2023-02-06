@@ -4,6 +4,8 @@ import { get } from 'svelte/store';
 import { TypedEmitter } from 'tiny-typed-emitter';
 import type { Property, URI } from './graph';
 import { show_loading_toast } from '../util';
+import type { Node as Graph_Node } from './graph';
+
 export interface Triple extends Binding {
 	subject: Node;
 	property: Node;
@@ -13,6 +15,7 @@ export interface Triple extends Binding {
 export interface Node {
 	type: 'literal' | 'uri';
 	value: string;
+	datatype?: string;
 }
 
 export interface Binding {
@@ -239,7 +242,8 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 		const results = result.map((r) => ({
 			uri: r.object.value,
 			type: r.object.type,
-			label: r.objectLabel?.value ?? r.object.value
+			label: r.objectLabel?.value ?? r.object.value,
+			datatype: r.object?.datatype ?? ''
 		}));
 
 		return results;
@@ -405,8 +409,8 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 	}
 
 	public async fetch_multiple_relations(
-		subjects: URI[],
-		other_nodes: URI[],
+		subjects: Graph_Node[],
+		other_nodes: Graph_Node[],
 		notify: boolean = true
 	) {
 		let resolve!: () => void;
@@ -440,13 +444,16 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 		return relations;
 	}
 
-	public async fetch_relations(subjects: URI[], other_nodes: URI[]) {
+	public async fetch_relations(subjects: Graph_Node[], other_nodes: Graph_Node[]) {
 		let subjects_string = `VALUES ?subject {\n`;
 
 		for (let i = 0; i < subjects.length; i++) {
 			const node = subjects[i];
-			if (isUrl(node)) subjects_string += `<${node}>\n`;
-			else subjects_string += `"${node}"\n`;
+			if (isUrl(node.id)) subjects_string += `<${node.id}>\n`;
+			else
+				subjects_string += `"${node.id}"${
+					node.datatype && node.datatype.length > 0 ? '^^' + '<' + node.datatype + '>' : ''
+				} \n`;
 		}
 		subjects_string += '}';
 
@@ -454,8 +461,11 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 
 		for (let i = 0; i < other_nodes.length; i++) {
 			const node = other_nodes[i];
-			if (isUrl(node)) objects_string += `<${node}>\n`;
-			else objects_string += `"${node}"\n`;
+			if (isUrl(node.id)) objects_string += `<${node.id}>\n`;
+			else
+				objects_string += `"${node.id}"${
+					node.datatype && node.datatype.length > 0 ? '^^' + '<' + node.datatype + '>' : ''
+				}\n`;
 		}
 		objects_string += '}';
 

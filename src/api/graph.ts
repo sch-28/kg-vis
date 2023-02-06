@@ -92,6 +92,7 @@ export class Node {
 	fixed: boolean;
 	image: string | undefined;
 	type: 'uri' | 'literal';
+	datatype?: string = '';
 	x: number;
 	y: number;
 	properties: Property[] = [];
@@ -267,6 +268,7 @@ export class Graph {
 		uri: URI,
 		label: string,
 		type: 'uri' | 'literal' = 'uri',
+
 		visible = false,
 		image?: URI,
 		position: {
@@ -420,8 +422,8 @@ export class Graph {
 
 	async load_relations(new_nodes: Node[], visible: boolean = true, notify: boolean = true) {
 		SPARQL.fetch_multiple_relations(
-			new_nodes.map((n) => n.id),
-			this.nodes.map((n) => n.id),
+			new_nodes,
+			this.nodes,
 			notify
 		).then((relations) => {
 			for (const relation of relations) {
@@ -488,6 +490,7 @@ export class Graph {
 				undefined,
 				position
 			);
+			n.datatype = new_node.datatype;
 			if (!n.visible) {
 				n.x = position.x;
 				n.y = position.y;

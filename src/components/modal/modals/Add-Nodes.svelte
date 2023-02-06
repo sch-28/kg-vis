@@ -60,10 +60,19 @@ WHERE
 					loading = false;
 					return;
 				}
-				const uris = results.flatMap((b) => Object.values(b).map((n) => n.value));
+				const uris = results.flatMap((b) =>
+					Object.values(b).map((n) => n.value + (n.datatype ? '^^' + n.datatype : ''))
+				);
 				const literal_nodes = uris
 					.filter((uri) => !isUrl(uri))
-					.map((uri) => graph.find_or_create_node(uri, uri, 'literal', false));
+					.map((uri) => {
+						const u = uri.split('^^')[0];
+						const node = graph.find_or_create_node(u, u, 'literal', false);
+						node.datatype = uri.split('^^')[1];
+						return node;
+					});
+
+				console.log(literal_nodes);
 				const new_nodes = await graph.load_nodes(uris.filter(isUrl), false);
 
 				nodes = nodes.concat(new_nodes).concat(literal_nodes);
