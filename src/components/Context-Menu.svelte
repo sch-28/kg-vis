@@ -16,6 +16,7 @@
 	import { Modal_Manager } from './modal/modal-store';
 	import GraphInformation from './modal/modals/Graph-Information.svelte';
 	import Export from './modal/modals/Export.svelte';
+	import { Hr } from 'flowbite-svelte';
 	export let menu_position = { x: 0, y: 0 };
 	export let hidden = true;
 	export let selection: Node | undefined = undefined;
@@ -197,7 +198,8 @@
 	<div class="context-menu">
 		{#each current_actions as action}
 			{#if action === 'split'}
-				<hr class="my-1" />
+				<!-- <hr class="my-1" /> -->
+				<Hr divClass="my-1" />
 			{:else}
 				<button
 					class="context-menu-item dark:hover:bg-black/30 hover:bg-black/10 {action.danger
