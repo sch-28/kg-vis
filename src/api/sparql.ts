@@ -446,6 +446,7 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 		for (let i = 0; i < subjects.length; i++) {
 			const node = subjects[i];
 			if (isUrl(node)) subjects_string += `<${node}>\n`;
+			else subjects_string += `"${node}"\n`;
 		}
 		subjects_string += '}';
 
@@ -454,6 +455,7 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 		for (let i = 0; i < other_nodes.length; i++) {
 			const node = other_nodes[i];
 			if (isUrl(node)) objects_string += `<${node}>\n`;
+			else objects_string += `"${node}"\n`;
 		}
 		objects_string += '}';
 
