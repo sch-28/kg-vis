@@ -2,7 +2,7 @@
 	import { ChevronDown, FolderOpen, XMark } from '@steeze-ui/heroicons';
 	import { Icon } from '@steeze-ui/svelte-icon';
 	import isUrl from 'is-url';
-	import { SPARQL } from '../../../api/sparql';
+	import { SPARQL, type Binding_Content } from '../../../api/sparql';
 	import type { Graph, Node, URI } from 'src/api/graph';
 	import { getContext, onMount } from 'svelte';
 	import LoadingCircle from '../../util/Loading-Circle.svelte';
@@ -60,12 +60,15 @@ WHERE
 					loading = false;
 					return;
 				}
-				const all_nodes = results.flatMap((b) => Object.values(b));
+				const all_nodes = results
+					.flatMap((b) => Object.values(b))
+					.filter((content) => content) as Required<Binding_Content>[];
 				const literal_nodes = all_nodes
 					.filter((node) => node.type === 'literal')
 					.map((node) => {
 						const new_node = graph.find_or_create_node(node.value, node.value, 'literal', false);
 						node.datatype && (new_node.datatype = node.datatype);
+						node['xml:lang'] && (new_node.language = node['xml:lang']);
 						return new_node;
 					});
 
@@ -214,7 +217,7 @@ WHERE
 			}
 
 			if ($Settings.smart_search) {
-				suggestion_promises = SPARQL.fetch_entities(input).then((entities) =>
+				suggestion_promises = SPARQL.search(input).then((entities) =>
 					entities.map((e) => ({
 						label: e.label,
 						type: e.type,

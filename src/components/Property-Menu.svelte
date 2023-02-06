@@ -52,11 +52,11 @@
 	const menu_offset = 30;
 	const menu_gap = 16;
 
-	if (SPARQL.listenerCount('progress') === 0) {
+	/* if (SPARQL.listenerCount('progress') === 0) {
 		SPARQL.on('progress', (p) => {
 			progress = p;
 		});
-	}
+	} */
 
 	$: {
 		if (wrapper) {

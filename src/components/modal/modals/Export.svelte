@@ -1,9 +1,11 @@
 <script lang="ts">
 	import { copy_to_clipboard, dark_mode, show_toast } from '../../../util';
-	import type { Graph } from '../../../api/graph';
+	import type { Graph, Node } from '../../../api/graph';
 	import { Button } from 'flowbite-svelte';
 	import { Settings } from '../../../settings';
 	import { get } from 'svelte/store';
+	import isUrl from 'is-url';
+	import { SPARQL } from '../../../api/sparql';
 
 	export let graph: Graph;
 
@@ -43,16 +45,17 @@ WHERE
 {
 	VALUES ?nodes{
         ${graph.data.nodes
-					.map((node) =>
-						node.type === 'uri'
-							? '<' + node.id + '>'
-							: '"' +
-							  node.id +
-							  '"' +
-							  (node.datatype && node.datatype.length > 0
-									? '^^' + '<' + node.datatype + '>'
-									: '@' + get(Settings).endpoint_lang)
-					)
+					.map((node: Node) => {
+						if (isUrl(node.id)) return `${SPARQL.shorten_uri(node.id)}`;
+						else
+							return `"${node.id}"${
+								node.datatype
+									? '^^' + SPARQL.shorten_uri(node.datatype)
+									: node.language
+									? '@' + node.language
+									: ''
+							}`;
+					})
 					.join('\n')}
     }
 }

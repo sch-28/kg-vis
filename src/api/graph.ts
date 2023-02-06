@@ -93,7 +93,7 @@ export class Node {
 	image: string | undefined;
 	type: 'uri' | 'literal';
 	datatype?: string;
-	lang?: string;
+	language?: string;
 	x: number;
 	y: number;
 	properties: Property[] = [];
@@ -422,7 +422,11 @@ export class Graph {
 	}
 
 	async load_relations(new_nodes: Node[], visible: boolean = true, notify: boolean = true) {
-		SPARQL.fetch_multiple_relations(new_nodes, this.nodes, notify).then((relations) => {
+		SPARQL.fetch_multiple_relations(
+			new_nodes.map(SPARQL.convert_node_to_binding_content),
+			this.nodes.map(SPARQL.convert_node_to_binding_content),
+			notify
+		).then((relations) => {
 			for (const relation of relations) {
 				this.create_edge(
 					relation.subject.value,
@@ -488,6 +492,7 @@ export class Graph {
 				position
 			);
 			n.datatype = new_node.datatype;
+			n.language = new_node.language;
 			if (!n.visible) {
 				n.x = position.x;
 				n.y = position.y;

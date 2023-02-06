@@ -1,46 +1,59 @@
-import isUrl from 'is-url';
 import { Settings } from '../settings';
 import { get } from 'svelte/store';
-import { TypedEmitter } from 'tiny-typed-emitter';
-import type { Property, URI } from './graph';
+import isUrl from 'is-url';
 import { show_loading_toast } from '../util';
-import type { Node as Graph_Node } from './graph';
+import type { Node, Property, URI } from './graph';
 
-export interface Triple extends Binding {
-	subject: Node;
-	property: Node;
-	object: Node;
-}
-
-export interface Node {
+export interface Binding_Content {
 	type: 'literal' | 'uri';
-	value: string;
-	datatype?: string;
+	value: URI;
+	datatype?: URI;
 	'xml:lang'?: string;
 }
 
-export interface Binding {
-	[key: string]: Node;
+interface Binding {
+	[key: string]: Binding_Content;
 }
 
-declare interface SPARQL_Events {
-	'progress'(progress: number): void;
+type Bindings = Binding[];
+
+interface PREFIXES {
+	[key: string]: string;
 }
 
-class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
-	private readonly prefix = `
-			PREFIX schema: <http://schema.org/>
-			PREFIX wdt: <http://www.wikidata.org/prop/direct/>
-			PREFIX bd: <http://www.bigdata.com/rdf#>
-			PREFIX wd: <http://www.wikidata.org/entity/>
-			PREFIX wikibase: <http://wikiba.se/ontology#>
-			PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-			PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-			PREFIX bif: <http://www.openlinksw.com/schemas/bif#>
-			PREFIX dcterms: <http://purl.org/dc/terms/>`;
+const PREFIXES: PREFIXES = {
+	rdf: 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
+	rdfs: 'http://www.w3.org/2000/01/rdf-schema#',
+	owl: 'http://www.w3.org/2002/07/owl#',
+	xsd: 'http://www.w3.org/2001/XMLSchema#',
+	skos: 'http://www.w3.org/2004/02/skos/core#',
+	dcterms: 'http://purl.org/dc/terms/',
+	foaf: 'http://xmlns.com/foaf/0.1/',
+	schema: 'http://schema.org/',
+	prov: 'http://www.w3.org/ns/prov#',
+	dc: 'http://purl.org/dc/elements/1.1/',
+	dct: 'http://purl.org/dc/terms/',
+	geo: 'http://www.w3.org/2003/01/geo/wgs84_pos#',
+	geosparql: 'http://www.opengis.net/ont/geosparql#',
+	gn: 'http://www.geonames.org/ontology#',
+	gndo: 'http://d-nb.info/standards/elementset/gnd#',
+	wd: 'http://www.wikidata.org/entity/',
+	wdt: 'http://www.wikidata.org/prop/direct/',
+	wikibase: 'http://wikiba.se/ontology#',
+	bd: 'http://www.bigdata.com/rdf#',
+	bif: 'http://www.openlinksw.com/schemas/bif#',
+	wdno: 'http://www.wikidata.org/prop/novalue/',
+	wdref: 'http://www.wikidata.org/reference/',
+	wdv: 'http://www.wikidata.org/value/',
+	dbpedia: 'http://dbpedia.org/resource/',
+	dbprop: 'http://dbpedia.org/property/',
+	dbowl: 'http://dbpedia.org/ontology/',
+	dbcat: 'http://dbpedia.org/resource/Category:',
+	db: 'http://dbpedia.org/',
+	dbp: 'http://dbpedia.org/property/'
+};
 
-	private current_progress: number | undefined = undefined;
-
+class SPARQL_Queries {
 	private last_fetch: number = 0;
 	private queue: string[] = [];
 	private last_queue: number = 0;
@@ -74,16 +87,37 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 		return get(Settings).endpoint_lang ?? 'en';
 	}
 
-	public get progress() {
-		return this.current_progress;
+	public shorten_uri(uri: URI) {
+		let shortened = false;
+		for (const prefix in PREFIXES) {
+			if (uri.includes(PREFIXES[prefix])) {
+				const code = uri.split(PREFIXES[prefix])[1];
+				if (code.length > 0) {
+					uri = uri.replace(PREFIXES[prefix] + code, prefix + ':' + code);
+					shortened = true;
+				}
+			}
+		}
+		if (!shortened) {
+			uri = '<' + uri + '>';
+		}
+
+		return uri;
 	}
 
-	constructor() {
-		super();
-		this.setMaxListeners(1);
+	public get prefixes() {
+		let prefix = '';
+		for (const key in PREFIXES) {
+			prefix += `PREFIX ${key}: <${PREFIXES[key]}> `;
+		}
+		return prefix;
 	}
 
-	public async query<T extends Binding>(body?: string, custom_endpoint?: string): Promise<T[]> {
+	public async query<T extends Binding>(
+		body?: string,
+		custom_endpoint?: string
+	): Promise<Partial<T>[]> {
+		// queue requests if rate limit is reached
 		const now = Date.now();
 		const diff = now - this.last_fetch;
 		if (diff < this.rate_limit && body) {
@@ -91,7 +125,7 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 			const timeout = Math.max(this.last_queue, this.last_fetch) + this.rate_limit - now;
 			this.last_queue = timeout + now;
 
-			return new Promise<T[]>((res) =>
+			return new Promise<Partial<T>[]>((res) =>
 				setTimeout(async () => {
 					res(await this.query<T>());
 				}, timeout)
@@ -104,8 +138,10 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 			body = this.queue.shift();
 		}
 
+		if (!body) return [];
+
 		const urlencoded = new URLSearchParams();
-		urlencoded.append('query', this.prefix + body);
+		urlencoded.append('query', this.prefixes + body);
 
 		try {
 			const result = await fetch(custom_endpoint || this.endpoint, {
@@ -139,11 +175,19 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 	}
 
 	// used for smart-search. Allows free-text search
-	public async fetch_entities(search_text: string) {
-		let result: { item: Node; itemLabel: Node; typeLabel: Node }[] = [];
+	public async search(search_text: URI) {
+		let result: {
+			item?: Binding_Content;
+			itemLabel?: Binding_Content;
+			typeLabel?: Binding_Content;
+		}[] = [];
 
 		if (this.endpoint_type == 'wikidata')
-			result = await SPARQL.query<{ item: Node; itemLabel: Node; typeLabel: Node }>(
+			result = await SPARQL.query<{
+				item: Binding_Content;
+				itemLabel: Binding_Content;
+				typeLabel: Binding_Content;
+			}>(
 				`	SELECT ?item ?itemLabel ?typeLabel WHERE {
 				SERVICE wikibase:mwapi {
 				bd:serviceParam wikibase:endpoint 'www.wikidata.org';
@@ -174,7 +218,11 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 					.map((x) => `"${x}"`)
 					.join(' AND ');
 			}
-			result = await SPARQL.query<{ item: Node; itemLabel: Node; typeLabel: Node }>(
+			result = await SPARQL.query<{
+				item: Binding_Content;
+				itemLabel: Binding_Content;
+				typeLabel: Binding_Content;
+			}>(
 				`	SELECT DISTINCT ?item ?itemLabel ?typeLabel WHERE {
 				?item rdfs:label ?itemLabel . 
 				FILTER (lang(?itemLabel) = '${this.endpoint_lang}') . 
@@ -207,17 +255,17 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 	}
 
 	public async fetch_description(subject: URI) {
-		const result = await this.query<{ description: Node }>(`
+		const result = await this.query<{ description: Binding_Content }>(`
 
 		SELECT DISTINCT ?description WHERE {
 			VALUES ?subject {
-				<${subject}>
+				${this.shorten_uri(subject)}
 			}
 			?subject schema:description ?description
 			FILTER (lang(?description) = '${this.endpoint_lang}')
 		} LIMIT 1`);
 
-		return result[0]?.description.value ?? '';
+		return result[0]?.description?.value ?? '';
 	}
 
 	// used to fetch all related nodes for a given node and one of its property
@@ -226,13 +274,13 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 		const promise = new Promise<void>((res) => (resolve = res));
 		notify && show_loading_toast(promise, 'Related');
 
-		const result = await this.query<{ object: Node; objectLabel?: Node }>(
+		const result = await this.query<{ object: Binding_Content; objectLabel?: Binding_Content }>(
 			`
 			SELECT DISTINCT ?object ?objectLabel ?objectDescription  WHERE {
 				{
-				  ?object <${property}> <${subject}> .
+				  ?object ${this.shorten_uri(property)} ${this.shorten_uri(subject)} .
 				} UNION{
-					<${subject}> <${property}> ?object
+					${this.shorten_uri(subject)} ${this.shorten_uri(property)} ?object
 				}
 				OPTIONAL {
 					?object rdfs:label ?objectLabel 
@@ -242,12 +290,15 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 		);
 		resolve();
 
-		const results = result.map((r) => ({
-			uri: r.object.value,
-			type: r.object.type,
-			label: r.objectLabel?.value ?? r.object.value,
-			datatype: r.object?.datatype ?? ''
-		}));
+		const results = result
+			.map((r) => ({
+				uri: r.object?.value ?? '',
+				type: r.object?.type ?? 'literal',
+				label: r.objectLabel?.value ?? r.object?.value ?? '',
+				datatype: r.object?.datatype ?? undefined,
+				language: r.object?.['xml:lang'] ?? undefined
+			}))
+			.filter((r) => r.uri !== '');
 
 		return results;
 	}
@@ -255,22 +306,20 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 	public async fetch_image(subject: URI) {
 		if (!isUrl(subject)) return undefined;
 		const result = await this.query<{
-			image: Node;
+			image: Binding_Content;
 		}>(
 			`
-			
 			SELECT DISTINCT ?image WHERE {
 			  VALUES ?subject {
-				<${subject}>
+				${this.shorten_uri(subject)}
 				  }
 	
 			?subject wdt:P18 ?image
-			
 			}
 				`
 		);
 		if (result.length > 0) {
-			return result[0].image.value;
+			return result[0].image?.value ?? undefined;
 		}
 
 		return undefined;
@@ -278,8 +327,8 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 
 	public async fetch_images(subjects: URI[]) {
 		const result = await this.query<{
-			image: Node;
-			subject: Node;
+			image: Binding_Content;
+			subject: Binding_Content;
 		}>(
 			`
 			
@@ -287,7 +336,7 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 			  VALUES ?subject {
 				${subjects
 					.filter((s) => isUrl(s))
-					.map((s) => `<${s}>`)
+					.map((s) => this.shorten_uri(s))
 					.join('\n')}
 				  }
 	
@@ -296,22 +345,22 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 			}
 				`
 		);
-		return result.map((r) => {
-			return { image: r.image.value, uri: r.subject.value };
-		});
+		return result
+			.map((r) => ({ image: r.image?.value, uri: r.subject?.value }))
+			.filter((r) => r.image && r.uri) as { image: string; uri: string }[];
 	}
 
 	public async fetch_property_labels(properties: URI[]) {
 		const result = await this.query<{
-			property: Node;
-			propertyLabel: Node;
+			property: Binding_Content;
+			propertyLabel: Binding_Content;
 		}>(
 			`
 			SELECT DISTINCT ?property ?propertyLabel  WHERE {
 			  VALUES ?property {
 				${properties
 					.filter((p) => isUrl(p))
-					.map((p) => `<${p}>`)
+					.map((p) => this.shorten_uri(p))
 					.join('\n')}
 				  }		
 				OPTIONAL{
@@ -328,8 +377,8 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 		if (result.length > 0) {
 			return result.map((r) => {
 				return {
-					uri: r.property.value,
-					label: r.propertyLabel?.value ?? r.property.value
+					uri: r.property?.value ?? '',
+					label: r.propertyLabel?.value ?? r.property?.value ?? ''
 				};
 			});
 		}
@@ -339,15 +388,15 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 
 	public async fetch_labels(subjects: URI[]) {
 		const result = await this.query<{
-			subject: Node;
-			subjectLabel: Node;
+			subject: Binding_Content;
+			subjectLabel: Binding_Content;
 		}>(
 			`
 			SELECT DISTINCT ?subject ?subjectLabel  WHERE {
 			  VALUES ?subject {
 				${subjects
 					.filter((s) => isUrl(s))
-					.map((s) => `<${s}>`)
+					.map((s) => this.shorten_uri(s))
 					.join('\n')}
 				  }		
 				
@@ -362,8 +411,8 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 		if (result.length > 0) {
 			return result.map((r) => {
 				return {
-					uri: r.subject.value,
-					label: r.subjectLabel?.value ?? r.subject.value
+					uri: r.subject?.value ?? '',
+					label: r.subjectLabel?.value ?? r.subject?.value ?? ''
 				};
 			});
 		}
@@ -373,14 +422,14 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 
 	public async fetch_info(subject: URI) {
 		const result = await this.query<{
-			label: Node;
-			description: Node;
-			typeLabel: Node;
+			label: Binding_Content;
+			description: Binding_Content;
+			typeLabel: Binding_Content;
 		}>(
 			`
 			SELECT DISTINCT ?label ?description ?typeLabel WHERE {
 			  VALUES ?subject {
-				<${subject}>
+				${this.shorten_uri(subject)}
 				  }
 	
 			OPTIONAL {
@@ -410,11 +459,10 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 
 		return { label: subject, description: '', type: '' };
 	}
-
 	// fetches relations between multiple nodes
 	public async fetch_multiple_relations(
-		subjects: Graph_Node[],
-		other_nodes: Graph_Node[],
+		subjects: Binding_Content[],
+		other_nodes: Binding_Content[],
 		notify: boolean = true
 	) {
 		let resolve!: () => void;
@@ -448,15 +496,19 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 		return relations;
 	}
 
-	public async fetch_relations(subjects: Graph_Node[], other_nodes: Graph_Node[]) {
+	public async fetch_relations(subjects: Binding_Content[], other_nodes: Binding_Content[]) {
 		let subjects_string = `VALUES ?subject {\n`;
 
 		for (let i = 0; i < subjects.length; i++) {
 			const node = subjects[i];
-			if (isUrl(node.id)) subjects_string += `<${node.id}>\n`;
+			if (isUrl(node.value)) subjects_string += `${this.shorten_uri(node.value)}\n`;
 			else
-				subjects_string += `"${node.id}"${
-					node.datatype ? '^^' + '<' + node.datatype + '>' : '@' + get(Settings).endpoint_lang
+				subjects_string += `"${node.value}"${
+					node.datatype
+						? '^^' + this.shorten_uri(node.datatype)
+						: node['xml:lang']
+						? '@' + node['xml:lang']
+						: ''
 				} \n`;
 		}
 		subjects_string += '}';
@@ -465,45 +517,48 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 
 		for (let i = 0; i < other_nodes.length; i++) {
 			const node = other_nodes[i];
-			if (isUrl(node.id)) objects_string += `<${node.id}>\n`;
+			if (isUrl(node.value)) objects_string += `${this.shorten_uri(node.value)}\n`;
 			else
-				objects_string += `"${node.id}"${
-					node.datatype ? '^^' + '<' + node.datatype + '>' : '@' + get(Settings).endpoint_lang
+				objects_string += `"${node.value}"${
+					node.datatype
+						? '^^' + this.shorten_uri(node.datatype)
+						: node['xml:lang']
+						? '@' + node['xml:lang']
+						: ''
 				}\n`;
 		}
 		objects_string += '}';
 
 		const result = await this.query<{
-			subject: Node;
-			property: Node;
-			object: Node;
-			dir: Node;
+			subject: Binding_Content;
+			property: Binding_Content;
+			object: Binding_Content;
+			dir: Binding_Content;
 		}>(
 			`
-			
-			SELECT DISTINCT ?object ?property ?subject ?dir WHERE
-			{
-				${subjects_string}
-				${objects_string}
-				{
-					BIND("in" as ?dir) . ?object ?property ?subject .
-				}
-				UNION
-				{	
-					BIND("out" as ?dir) . ?subject ?property ?object . 
-				}
-				
-			}`
+        SELECT DISTINCT ?object ?property ?subject ?dir WHERE
+        {
+            ${subjects_string}
+            ${objects_string}
+            {
+                BIND("in" as ?dir) . ?object ?property ?subject .
+            }
+            UNION
+            {	
+                BIND("out" as ?dir) . ?subject ?property ?object . 
+            }
+            
+        }`
 		);
 
-		return result;
+		return result.filter((r) => r.subject && r.object) as Required<typeof result[number]>[];
 	}
 
 	public async fetch_property_count(subject: URI, property: URI): Promise<Property> {
 		const result = await this.query<{
-			propLabel: Node;
-			outCount: Node;
-			inCount: Node;
+			propLabel: Binding_Content;
+			outCount: Binding_Content;
+			inCount: Binding_Content;
 		}>(
 			`
 			
@@ -536,10 +591,10 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 		if (result.length > 0) {
 			const res = result[0];
 			return {
-				label: res.propLabel?.value,
+				label: res.propLabel?.value || property,
 				uri: property,
-				out_count: +res.outCount.value,
-				in_count: +res.inCount.value,
+				out_count: +(res.outCount?.value ?? 0),
+				in_count: +(res.inCount?.value ?? 0),
 				related: [],
 				fetched: false
 			};
@@ -556,7 +611,7 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 	}
 
 	public async fetch_properties(subject: URI) {
-		const result = await this.query<{ property: Node }>(
+		const result = await this.query<{ property: Binding_Content }>(
 			`
 			
 			SELECT DISTINCT ?property  WHERE {
@@ -574,14 +629,25 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 		);
 
 		const results: Property[] = [];
-		const properties = result.map((c) => c.property.value);
+		const properties = (result.filter((c) => c.property) as Required<typeof result[number]>[]).map(
+			(c) => c.property.value
+		);
 		const requests: Promise<Property>[] = [];
 		properties.forEach((prop) => requests.push(this.fetch_property_count(subject, prop)));
 		for (let i = 0; i < requests.length; i++) {
 			results.push(await requests[i]);
-			this.emit('progress', Math.floor((i / requests.length) * 100));
 		}
 		return results;
 	}
+
+	public convert_node_to_binding_content(node: Node): Binding_Content {
+		return {
+			type: node.type,
+			value: node.id,
+			datatype: node.datatype,
+			'xml:lang': node.language
+		};
+	}
 }
+
 export const SPARQL = new SPARQL_Queries();
