@@ -16,6 +16,7 @@ export interface Node {
 	type: 'literal' | 'uri';
 	value: string;
 	datatype?: string;
+	'xml:lang'?: string;
 }
 
 export interface Binding {
@@ -455,7 +456,7 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 			if (isUrl(node.id)) subjects_string += `<${node.id}>\n`;
 			else
 				subjects_string += `"${node.id}"${
-					node.datatype ? '^^' + '<' + node.datatype + '>' : ''
+					node.datatype ? '^^' + '<' + node.datatype + '>' : '@' + get(Settings).endpoint_lang
 				} \n`;
 		}
 		subjects_string += '}';
@@ -466,7 +467,9 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 			const node = other_nodes[i];
 			if (isUrl(node.id)) objects_string += `<${node.id}>\n`;
 			else
-				objects_string += `"${node.id}"${node.datatype ? '^^' + '<' + node.datatype + '>' : ''}\n`;
+				objects_string += `"${node.id}"${
+					node.datatype ? '^^' + '<' + node.datatype + '>' : '@' + get(Settings).endpoint_lang
+				}\n`;
 		}
 		objects_string += '}';
 

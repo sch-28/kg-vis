@@ -2,6 +2,8 @@
 	import { copy_to_clipboard, dark_mode, show_toast } from '../../../util';
 	import type { Graph } from '../../../api/graph';
 	import { Button } from 'flowbite-svelte';
+	import { Settings } from '../../../settings';
+	import { get } from 'svelte/store';
 
 	export let graph: Graph;
 
@@ -47,7 +49,9 @@ WHERE
 							: '"' +
 							  node.id +
 							  '"' +
-							  (node.datatype && node.datatype.length > 0 ? '^^' + '<' + node.datatype + '>' : '')
+							  (node.datatype && node.datatype.length > 0
+									? '^^' + '<' + node.datatype + '>'
+									: '@' + get(Settings).endpoint_lang)
 					)
 					.join('\n')}
     }

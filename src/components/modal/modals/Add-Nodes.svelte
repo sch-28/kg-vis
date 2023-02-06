@@ -60,21 +60,21 @@ WHERE
 					loading = false;
 					return;
 				}
-				const uris = results.flatMap((b) =>
-					Object.values(b).map((n) => n.value + (n.datatype ? '^^' + n.datatype : ''))
-				);
-				const literal_nodes = uris
-					.filter((uri) => !isUrl(uri))
-					.map((uri) => {
-						const u = uri.split('^^')[0];
-						const node = graph.find_or_create_node(u, u, 'literal', false);
-						node.datatype = uri.split('^^')[1];
-						return node;
+				const all_nodes = results.flatMap((b) => Object.values(b));
+				const literal_nodes = all_nodes
+					.filter((node) => node.type === 'literal')
+					.map((node) => {
+						const new_node = graph.find_or_create_node(node.value, node.value, 'literal', false);
+						node.datatype && (new_node.datatype = node.datatype);
+						return new_node;
 					});
 
-				const new_nodes = await graph.load_nodes(uris.filter(isUrl), false);
+				const entity_nodes = await graph.load_nodes(
+					all_nodes.filter((node) => node.type === 'uri').map((node) => node.value),
+					false
+				);
 
-				nodes = nodes.concat(new_nodes).concat(literal_nodes);
+				nodes = nodes.concat(entity_nodes).concat(literal_nodes);
 				loading = false;
 			})
 			.catch((e) => {
@@ -295,7 +295,7 @@ WHERE
 					bind:this={sparql_query_area}
 					bind:value={sparql_query}
 					id="sparql-query"
-					class="resize-none w-full px-0 text-sm text-gray-900 bg-white border-0 dark:bg-gray-800 focus:ring-0 dark:text-light dark:placeholder-gray-400 max-h-[500px]"
+					class="resize-none w-full px-0 text-sm text-gray-900 bg-white border-0 dark:bg-gray-800 focus:ring-0 dark:text-light dark:placeholder-gray-400 max-h-[350px]"
 					placeholder={`Enter a SPARQL query or select an example.`}
 					required
 				/>

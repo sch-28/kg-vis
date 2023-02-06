@@ -93,6 +93,7 @@ export class Node {
 	image: string | undefined;
 	type: 'uri' | 'literal';
 	datatype?: string;
+	lang?: string;
 	x: number;
 	y: number;
 	properties: Property[] = [];
