@@ -5,19 +5,143 @@
 		InformationCircle,
 		LockClosed,
 		Trash,
-		LockOpen
+		LockOpen,
+		ClipboardDocument,
+		Photo
 	} from '@steeze-ui/heroicons';
 	import type { Graph, Node } from '../api/graph';
+	import { FitScreen, ImportExport } from '@steeze-ui/material-design-icons';
+	import type { IconSource } from '@steeze-ui/svelte-icon/types';
+	import { show_toast } from '../util';
+	import { Modal_Manager } from './modal/modal-store';
+	import GraphInformation from './Graph-Information.svelte';
 	export let menu_position = { x: 0, y: 0 };
 	export let hidden = true;
 	export let selection: Node | undefined = undefined;
 	export let graph: Graph;
 	export let on_information: (node: Node) => void;
+
 	let wrapper: HTMLElement;
+
+	type Action = {
+		icon: IconSource;
+		label: string;
+		handle: () => void;
+		danger?: boolean;
+	};
+
+	const node_actions = (): (Action | 'split')[] => [
+		{
+			icon: MagnifyingGlass,
+			label: 'Focus',
+			handle: handle_focus
+		},
+		{
+			icon: InformationCircle,
+			label: 'Information',
+			handle: handle_information
+		},
+		{
+			icon: ClipboardDocument,
+			label: 'Copy URI',
+			handle: handle_clipboard_uri
+		},
+		'split',
+		{
+			icon: selection && selection.fixed ? LockOpen : LockClosed,
+			label: selection && selection.fixed ? 'Unlock' : 'Lock',
+			handle: handle_lock
+		},
+		{
+			icon: Trash,
+			label: 'Delete',
+			handle: handle_delete,
+			danger: true
+		}
+	];
+
+	const canvas_actions = (): (Action | 'split')[] => [
+		{
+			icon: InformationCircle,
+			label: 'Information',
+			handle: handle_graph_information
+		},
+		'split',
+		{
+			icon: FitScreen,
+			label: 'Fit graph',
+			handle: handle_fit_graph
+		},
+		{
+			icon: Photo,
+			label: 'Export',
+			handle: () => {
+				/* hidden = true;
+				graph.show_import_export = true; */
+			}
+		},
+		'split',
+		{
+			icon: LockClosed,
+			label: 'Lock all',
+			handle: handle_lock_all
+		},
+		{
+			icon: LockOpen,
+			label: 'Unlock all',
+			handle: handle_unlock_all
+		},
+		'split',
+		{
+			icon: Trash,
+			label: 'Delete all',
+			handle: handle_delete_all,
+			danger: true
+		}
+	];
+
+	let current_actions: (Action | 'split')[] = node_actions();
 
 	$: {
 		wrapper;
 		set_position(menu_position);
+	}
+
+	$: {
+		current_actions = selection ? node_actions() : canvas_actions();
+	}
+
+	function handle_fit_graph() {
+		graph.network?.fit();
+		hidden = true;
+	}
+
+	function handle_unlock_all() {
+		graph.lock_all_nodes(false);
+		hidden = true;
+	}
+
+	function handle_lock_all() {
+		graph.lock_all_nodes(true);
+		hidden = true;
+	}
+
+	function handle_delete_all() {
+		graph.reset();
+		hidden = true;
+	}
+
+	function handle_graph_information() {
+		Modal_Manager.open(GraphInformation, { graph });
+		hidden = true;
+	}
+
+	function handle_clipboard_uri() {
+		if (selection) {
+			navigator.clipboard.writeText(selection.id);
+			show_toast('URI copied to clipboard', 'success');
+		}
+		hidden = true;
 	}
 
 	function set_position(position: { x: number; y: number }) {
@@ -68,50 +192,24 @@
 	class="border dark:border-dark-muted dark:bg-dark-bg bg-white shadow-md z-40 absolute p-2 rounded-lg"
 >
 	<div class="context-menu">
-		{#if selection}
-			<button
-				class="context-menu-item dark:hover:bg-black/30 hover:bg-black/10"
-				on:click={handle_information}
-			>
-				<div class="icon">
-					<Icon src={InformationCircle} />
-				</div>
+		{#each current_actions as action}
+			{#if action === 'split'}
+				<hr class="my-1" />
+			{:else}
+				<button
+					class="context-menu-item dark:hover:bg-black/30 hover:bg-black/10 {action.danger
+						? 'text-error dark:text-error-dark'
+						: ''}"
+					on:click={action.handle}
+				>
+					<div class="icon">
+						<Icon src={action.icon} />
+					</div>
 
-				Information
-			</button>
-			<button
-				class="context-menu-item dark:hover:bg-black/30 hover:bg-black/10"
-				on:click={handle_focus}
-			>
-				<div class="icon">
-					<Icon src={MagnifyingGlass} />
-				</div>
-
-				Focus
-			</button>
-			<button
-				class="context-menu-item dark:hover:bg-black/30 hover:bg-black/10"
-				on:click={handle_lock}
-			>
-				<div class="icon">
-					<Icon src={selection.fixed ? LockOpen : LockClosed} />
-				</div>
-
-				{selection.fixed ? 'Unlock' : 'Lock'}
-			</button>
-			<button
-				class="context-menu-item dark:hover:bg-black/30 hover:bg-black/10 text-[#EF4444]"
-				on:click={handle_delete}
-			>
-				<div class="icon">
-					<Icon src={Trash} />
-				</div>
-
-				Remove
-			</button>
-		{:else}
-			Not implemented
-		{/if}
+					{action.label}
+				</button>
+			{/if}
+		{/each}
 	</div>
 </div>
 

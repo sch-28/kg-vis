@@ -7,56 +7,56 @@ import isUrl from 'is-url';
 import { dark_mode } from '../util';
 import * as vis from 'vis-network';
 
-
-const get_network_options = () => ({
-	interaction: {
-		hideEdgesOnDrag: get(Settings).hide_edges_on_drag ?? false
-	},
-	nodes: {
-		color: dark_mode ? '#6a7e9d' : '#74a0e9',
-		shape: 'dot',
-		font: {
-			color: dark_mode ? 'white' : 'black'
+const get_network_options = () =>
+	({
+		interaction: {
+			hideEdgesOnDrag: get(Settings).hide_edges_on_drag ?? false
 		},
-		borderWidth: 3,
-		chosen: false,
-		widthConstraint: {
-			maximum: 125
-		}
-	},
-	edges: {
-		arrows: {
-			to: {
-				enabled: true,
-				type: 'arrow'
+		nodes: {
+			color: dark_mode ? '#6a7e9d' : '#74a0e9',
+			shape: 'dot',
+			font: {
+				color: dark_mode ? 'white' : 'black'
+			},
+			borderWidth: 3,
+			chosen: false,
+			widthConstraint: {
+				maximum: 125
 			}
 		},
-		widthConstraint: {
-			maximum: 125
+		edges: {
+			arrows: {
+				to: {
+					enabled: true,
+					type: 'arrow'
+				}
+			},
+			widthConstraint: {
+				maximum: 125
+			},
+			font: {
+				strokeWidth: 0,
+				color: dark_mode ? 'white' : 'black',
+				background: dark_mode ? '#111827' : 'white'
+			},
+			color: {
+				color: dark_mode ? '#4a5e7d' : '#74a0e9',
+				highlight: dark_mode ? '#4a5e7d' : '#74a0e9'
+			},
+			labelHighlightBold: false
 		},
-		font: {
-			strokeWidth: 0,
-			color: dark_mode ? 'white' : 'black',
-			background: dark_mode ? '#111827' : 'white'
-		},
-		color: {
-			color: dark_mode ? '#4a5e7d' : '#74a0e9',
-			highlight: dark_mode ? '#4a5e7d' : '#74a0e9'
-		},
-		labelHighlightBold: false
-	},
-	physics: {
-		solver: 'forceAtlas2Based',
-		forceAtlas2Based: {
-			gravitationalConstant: -75,
-			springLength: 100,
-			springConstant: 0.02
-		},
-		maxVelocity: 50,
-		minVelocity: 3,
-		timestep: 0.35
-	}
-} as Options);
+		physics: {
+			solver: 'forceAtlas2Based',
+			forceAtlas2Based: {
+				gravitationalConstant: -75,
+				springLength: 100,
+				springConstant: 0.02
+			},
+			maxVelocity: 50,
+			minVelocity: 3,
+			timestep: 0.35
+		}
+	} as Options);
 
 export type URI = string;
 
@@ -318,6 +318,19 @@ export class Graph {
 	toggle_node_lock(node: Node, position: { x: number; y: number }) {
 		node.fixed = !node.fixed;
 		this.update_node(node, position);
+	}
+
+	lock_node(node: Node, position: { x: number; y: number }, lock = true) {
+		node.fixed = lock;
+		this.update_node(node, position);
+	}
+
+	lock_all_nodes(lock = true) {
+		this.nodes.forEach((node) => (node.fixed = lock));
+		const positions = this.network.getPositions();
+		for (const node of this.nodes) {
+			this.update_node(node, positions[node.id]);
+		}
 	}
 
 	create_edge(source: URI, uri: URI, target: URI, label: string) {
