@@ -60,12 +60,13 @@ WHERE
 					loading = false;
 					return;
 				}
-				const new_nodes = await graph.load_nodes(
-					results.flatMap((b) => Object.values(b).map((n) => n.value)),
-					false
-				);
+				const uris = results.flatMap((b) => Object.values(b).map((n) => n.value));
+				const literal_nodes = uris
+					.filter((uri) => !isUrl(uri))
+					.map((uri) => graph.find_or_create_node(uri, uri, 'literal', false));
+				const new_nodes = await graph.load_nodes(uris.filter(isUrl), false);
 
-				nodes = nodes.concat(new_nodes);
+				nodes = nodes.concat(new_nodes).concat(literal_nodes);
 				loading = false;
 			})
 			.catch((e) => {
@@ -270,7 +271,7 @@ WHERE
 	<div
 		style={`height: ${
 			$Settings.advanced_settings && sparql_query_area
-				? Math.min(sparql_query_area_height, 500) + 113
+				? Math.min(sparql_query_area_height, 350) + 113
 				: 0
 		}px`}
 		bind:this={advanced_container}
