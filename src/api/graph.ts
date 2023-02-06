@@ -129,6 +129,8 @@ export class Node {
 		this.description = description;
 		if (image) {
 			this.update_image(image);
+		} else if (type === 'literal') {
+			this.color = '#31C48D';
 		}
 	}
 

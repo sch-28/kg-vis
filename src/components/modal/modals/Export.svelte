@@ -7,25 +7,23 @@
 
 	let image_src: string = '';
 
+	// draw background and export canvas as image
 	$: {
 		graph;
 		const canvas = graph.container.querySelector('canvas');
 		if (canvas) {
-			const destinationCanvas = document.createElement('canvas');
-			destinationCanvas.width = canvas.width;
-			destinationCanvas.height = canvas.height;
-
-			const destCtx = destinationCanvas.getContext('2d')!;
-
-			//create a rectangle with the desired color
-			destCtx.fillStyle = dark_mode ? '#111827' : '#FFFFFF';
-			destCtx.fillRect(0, 0, canvas.width, canvas.height);
-
-			//draw the original canvas onto the destination canvas
-			destCtx.drawImage(canvas, 0, 0);
-
-			//finally use the destinationCanvas.toDataURL() method to get the desired output;
-			image_src = destinationCanvas.toDataURL('image/png', 1);
+			try {
+				const background_canvas = document.createElement('canvas');
+				background_canvas.width = canvas.width;
+				background_canvas.height = canvas.height;
+				const background_ctx = background_canvas.getContext('2d')!;
+				background_ctx.fillStyle = dark_mode ? '#111827' : '#FFFFFF';
+				background_ctx.fillRect(0, 0, canvas.width, canvas.height);
+				background_ctx.drawImage(canvas, 0, 0);
+				image_src = background_canvas.toDataURL('image/png', 1);
+			} catch (e) {
+				console.error(e);
+			}
 		}
 	}
 
@@ -44,7 +42,7 @@ WHERE
 	VALUES ?nodes{
         ${graph.nodes
 					.map((node) => (node.type === 'uri' ? '<' + node.id + '>' : '"' + node.id + '"'))
-					.join(' ')}
+					.join('\n')}
     }
 }
         `);
@@ -53,7 +51,11 @@ WHERE
 
 <h1 class="text-lg font-bold mb-2">Export</h1>
 <div class="flex gap-2 w-[475px] flex-col h-full">
-	<img src={image_src} alt="graph" class="" />
+	{#if image_src.length > 0}
+		<img src={image_src} alt="graph" class="" />
+	{:else}
+		Could not export image because of iframe security :(
+	{/if}
 
 	<Button on:click={download}>Download Image</Button>
 	<Button on:click={export_sparql}>Copy as Query</Button>

@@ -12,7 +12,7 @@
 	} from '@steeze-ui/heroicons';
 	import type { Graph, Node } from '../api/graph';
 	import type { IconSource } from '@steeze-ui/svelte-icon/types';
-	import { copy_to_clipboard, show_toast } from '../util';
+	import { copy_to_clipboard } from '../util';
 	import { Modal_Manager } from './modal/modal-store';
 	import GraphInformation from './modal/modals/Graph-Information.svelte';
 	import Export from './modal/modals/Export.svelte';
