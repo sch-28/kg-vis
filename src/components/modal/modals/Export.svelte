@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { dark_mode } from '../../../util';
+	import { copy_to_clipboard, dark_mode, show_toast } from '../../../util';
 	import type { Graph } from '../../../api/graph';
 	import { Button } from 'flowbite-svelte';
 
@@ -37,13 +37,14 @@
 	}
 
 	function export_sparql() {
-		// copies sparql to clipboard
-		navigator.clipboard.writeText(`
+		copy_to_clipboard(`
 SELECT ?nodes
 WHERE 
 {
 	VALUES ?nodes{
-        ${graph.nodes.map((node) => '<' + node.id + '>').join(' ')}
+        ${graph.nodes
+					.map((node) => (node.type === 'uri' ? '<' + node.id + '>' : '"' + node.id + '"'))
+					.join(' ')}
     }
 }
         `);
@@ -55,5 +56,5 @@ WHERE
 	<img src={image_src} alt="graph" class="" />
 
 	<Button on:click={download}>Download Image</Button>
-	<Button on:click={export_sparql}>Export to SPARQL query</Button>
+	<Button on:click={export_sparql}>Copy as Query</Button>
 </div>

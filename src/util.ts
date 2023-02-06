@@ -83,3 +83,13 @@ function measure_scrollbar() {
 }
 
 export const scrollbar_width = measure_scrollbar();
+
+export function copy_to_clipboard(text: string) {
+	try {
+		navigator.clipboard.writeText(text);
+		show_toast('Copied to clipboard!', 'success');
+	} catch (e) {
+		show_toast('Error while copying to clipboard!', 'error');
+		console.log(e);
+	}
+}
