@@ -57,6 +57,7 @@ WHERE
 			.then(async (results) => {
 				error = '';
 				if (results.length === 0) {
+					loading = false;
 					return;
 				}
 				const new_nodes = await graph.load_nodes(

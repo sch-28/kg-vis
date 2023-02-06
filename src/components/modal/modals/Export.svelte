@@ -35,6 +35,19 @@
 		link.href = image_src;
 		link.click();
 	}
+
+	function export_sparql() {
+		// copies sparql to clipboard
+		navigator.clipboard.writeText(`
+SELECT ?nodes
+WHERE 
+{
+	VALUES ?nodes{
+        ${graph.nodes.map((node) => '<' + node.id + '>').join(' ')}
+    }
+}
+        `);
+	}
 </script>
 
 <h1 class="text-lg font-bold mb-2">Export</h1>
@@ -42,4 +55,5 @@
 	<img src={image_src} alt="graph" class="" />
 
 	<Button on:click={download}>Download Image</Button>
+	<Button on:click={export_sparql}>Export to SPARQL query</Button>
 </div>

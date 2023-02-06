@@ -208,7 +208,7 @@
 					on:click={action.handle}
 				>
 					<div class="icon">
-						<Icon src={action.icon}  />
+						<Icon src={action.icon} />
 					</div>
 
 					{action.label}
