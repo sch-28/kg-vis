@@ -7,14 +7,15 @@
 		Trash,
 		LockOpen,
 		ClipboardDocument,
-		Photo
+		Photo,
+		ArrowsPointingOut
 	} from '@steeze-ui/heroicons';
 	import type { Graph, Node } from '../api/graph';
-	import { FitScreen, ImportExport } from '@steeze-ui/material-design-icons';
 	import type { IconSource } from '@steeze-ui/svelte-icon/types';
 	import { show_toast } from '../util';
 	import { Modal_Manager } from './modal/modal-store';
 	import GraphInformation from './modal/modals/Graph-Information.svelte';
+	import Export from './modal/modals/Export.svelte';
 	export let menu_position = { x: 0, y: 0 };
 	export let hidden = true;
 	export let selection: Node | undefined = undefined;
@@ -68,17 +69,14 @@
 		},
 		'split',
 		{
-			icon: FitScreen,
+			icon: ArrowsPointingOut,
 			label: 'Fit graph',
 			handle: handle_fit_graph
 		},
 		{
 			icon: Photo,
 			label: 'Export',
-			handle: () => {
-				/* hidden = true;
-				graph.show_import_export = true; */
-			}
+			handle: handle_export
 		},
 		'split',
 		{
@@ -109,6 +107,11 @@
 
 	$: {
 		current_actions = selection ? node_actions() : canvas_actions();
+	}
+
+	function handle_export() {
+		Modal_Manager.open(Export, { graph });
+		hidden = true;
 	}
 
 	function handle_fit_graph() {
@@ -203,7 +206,7 @@
 					on:click={action.handle}
 				>
 					<div class="icon">
-						<Icon src={action.icon} />
+						<Icon src={action.icon}  />
 					</div>
 
 					{action.label}

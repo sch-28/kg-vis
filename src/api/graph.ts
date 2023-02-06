@@ -168,12 +168,12 @@ export class Edge {
 export class Graph {
 	nodes: Node[];
 	edges: Edge[];
-
 	network: Network;
-
 	data: { nodes: DataSet<any>; edges: DataSet<any> };
+	container: HTMLElement;
 
 	constructor(container: HTMLElement, start?: URI) {
+		this.container = container;
 		this.nodes = [];
 		this.edges = [];
 		const data_nodes = new DataSet([]);
