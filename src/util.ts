@@ -60,6 +60,15 @@ export function show_loading_toast(promise: Promise<any>, message: string) {
 	document.querySelector('.toaster .message')?.setAttribute('title', message);
 }
 
+export function show_toast(message: string, type: 'success' | 'error') {
+	toast[type](message, {
+		position: 'top-right',
+		style: `${
+			dark_mode ? 'background: #1f2937; color: #fff;' : 'background: #fff; color: #000;'
+		} min-width: 200px;`
+	});
+}
+
 function measure_scrollbar() {
 	const div = document.createElement('div');
 	div.style.width = '100px';
