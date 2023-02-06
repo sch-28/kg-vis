@@ -72,7 +72,6 @@ WHERE
 						return node;
 					});
 
-				console.log(literal_nodes);
 				const new_nodes = await graph.load_nodes(uris.filter(isUrl), false);
 
 				nodes = nodes.concat(new_nodes).concat(literal_nodes);

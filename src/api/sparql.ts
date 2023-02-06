@@ -137,6 +137,7 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 		}
 	}
 
+	// used for smart-search. Allows free-text search
 	public async fetch_entities(search_text: string) {
 		let result: { item: Node; itemLabel: Node; typeLabel: Node }[] = [];
 
@@ -218,6 +219,7 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 		return result[0]?.description.value ?? '';
 	}
 
+	// used to fetch all related nodes for a given node and one of its property
 	public async fetch_related_nodes(subject: URI, property: URI, notify?: boolean) {
 		let resolve!: () => void;
 		const promise = new Promise<void>((res) => (resolve = res));
@@ -408,6 +410,7 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 		return { label: subject, description: '', type: '' };
 	}
 
+	// fetches relations between multiple nodes
 	public async fetch_multiple_relations(
 		subjects: Graph_Node[],
 		other_nodes: Graph_Node[],
@@ -452,7 +455,7 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 			if (isUrl(node.id)) subjects_string += `<${node.id}>\n`;
 			else
 				subjects_string += `"${node.id}"${
-					node.datatype && node.datatype.length > 0 ? '^^' + '<' + node.datatype + '>' : ''
+					node.datatype ? '^^' + '<' + node.datatype + '>' : ''
 				} \n`;
 		}
 		subjects_string += '}';
@@ -463,9 +466,7 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 			const node = other_nodes[i];
 			if (isUrl(node.id)) objects_string += `<${node.id}>\n`;
 			else
-				objects_string += `"${node.id}"${
-					node.datatype && node.datatype.length > 0 ? '^^' + '<' + node.datatype + '>' : ''
-				}\n`;
+				objects_string += `"${node.id}"${node.datatype ? '^^' + '<' + node.datatype + '>' : ''}\n`;
 		}
 		objects_string += '}';
 
