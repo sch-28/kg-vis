@@ -14,7 +14,7 @@
 	import type { IconSource } from '@steeze-ui/svelte-icon/types';
 	import { show_toast } from '../util';
 	import { Modal_Manager } from './modal/modal-store';
-	import GraphInformation from './Graph-Information.svelte';
+	import GraphInformation from './modal/modals/Graph-Information.svelte';
 	export let menu_position = { x: 0, y: 0 };
 	export let hidden = true;
 	export let selection: Node | undefined = undefined;
@@ -32,14 +32,14 @@
 
 	const node_actions = (): (Action | 'split')[] => [
 		{
-			icon: MagnifyingGlass,
-			label: 'Focus',
-			handle: handle_focus
-		},
-		{
 			icon: InformationCircle,
 			label: 'Information',
 			handle: handle_information
+		},
+		{
+			icon: MagnifyingGlass,
+			label: 'Focus',
+			handle: handle_focus
 		},
 		{
 			icon: ClipboardDocument,

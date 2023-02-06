@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { Badge, Hr } from 'flowbite-svelte';
-	import type { Graph, Node, Property } from '../../api/graph';
 	import { Icon } from '@steeze-ui/svelte-icon';
 	import { ArrowTopRightOnSquare, Plus } from '@steeze-ui/heroicons';
 	import { getContext } from 'svelte';
+	import type { Graph, Property, Node } from '../../../api/graph';
 
 	export let property: Property;
 	export let graph: Graph;

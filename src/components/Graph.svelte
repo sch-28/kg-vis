@@ -3,7 +3,7 @@
 	import PropertyMenu from './Property-Menu.svelte';
 	import { Graph, type URI, type Node } from '../api/graph';
 	import ActionMenu from './Header.svelte';
-	import InformationMenu from './information-menu/Information-Menu.svelte';
+	import InformationMenu from './Information-Menu.svelte';
 
 	interface Click_Event {
 		edges: [];

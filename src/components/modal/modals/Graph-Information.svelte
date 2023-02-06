@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { SPARQL } from '../api/sparql';
-	import type { Graph } from '../api/graph';
+	import { SPARQL } from '../../../api/sparql';
+	import type { Graph } from '../../../api/graph';
 
 	export let graph: Graph;
 

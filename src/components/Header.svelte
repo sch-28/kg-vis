@@ -3,15 +3,14 @@
 	import { Icon } from '@steeze-ui/svelte-icon';
 	import type { Graph } from 'src/api/graph';
 	import { onMount } from 'svelte';
-	import type { Action } from './header-actions/action';
-	import AddAction from './header-actions/Add-Action.svelte';
-	import Settings from './header-actions/Settings.svelte';
+	import AddAction from './modal/modals/Add-Nodes.svelte';
+	import Settings from './modal/modals/Settings.svelte';
 	import PlusCircleOutline from 'svelte-material-icons/PlusCircleOutline.svelte';
-	import { Modal_Manager } from './modal/modal-store';
+	import { Modal_Manager, type Component } from './modal/modal-store';
 
 	export let graph: Graph;
 
-	function open(action: Action) {
+	function open(action: Component) {
 		Modal_Manager.open(action, { graph });
 	}
 

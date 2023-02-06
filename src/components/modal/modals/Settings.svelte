@@ -13,11 +13,11 @@
 	} from 'flowbite-svelte';
 	import GraphIcon from 'svelte-material-icons/GraphOutline.svelte';
 	import { ArrowPath, CircleStack } from '@steeze-ui/heroicons';
-	import { languages, Settings } from '../../settings';
-	import type { Graph } from '../../api/graph';
-	import Tooltip from '../util/Tooltip.svelte';
+	import { languages, Settings } from '../../../settings';
+	import type { Graph } from '../../../api/graph';
+	import Tooltip from '../../util/Tooltip.svelte';
 	import { HelpOutline } from '@steeze-ui/material-design-icons';
-	import { Modal_Manager } from '../modal/modal-store';
+	import { Modal_Manager } from '../modal-store';
 
 	export let graph: Graph;
 

@@ -2,14 +2,14 @@
 	import { ChevronDown, FolderOpen, XMark } from '@steeze-ui/heroicons';
 	import { Icon } from '@steeze-ui/svelte-icon';
 	import isUrl from 'is-url';
-	import { SPARQL } from '../../api/sparql';
+	import { SPARQL } from '../../../api/sparql';
 	import type { Graph, Node, URI } from 'src/api/graph';
 	import { getContext, onMount } from 'svelte';
-	import LoadingCircle from '../util/Loading-Circle.svelte';
-	import { Settings } from '../../settings';
+	import LoadingCircle from '../../util/Loading-Circle.svelte';
+	import { Settings } from '../../../settings';
 	import { Button, Chevron, Dropdown, DropdownItem, Hr, Select } from 'flowbite-svelte';
-	import { click_outside, scrollbar_width } from '../../util';
-	import { Modal_Manager } from '../modal/modal-store';
+	import { click_outside, scrollbar_width } from '../../../util';
+	import { Modal_Manager } from '../modal-store';
 
 	export let graph: Graph;
 

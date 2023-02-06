@@ -1,15 +1,13 @@
 <script lang="ts">
 	import { Heading, Hr } from 'flowbite-svelte';
 	import { Icon } from '@steeze-ui/svelte-icon';
-	import type { Graph, Node, Property } from '../../api/graph';
-	import LoadingCircle from '../util/Loading-Circle.svelte';
+	import type { Graph, Node, Property } from '../api/graph';
+	import LoadingCircle from './util/Loading-Circle.svelte';
 	import { paginate, DarkPaginationNav } from 'svelte-paginate';
 	import { ArrowTopRightOnSquare, Plus, XMark } from '@steeze-ui/heroicons';
-	import type { Action } from '../header-actions/action';
-	import InformationMenuMore from './Information-Menu-More.svelte';
-	import { bind } from 'svelte-simple-modal';
 	import { setContext } from 'svelte';
-	import { Modal_Manager } from '../modal/modal-store';
+	import { Modal_Manager } from './modal/modal-store';
+	import InformationMenuMore from './modal/modals/Information-Menu-More.svelte';
 
 	export let node: Node | undefined;
 	export let graph: Graph;
