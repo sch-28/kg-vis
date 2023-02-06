@@ -33,7 +33,7 @@
 	<div class="flex gap-2 flex-col">
 		{#each attributes() as { label, value }}
 			<div class="flex flex-col gap-2 ">
-				<span class="text-sm text-gray-600">{label}</span>
+				<span class="text-sm text-gray-600 dark:text-gray-400">{label}</span>
 				<span class="text-lg font-bold">{value}</span>
 			</div>
 		{/each}
