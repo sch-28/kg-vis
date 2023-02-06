@@ -40,9 +40,14 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 	private last_fetch: number = 0;
 	private queue: string[] = [];
 	private last_queue: number = 0;
+	private query_counter: number = 0;
 
 	public get rate_limit() {
 		return +get(Settings).rate_limit ?? 10;
+	}
+
+	public get query_count() {
+		return this.query_counter;
 	}
 
 	public get size_limit() {
@@ -120,7 +125,7 @@ class SPARQL_Queries extends TypedEmitter<SPARQL_Events> {
 			for (const binding of json.results.bindings) {
 				bindings.push(binding);
 			}
-
+			this.query_counter++;
 			return bindings;
 		} catch (e) {
 			console.error(e);
