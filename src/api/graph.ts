@@ -1,5 +1,5 @@
 import { Settings } from '../settings';
-import { DataSet } from 'vis-data';
+import { DataSet, DataView } from 'vis-data';
 import type { Network, Options } from 'vis-network';
 import { SPARQL } from './sparql';
 import { get } from 'svelte/store';
@@ -19,7 +19,10 @@ const get_network_options = () =>
 				color: dark_mode ? 'white' : 'black'
 			},
 			borderWidth: 3,
-			chosen: false,
+			chosen: {
+				node: true,
+				label: false
+			},
 			widthConstraint: {
 				maximum: 125
 			}
@@ -176,22 +179,39 @@ export class Graph {
 	nodes: Node[];
 	edges: Edge[];
 	network: Network;
-	data: { nodes: DataSet<any>; edges: DataSet<any> };
+	data: { nodes: DataSet<Node>; edges: DataSet<any> };
 	container: HTMLElement;
 
 	constructor(container: HTMLElement, start?: URI) {
 		this.container = container;
 		this.nodes = [];
 		this.edges = [];
-		const data_nodes = new DataSet([]);
-		const data_edges = new DataSet([]);
+		const data_nodes = new DataSet<Node>([]);
+		const data_edges = new DataSet<any>([]);
 		this.data = { nodes: data_nodes, edges: data_edges };
+
+		const data_view_nodes = new DataView(data_nodes, { filter: (node) => this.node_filter(node) });
+		const data_view_edges = new DataView(data_edges, { filter: (edge) => this.edge_filter(edge) });
+
 		this.update_data();
-		this.network = new vis.Network(container, this.data, get_network_options());
+		this.network = new vis.Network(
+			container,
+			{ nodes: data_view_nodes, edges: data_view_edges },
+			get_network_options()
+		);
 
 		if (start) {
 			this.load_node(start).then(() => this.update_data());
 		}
+	}
+
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
+	node_filter(node: Node) {
+		return true;
+	}
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
+	edge_filter(edge: Edge) {
+		return true;
 	}
 
 	reset() {
@@ -337,8 +357,8 @@ export class Graph {
 		this.nodes.forEach((node) => (node.fixed = lock));
 		const positions = this.network.getPositions();
 		for (const node of this.nodes) {
-			node.x = positions[node.id].x;
-			node.y = positions[node.id].y;
+			node.x = positions[node.id]?.x ?? 0;
+			node.y = positions[node.id]?.y ?? 0;
 		}
 		this.data.nodes.update(this.nodes);
 	}
