@@ -334,8 +334,10 @@ export class Graph {
 		this.nodes.forEach((node) => (node.fixed = lock));
 		const positions = this.network.getPositions();
 		for (const node of this.nodes) {
-			this.update_node(node, positions[node.id]);
+			node.x = positions[node.id].x;
+			node.y = positions[node.id].y;
 		}
+		this.data.nodes.update(this.nodes);
 	}
 
 	create_edge(source: URI, uri: URI, target: URI, label: string) {
