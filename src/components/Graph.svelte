@@ -90,7 +90,10 @@
 <ActionMenu {graph} />
 
 {#if loading_graph}
-	<div class="absolute bottom-4 right-4 w-6 h-6 flex justify-center items-center">
+	<div
+		class="absolute bottom-4 right-4 w-6 h-6 flex justify-center items-center"
+		title="Graph is stabilizing.."
+	>
 		<LoadingCircle />
 	</div>
 {/if}

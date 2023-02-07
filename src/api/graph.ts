@@ -43,6 +43,9 @@ const get_network_options = () =>
 				color: dark_mode ? '#4a5e7d' : '#74a0e9',
 				highlight: dark_mode ? '#4a5e7d' : '#74a0e9'
 			},
+			smooth: {
+				type: get(Settings).smooth_edges ? 'dynamic' : 'continuous'
+			},
 			labelHighlightBold: false
 		},
 		physics: {

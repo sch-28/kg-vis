@@ -35,6 +35,18 @@
 		graph.update_edge_labels();
 	}
 
+	function update_edges() {
+		graph.network?.setOptions({
+			edges: {
+				smooth: {
+					type: $Settings.smooth_edges ? 'dynamic' : 'continuous',
+					enabled: true,
+					roundness: 0.5
+				}
+			}
+		});
+	}
+
 	const language_items = Object.keys(languages).map((lang) => {
 		return {
 			value: lang,
@@ -200,6 +212,12 @@
 				<Toggle bind:checked={$Settings.hide_edges_on_drag}>Hide edges on drag</Toggle>
 				<Tooltip
 					text="Hide edge lables only when dragging the view - this drastically improves performance "
+				/>
+			</div>
+			<div class="flex items-center justify-between gap-2">
+				<Toggle bind:checked={$Settings.smooth_edges} on:change={update_edges}>Smooth edges</Toggle>
+				<Tooltip
+					text="Makes the edges look smoother, but will also cost performance. Disable if you have performance issues."
 				/>
 			</div>
 			<div class="flex items-center justify-between gap-2">
