@@ -1,5 +1,6 @@
 import type { Action } from 'svelte/types/runtime/action';
 import toast from 'svelte-french-toast';
+import Fuse from 'fuse.js';
 
 export const click_outside: Action = (node) => {
 	const handle_click = (event: MouseEvent) =>
@@ -92,4 +93,16 @@ export function copy_to_clipboard(text: string) {
 		show_toast('Error while copying to clipboard!', 'error');
 		console.log(e);
 	}
+}
+
+export function fuzzy_search<T>(list: T[], query: string, keys: string[]) {
+	const fuse = new Fuse(list, {
+		keys: keys,
+		includeMatches: true,
+		threshold: 0.3,
+		shouldSort: true,
+		distance: 1000
+	});
+
+	return fuse.search(query);
 }
