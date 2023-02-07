@@ -98,16 +98,16 @@
 		<Popover class="w-44 text-sm font-normal [&>*:nth-child(2)]:p-0" title="Graph is stabilizing">
 			<div class="flex flex-col items-start">
 				<Button
-					on:click={() => graph.network.stabilize()}
-					color="light"
-					btnClass="py-2 px-3 w-full text-left dark:hover:bg-black/30 hover:bg-black/10"
-					>Skip animation</Button
-				>
-				<Button
 					on:click={() => graph.network.stopSimulation()}
 					color="light"
 					btnClass="rounded-b-lg py-2 px-3 w-full text-left dark:hover:bg-black/30 hover:bg-black/10"
-					>Stop</Button
+					>Stop animation</Button
+				>
+				<Button
+					on:click={() => graph.network.stabilize()}
+					color="light"
+					btnClass="py-2 px-3 w-full text-left dark:hover:bg-black/30 hover:bg-black/10"
+					>Stabilize</Button
 				>
 			</div>
 		</Popover>
