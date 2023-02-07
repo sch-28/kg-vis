@@ -54,7 +54,7 @@
 
 			loading_properties = true;
 			graph.get_properties(uri).then((node) => {
-				if (hide_context_menu && selected_node !== undefined) selected_node = node;
+				if (hide_context_menu && selected_node === node) selected_node = node;
 				loading_properties = false;
 			});
 		} else {
