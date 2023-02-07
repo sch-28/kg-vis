@@ -112,7 +112,7 @@
 			</div>
 		</Popover>
 	</div>
-{:else}
+{:else if graph && graph.data.nodes.length > 0}
 	<div class="absolute bottom-4 right-4 w-6 h-6 flex justify-center items-center">
 		<Icon src={Play} />
 		<Popover class="w-44 text-sm font-normal [&>*:nth-child(2)]:p-0" title="Graph is resting">
