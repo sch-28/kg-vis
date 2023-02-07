@@ -478,7 +478,9 @@ export class Graph {
 			existing_property = property;
 		}
 
-		const raw_new_nodes = await SPARQL.fetch_related_nodes(uri, property.uri, notify);
+		const raw_new_nodes = (await SPARQL.fetch_related_nodes(uri, property.uri, notify)).sort(
+			(a, b) => a.label.localeCompare(b.label)
+		);
 		const new_nodes: Node[] = [];
 		const already_exists: Node[] = [];
 
