@@ -12,7 +12,7 @@
 		Toggle
 	} from 'flowbite-svelte';
 	import GraphIcon from 'svelte-material-icons/GraphOutline.svelte';
-	import { ArrowPath, CircleStack } from '@steeze-ui/heroicons';
+	import { ArchiveBox, ArrowPath, CircleStack } from '@steeze-ui/heroicons';
 	import { languages, Settings } from '../../../settings';
 	import type { Graph } from '../../../api/graph';
 	import Tooltip from '../../util/Tooltip.svelte';
@@ -29,7 +29,7 @@
 		});
 	}
 
-	let selected_setting: 'endpoint' | 'graph' | 'documentation' = 'endpoint';
+	let selected_setting: 'endpoint' | 'graph' | 'other' = 'endpoint';
 
 	function update_labels() {
 		graph.update_edge_labels();
@@ -65,7 +65,7 @@
 </script>
 
 <h1 class="text-lg font-bold mb-2">Settings</h1>
-<div class="flex gap-4 w-[475px] h-[230px]">
+<div class="flex gap-4 w-[475px] h-[250px]">
 	<div>
 		<Sidebar asideClass="w-48">
 			<SidebarWrapper divClass="">
@@ -90,13 +90,18 @@
 							</div>
 						</svelte:fragment>
 					</SidebarItem>
+					<SidebarItem
+						label="Other"
+						active={selected_setting === 'other'}
+						on:click={() => (selected_setting = 'other')}
+					>
+						<svelte:fragment slot="icon">
+							<Icon src={ArchiveBox} class="w-6 h-6" />
+						</svelte:fragment>
+					</SidebarItem>
 				</SidebarGroup>
 				<SidebarGroup border>
-					<SidebarItem
-						label="Documentation"
-						active={selected_setting === 'documentation'}
-						on:click={() => (selected_setting = 'documentation')}
-					>
+					<SidebarItem label="Documentation">
 						<svelte:fragment slot="icon">
 							<Icon src={HelpOutline} class="w-6 h-6 fill-current" />
 						</svelte:fragment>
@@ -220,14 +225,13 @@
 					text="Makes the edges look smoother, but will also cost performance. Disable if you have performance issues."
 				/>
 			</div>
+		{:else if selected_setting === 'other'}
 			<div class="flex items-center justify-between gap-2">
 				<Toggle bind:checked={$Settings.smart_search}>Smart search</Toggle>
 				<Tooltip
 					text="When enabled, the search will try to find the best match for your input, by using a free-text search query on the official wikidata/dpbeida endpoints."
 				/>
 			</div>
-		{:else if selected_setting === 'documentation'}
-			<!-- <DocumentationSettings /> -->
 		{/if}
 	</div>
 </div>
