@@ -175,12 +175,22 @@ export class Edge {
 	}
 }
 
+type NodeFilter = {
+	node: Node;
+	range: number;
+	color: string;
+	visible: boolean;
+};
+
 export class Graph {
 	nodes: Node[];
 	edges: Edge[];
 	network: Network;
 	data: { nodes: DataSet<Node>; edges: DataSet<any> };
+	data_view: { nodes: DataView<Node>; edges: DataView<any> };
 	container: HTMLElement;
+	node_filters: NodeFilter[];
+	simulation_running: boolean;
 
 	constructor(container: HTMLElement, start?: URI) {
 		this.container = container;
@@ -192,6 +202,10 @@ export class Graph {
 
 		const data_view_nodes = new DataView(data_nodes, { filter: (node) => this.node_filter(node) });
 		const data_view_edges = new DataView(data_edges, { filter: (edge) => this.edge_filter(edge) });
+		this.data_view = { nodes: data_view_nodes, edges: data_view_edges };
+
+		this.node_filters = [];
+		this.simulation_running = false;
 
 		this.update_data();
 		this.network = new vis.Network(
@@ -205,8 +219,35 @@ export class Graph {
 		}
 	}
 
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
+	add_filter(node: Node, range?: number, color?: string, visible?: boolean) {
+		if (!range) range = 2;
+		/* if (!color) color = get_network_options().nodes?.color || dark_mode ? '#4a5e7d' : '#74a0e9'; */
+		if (!color) color = 'red';
+		if (!visible) visible = true;
+
+		this.node_filters.push({ node, range, color, visible });
+		this.data_view.nodes.refresh();
+		this.refresh_nodes();
+	}
+
 	node_filter(node: Node) {
+		for (const filter of this.node_filters) {
+			if (filter.node.id == node.id) {
+				node.color = filter.color;
+				return filter.visible;
+			} else {
+				for (let i = 0; i < filter.range; i++) {
+					const connected_nodes = this.network.getConnectedNodes(node.id);
+					if (connected_nodes.length == 0 || typeof connected_nodes[0] !== 'string') return true;
+					for (const connected_node of connected_nodes) {
+						if (connected_node == filter.node.id) {
+							node.color = filter.color;
+							return filter.visible;
+						}
+					}
+				}
+			}
+		}
 		return true;
 	}
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -355,12 +396,19 @@ export class Graph {
 
 	lock_all_nodes(lock = true) {
 		this.nodes.forEach((node) => (node.fixed = lock));
+		this.refresh_nodes();
+	}
+
+	refresh_nodes() {
 		const positions = this.network.getPositions();
 		for (const node of this.nodes) {
 			node.x = positions[node.id]?.x ?? 0;
 			node.y = positions[node.id]?.y ?? 0;
 		}
 		this.data.nodes.update(this.nodes);
+		if (!this.simulation_running) {
+			this.network.stopSimulation();
+		}
 	}
 
 	create_edge(source: URI, uri: URI, target: URI, label: string) {

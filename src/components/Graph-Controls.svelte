@@ -15,7 +15,10 @@
 		<Popover class="w-44 text-sm font-normal [&>*:nth-child(2)]:p-0" title="Graph is stabilizing">
 			<div class="flex flex-col items-start">
 				<Button
-					on:click={() => graph.network.stopSimulation()}
+					on:click={() => {
+						graph.simulation_running = false;
+						graph.network.stopSimulation();
+					}}
 					color="light"
 					btnClass="rounded-b-lg py-2 px-3 w-full text-left dark:hover:bg-black/30 hover:bg-black/10"
 					>Stop animation</Button
@@ -35,7 +38,10 @@
 		<Popover class="w-44 text-sm font-normal [&>*:nth-child(2)]:p-0" title="Graph is resting">
 			<div class="flex flex-col items-start">
 				<Button
-					on:click={() => graph.network.startSimulation()}
+					on:click={() => {
+						graph.simulation_running = true;
+						graph.network.startSimulation();
+					}}
 					color="light"
 					btnClass="py-2 px-3 w-full text-left dark:hover:bg-black/30 hover:bg-black/10"
 					>Start animation</Button

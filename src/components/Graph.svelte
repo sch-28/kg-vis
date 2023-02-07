@@ -28,6 +28,10 @@
 	let loading_graph: boolean = false;
 
 	$: if (container) {
+		init();
+	}
+
+	function init() {
 		graph = new Graph(container);
 		graph.network.on('click', show_properties);
 		graph.network.on('oncontext', show_context_menu);
@@ -35,6 +39,7 @@
 			loading_graph = true;
 		});
 		graph.network.on('stabilized', () => {
+			graph.simulation_running = false;
 			loading_graph = false;
 		});
 	}

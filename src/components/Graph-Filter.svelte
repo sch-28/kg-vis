@@ -24,7 +24,6 @@
 
 	$: open && search_input && search_input.focus();
 
-
 	onMount(() => {
 		search_input = search_container.querySelector('input')!;
 	});
@@ -39,7 +38,6 @@
 	<div class="flex flex-col w-6/12 mx-auto pointer-events-auto">
 		<Search
 			on:click={() => {
-				console.log('click');
 				if (search_results.length > 0) {
 					search_results_open = true;
 				}
@@ -75,7 +73,10 @@
 					>
 						<button
 							class="p-1 rounded-lg bg-transparent hover:bg-black/5 dark:hover:bg-black/30 transition-all duration-200 ease-in-out"
-							on:click={() => null}
+							on:click={(e) => {
+								e.stopPropagation();
+								graph.add_filter(result.item);
+							}}
 						>
 							<Icon src={Plus} size={'20'} />
 						</button>
