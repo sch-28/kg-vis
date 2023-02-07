@@ -4,10 +4,6 @@
 	import { Graph, type URI, type Node } from '../api/graph';
 	import ActionMenu from './Header.svelte';
 	import InformationMenu from './Information-Menu.svelte';
-	import LoadingCircle from './util/Loading-Circle.svelte';
-	import { Button, Popover } from 'flowbite-svelte';
-	import { Icon } from '@steeze-ui/svelte-icon';
-	import { Play } from '@steeze-ui/heroicons';
 	import GraphControls from './Graph-Controls.svelte';
 
 	interface Click_Event {

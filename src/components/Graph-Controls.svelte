@@ -10,7 +10,7 @@
 </script>
 
 {#if loading_graph}
-	<div class="absolute bottom-4 right-4 w-8 h-8 flex justify-center items-center">
+	<div class="absolute bottom-4 right-4 w-8 h-8 flex justify-center items-center z-50">
 		<LoadingCircle />
 		<Popover class="w-44 text-sm font-normal [&>*:nth-child(2)]:p-0" title="Graph is stabilizing">
 			<div class="flex flex-col items-start">
@@ -30,7 +30,7 @@
 		</Popover>
 	</div>
 {:else if graph && graph.data.nodes.length > 0}
-	<div class="absolute bottom-4 right-4 w-8 h-8 flex justify-center items-center">
+	<div class="absolute bottom-4 right-4 w-8 h-8 flex justify-center items-center z-50">
 		<Icon src={Play} />
 		<Popover class="w-44 text-sm font-normal [&>*:nth-child(2)]:p-0" title="Graph is resting">
 			<div class="flex flex-col items-start">
