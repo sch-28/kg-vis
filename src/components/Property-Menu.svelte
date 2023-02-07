@@ -584,7 +584,7 @@
 			>
 		{:else}
 			<div class="properties m-auto w-full items-center justify-center p-5">
-				<div role="status">
+				<div role="status" class="w-8 h-8">
 					<LoadingCircle />
 					<span class="sr-only">Loading...</span>
 				</div>
