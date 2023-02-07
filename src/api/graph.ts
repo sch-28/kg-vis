@@ -429,6 +429,7 @@ export class Graph {
 			this.nodes.map(SPARQL.convert_node_to_binding_content),
 			notify
 		).then((relations) => {
+			let update = false;
 			for (const relation of relations) {
 				this.create_edge(
 					relation.subject.value,
@@ -443,6 +444,7 @@ export class Graph {
 					if (related) {
 						if (property.related.find((node) => node.id == related.id) == undefined) {
 							property.related.push(related);
+							if (node?.visible && related.visible) update = true;
 						}
 					}
 				} else if (!property && node) {
@@ -454,9 +456,10 @@ export class Graph {
 						out_count: 1,
 						fetched: false
 					});
+					if (node.visible && related?.visible) update = true;
 				}
 			}
-			this.update_data(visible);
+			this.update_data(update || visible);
 		});
 	}
 
