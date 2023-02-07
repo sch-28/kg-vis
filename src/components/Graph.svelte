@@ -4,6 +4,7 @@
 	import { Graph, type URI, type Node } from '../api/graph';
 	import ActionMenu from './Header.svelte';
 	import InformationMenu from './Information-Menu.svelte';
+	import LoadingCircle from './util/Loading-Circle.svelte';
 
 	interface Click_Event {
 		edges: [];
@@ -24,11 +25,18 @@
 	let context_selection: Node | undefined = undefined;
 	let show_node_information: Node | undefined = undefined;
 	let loading_properties: boolean = false;
+	let loading_graph: boolean = false;
 
 	$: if (container) {
 		graph = new Graph(container);
 		graph.network.on('click', show_properties);
 		graph.network.on('oncontext', show_context_menu);
+		graph.network.on('startStabilizing', () => {
+			loading_graph = true;
+		});
+		graph.network.on('stabilized', () => {
+			loading_graph = false;
+		});
 	}
 
 	function show_context_menu(event: Click_Event) {
@@ -80,3 +88,9 @@
 	{graph}
 />
 <ActionMenu {graph} />
+
+{#if loading_graph}
+	<div class="absolute bottom-4 right-4 w-6 h-6 flex justify-center items-center">
+		<LoadingCircle />
+	</div>
+{/if}
