@@ -464,15 +464,20 @@ export class Graph {
 	}
 
 	create_edge(source: URI, uri: URI, target: URI, label: string) {
-		if (
-			this.edges.find(
-				(edge) =>
-					(edge.from == source && edge.uri == uri && edge.to == target) ||
-					(edge.to == source && edge.uri == uri && edge.from == target)
-			)
-		) {
-			return false;
+		const old_edge = this.edges.find(
+			(edge) => edge.from == source && edge.uri == uri && edge.to == target
+		);
+
+		if (old_edge) {
+			if (this.edges.find((edge) => edge.to == source && edge.uri == uri && edge.from == target)) {
+				return false;
+			} else {
+				const edge = new Edge(target, uri, source, label);
+				this.edges.push(edge);
+				return true;
+			}
 		}
+
 		const edge = new Edge(source, uri, target, label);
 		this.edges.push(edge);
 
@@ -561,16 +566,16 @@ export class Graph {
 					relation.property_label
 				);
 				const node = this.nodes.find((n) => n.id == relation.subject.value);
-				const property = node?.properties.find((p) => p.uri == relation.property.value);
+				const node_property = node?.properties.find((p) => p.uri == relation.property.value);
 				const related = this.nodes.find((n) => n.id == relation.object.value);
-				if (property) {
+				if (node_property) {
 					if (related) {
-						if (property.related.find((node) => node.id == related.id) == undefined) {
-							property.related.push(related);
+						if (node_property.related.find((node) => node.id == related.id) == undefined) {
+							node_property.related.push(related);
 							if (node?.visible && related.visible) update = true;
 						}
 					}
-				} else if (!property && node) {
+				} else if (!node_property && node) {
 					node.properties.push({
 						uri: relation.property.value,
 						label: relation.property_label,
