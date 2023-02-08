@@ -306,6 +306,7 @@ export class Graph {
 	reset() {
 		this.nodes = [];
 		this.edges = [];
+		this.node_filters = [];
 		this.data.nodes.clear();
 		this.data.edges.clear();
 	}
