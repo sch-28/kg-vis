@@ -239,10 +239,7 @@
 
 	function select_item(dir: -1 | 1) {
 		if (state.sorted_items.length > 0) {
-			if (
-				selected_item + dir >= -2 &&
-				selected_item + dir < state.sorted_items.length
-			) {
+			if (selected_item + dir >= -2 && selected_item + dir < state.sorted_items.length) {
 				selected_item += dir;
 			}
 			if (selected_item === -2) {
@@ -424,9 +421,7 @@
 						bind:this={search_input}
 						bind:value={search_string}
 						type="text"
-						class="{show_search
-							? 'dark:bg-slate-800  pl-8 visible pr-7 shadow-inset'
-							: 'hidden'}
+						class="{show_search ? 'dark:bg-slate-800  pl-8 visible pr-7 shadow-inset' : 'hidden'}
 						w-full  rounded-lg 
 						placeholder:text-gray-400
 						text-sm
@@ -609,6 +604,11 @@
 					{/if}
 				</button>
 			{/each}
+			{#if loading}
+				<div class="w-8 h-8 mx-auto mt-2">
+					<LoadingCircle />
+				</div>
+			{/if}
 		</div>
 		{#if state.current_context === 'node'}
 			<Button on:click={add_selected} disabled={state.selected_nodes.length == 0} class=""
