@@ -9,7 +9,7 @@
 	import { Modal_Manager } from './modal/modal-store';
 	import InformationMenuMore from './modal/modals/Information-Menu-More.svelte';
 
-	export let node: Node | undefined;
+	export let node: Node | undefined = undefined;
 
 	let node_description: string = '';
 
