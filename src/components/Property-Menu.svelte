@@ -276,7 +276,7 @@
 	async function add_all() {
 		if (state.current_context === 'node') return;
 
-		const properties = state.sorted_items.filter((p) => !p.item.fetched).map((p) => p.item);
+		const properties = state.sorted_items.map((p) => p.item);
 
 		state = {
 			sort_direction: state.sort_direction,
@@ -304,12 +304,12 @@
 					.then((nodes) => {
 						if (state.current_context === 'node') {
 							for (let node of nodes) {
-								if (!state.selected_nodes.find((n) => n.id === node.id)) {
-									state.selected_nodes.push(node);
+								if (!state.items.find((n) => n.id === node.id)) {
+									state.items.push(node);
 								}
 							}
-							state.selected_nodes = state.selected_nodes;
 						}
+						sort_items();
 						return res(nodes);
 					});
 			});
@@ -452,7 +452,7 @@
 			<button
 				bind:this={add_all_button}
 				on:click={add_all}
-				class="min-h-[34px] mx-2 px-2 flex items-center rounded-lg  h-10 bg-transparent hover:bg-black/5 dark:hover:bg-black/30 transition-all duration-200 ease-in-out {selected_node.properties.every(
+				class="min-h-[34px] mx-2 px-2 flex items-center rounded-lg  h-10 bg-transparent hover:bg-black/5 dark:hover:bg-black/30  {selected_node.properties.every(
 					(p) => p.fetched && p.related.every((r) => r.visible)
 				)
 					? 'opacity-50 cursor-default'
@@ -474,7 +474,7 @@
 			<button
 				bind:this={add_all_button}
 				on:click={select_all}
-				class="min-h-[34px] mx-2 px-2 flex items-center rounded-lg  h-10 bg-transparent hover:bg-black/5 dark:hover:bg-black/30 transition-all duration-200 ease-in-out {selected_node.properties.every(
+				class="min-h-[34px] mx-2 px-2 flex items-center rounded-lg  h-10 bg-transparent hover:bg-black/5 dark:hover:bg-black/30  {selected_node.properties.every(
 					(p) => p.fetched && p.related.every((r) => r.visible)
 				)
 					? 'opacity-50 cursor-default'
@@ -528,7 +528,7 @@
 				<button
 					bind:this={item.button}
 					on:click={() => item_clicked(item.item)}
-					class="truncate min-w-0 min-h-[35px] items-center flex px-2 rounded-lg bg-transparent hover:bg-black/5 dark:hover:bg-black/30 transition-all duration-200 ease-in-out {is_disabled(
+					class="truncate min-w-0 min-h-[35px] items-center flex px-2 rounded-lg bg-transparent hover:bg-black/5 dark:hover:bg-black/30  {is_disabled(
 						item.item
 					)
 						? 'opacity-50 cursor-default'
