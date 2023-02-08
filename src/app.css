@@ -33,3 +33,20 @@ html.dark {
 .color-picker .wrapper input,.color-picker .wrapper button{
 	@apply dark:bg-dark-muted;
 }
+
+::-webkit-scrollbar {
+	width: 4px;
+	height: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+	background-color: hsl(0 0% 98%);
+	border-radius: 1rem;
+}
+
+::-webkit-scrollbar-track {
+	background-color: transparent;
+}
+::-webkit-scrollbar-track {
+	background-color: transparent;
+}
