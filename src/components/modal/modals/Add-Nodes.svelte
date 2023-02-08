@@ -3,15 +3,13 @@
 	import { Icon } from '@steeze-ui/svelte-icon';
 	import isUrl from 'is-url';
 	import { SPARQL, type Binding_Content } from '../../../api/sparql';
-	import type { Graph, Node, URI } from 'src/api/graph';
+	import { CurrentGraph, type Node, type URI } from '../../../api/graph';
 	import { getContext, onMount } from 'svelte';
 	import LoadingCircle from '../../util/Loading-Circle.svelte';
 	import { Settings } from '../../../settings';
-	import { Button, Chevron, Dropdown, DropdownItem, Hr, Select } from 'flowbite-svelte';
+	import { Button, Chevron, Dropdown, DropdownItem, Hr } from 'flowbite-svelte';
 	import { click_outside, scrollbar_width } from '../../../util';
 	import { Modal_Manager } from '../modal-store';
-
-	export let graph: Graph;
 
 	let error: string = '';
 	let loading: boolean = false;
@@ -65,13 +63,18 @@ WHERE
 				const literal_nodes = all_nodes
 					.filter((node) => node.type === 'literal')
 					.map((node) => {
-						const new_node = graph.find_or_create_node(node.value, node.value, 'literal', false);
+						const new_node = $CurrentGraph.find_or_create_node(
+							node.value,
+							node.value,
+							'literal',
+							false
+						);
 						node.datatype && (new_node.datatype = node.datatype);
 						node['xml:lang'] && (new_node.language = node['xml:lang']);
 						return new_node;
 					});
 
-				const entity_nodes = await graph.load_nodes(
+				const entity_nodes = await $CurrentGraph.load_nodes(
 					all_nodes.filter((node) => node.type === 'uri').map((node) => node.value),
 					false
 				);
@@ -116,7 +119,7 @@ WHERE
 		}
 		error = '';
 		loading = true;
-		const node = await graph.load_node(url);
+		const node = await $CurrentGraph.load_node(url);
 		/* if (label === url) {
 			error = 'No label found';
 			return;
@@ -127,13 +130,13 @@ WHERE
 	}
 
 	function remove_node(node: Node) {
-		graph.nodes = graph.nodes.filter((n) => n !== node);
+		$CurrentGraph.nodes = $CurrentGraph.nodes.filter((n) => n !== node);
 		nodes = nodes.filter((n) => n !== node);
 	}
 
 	async function add_nodes() {
-		graph.show_nodes(nodes);
-		graph.load_relations(nodes);
+		$CurrentGraph.show_nodes(nodes);
+		$CurrentGraph.load_relations(nodes);
 
 		close();
 	}
@@ -369,7 +372,7 @@ WHERE
 					<h3 class="text-sm font-medium">{nodes.length} Result{nodes.length === 1 ? '' : 's'}</h3>
 					<button
 						on:click={() => {
-							graph.nodes = graph.nodes.filter((n) => !nodes.includes(n));
+							$CurrentGraph.nodes = $CurrentGraph.nodes.filter((n) => !nodes.includes(n));
 							nodes = [];
 						}}
 						class="text-sm text-error dark:text-error-dark"

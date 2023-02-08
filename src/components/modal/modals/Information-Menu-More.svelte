@@ -3,14 +3,13 @@
 	import { Icon } from '@steeze-ui/svelte-icon';
 	import { ArrowTopRightOnSquare, Plus } from '@steeze-ui/heroicons';
 	import { getContext } from 'svelte';
-	import type { Graph, Property, Node } from '../../../api/graph';
+	import { type Property, type Node, CurrentGraph } from '../../../api/graph';
 
 	export let property: Property;
-	export let graph: Graph;
 	const close = getContext('close') as () => void;
 
 	function add_node(node: Node) {
-		graph.show_node(node);
+		$CurrentGraph.show_node(node);
 		close();
 	}
 </script>

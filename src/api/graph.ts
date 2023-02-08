@@ -2,7 +2,7 @@ import { Settings } from '../settings';
 import { DataSet, DataView } from 'vis-data';
 import type { Network, Options } from 'vis-network';
 import { SPARQL } from './sparql';
-import { get } from 'svelte/store';
+import { get, writable } from 'svelte/store';
 import isUrl from 'is-url';
 import { dark_mode } from '../util';
 import * as vis from 'vis-network';
@@ -221,6 +221,7 @@ export class Graph {
 	}
 
 	add_filter(node: Node, range?: number, color?: string, visible?: boolean) {
+		if (this.node_filters.find((f) => f.node.id == node.id)) return;
 		if (!range) range = 2;
 		if (!color) color = get_network_options().nodes.color;
 		if (!visible) visible = true;
@@ -657,3 +658,5 @@ export class Graph {
 		return new_nodes.concat(already_exists);
 	}
 }
+
+export const CurrentGraph = writable<Graph>(new Graph(document.createElement('div')));

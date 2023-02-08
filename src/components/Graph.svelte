@@ -1,7 +1,7 @@
 <script lang="ts">
 	import ContextMenu from './Context-Menu.svelte';
 	import PropertyMenu from './Property-Menu.svelte';
-	import { Graph, type URI, type Node } from '../api/graph';
+	import { Graph, type URI, type Node, CurrentGraph } from '../api/graph';
 	import ActionMenu from './Header.svelte';
 	import InformationMenu from './Information-Menu.svelte';
 	import GraphControls from './Graph-Controls.svelte';
@@ -19,7 +19,6 @@
 	}
 
 	let container: HTMLElement;
-	let graph: Graph;
 	let selected_node: Node | undefined;
 	let menu_position = { x: 0, y: 0 };
 	let hide_context_menu = true;
@@ -33,14 +32,14 @@
 	});
 
 	function init() {
-		graph = new Graph(container);
-		graph.network.on('click', show_properties);
-		graph.network.on('oncontext', show_context_menu);
-		graph.network.on('startStabilizing', () => {
+		$CurrentGraph = new Graph(container);
+		$CurrentGraph.network.on('click', show_properties);
+		$CurrentGraph.network.on('oncontext', show_context_menu);
+		$CurrentGraph.network.on('startStabilizing', () => {
 			loading_graph = true;
 		});
-		graph.network.on('stabilized', () => {
-			graph.simulation_running = false;
+		$CurrentGraph.network.on('stabilized', () => {
+			$CurrentGraph.simulation_running = false;
 			loading_graph = false;
 		});
 	}
@@ -48,8 +47,8 @@
 	function show_context_menu(event: Click_Event) {
 		event.event.preventDefault();
 		selected_node = undefined;
-		const uri = graph.network.getNodeAt(event.pointer.DOM) as URI;
-		const node = graph.get_node(uri);
+		const uri = $CurrentGraph.network.getNodeAt(event.pointer.DOM) as URI;
+		const node = $CurrentGraph.get_node(uri);
 		node ? (context_selection = node) : (context_selection = undefined);
 		hide_context_menu = false;
 		menu_position = event.pointer.DOM;
@@ -57,17 +56,19 @@
 
 	function show_properties(event: Click_Event) {
 		hide_context_menu = true;
-		if (graph.network.getSelectedNodes().length > 0) {
+		if ($CurrentGraph.network.getSelectedNodes().length > 0) {
 			const uri = event.nodes[0];
-			const node = graph.get_node(uri);
+			const node = $CurrentGraph.get_node(uri);
 			if (!node || node.type === 'literal') return;
 
 			selected_node = node;
-			const node_position = graph.network.canvasToDOM(graph.network.getPosition(uri));
+			const node_position = $CurrentGraph.network.canvasToDOM(
+				$CurrentGraph.network.getPosition(uri)
+			);
 			menu_position = node_position;
 
 			loading_properties = true;
-			graph.get_properties(uri).then((node) => {
+			$CurrentGraph.get_properties(uri).then((node) => {
 				if (hide_context_menu && selected_node === node) selected_node = node;
 				loading_properties = false;
 			});
@@ -77,12 +78,11 @@
 	}
 </script>
 
-<InformationMenu bind:node={show_node_information} {graph} />
+<InformationMenu bind:node={show_node_information} />
 <div bind:this={container} class="w-full h-full" />
 <PropertyMenu
 	{menu_position}
 	{selected_node}
-	{graph}
 	loading={loading_properties}
 	information_tab_visible={show_node_information !== undefined}
 />
@@ -91,7 +91,6 @@
 	{menu_position}
 	bind:hidden={hide_context_menu}
 	selection={context_selection}
-	{graph}
 />
-<ActionMenu {graph} />
-<GraphControls {graph} {loading_graph} />
+<ActionMenu />
+<GraphControls {loading_graph} />

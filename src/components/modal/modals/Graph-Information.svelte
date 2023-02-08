@@ -1,25 +1,23 @@
 <script lang="ts">
+	import { CurrentGraph } from '../../../api/graph';
 	import { SPARQL } from '../../../api/sparql';
-	import type { Graph } from '../../../api/graph';
-
-	export let graph: Graph;
 
 	const attributes = (): { label: string; value: string | number }[] => [
 		{
 			label: 'Nodes',
-			value: graph.data.nodes.length
+			value: $CurrentGraph.data.nodes.length
 		},
 		{
 			label: 'Edges',
-			value: graph.data.edges.length
+			value: $CurrentGraph.data.edges.length
 		},
 		{
 			label: 'Hidden Nodes',
-			value: graph.nodes.length - graph.data.nodes.length
+			value: $CurrentGraph.nodes.length - $CurrentGraph.data.nodes.length
 		},
 		{
 			label: 'Hidden Edges',
-			value: graph.edges.length - graph.data.edges.length
+			value: $CurrentGraph.edges.length - $CurrentGraph.data.edges.length
 		},
 		{
 			label: 'Query Count',

@@ -14,15 +14,13 @@
 	import GraphIcon from 'svelte-material-icons/GraphOutline.svelte';
 	import { ArchiveBox, ArrowPath, CircleStack } from '@steeze-ui/heroicons';
 	import { languages, Settings } from '../../../settings';
-	import type { Graph } from '../../../api/graph';
+	import { CurrentGraph } from '../../../api/graph';
 	import Tooltip from '../../util/Tooltip.svelte';
 	import { HelpOutline } from '@steeze-ui/material-design-icons';
 	import { Modal_Manager } from '../modal-store';
 
-	export let graph: Graph;
-
 	$: {
-		graph.network?.setOptions({
+		$CurrentGraph.network?.setOptions({
 			interaction: {
 				hideEdgesOnDrag: $Settings.hide_edges_on_drag
 			}
@@ -32,11 +30,11 @@
 	let selected_setting: 'endpoint' | 'graph' | 'other' = 'endpoint';
 
 	function update_labels() {
-		graph.update_edge_labels();
+		$CurrentGraph.update_edge_labels();
 	}
 
 	function update_edges() {
-		graph.network?.setOptions({
+		$CurrentGraph.network?.setOptions({
 			edges: {
 				smooth: {
 					type: $Settings.smooth_edges ? 'dynamic' : 'continuous',
@@ -109,7 +107,7 @@
 					<SidebarItem
 						label="Reset Graph"
 						on:click={() => {
-							graph.reset();
+							$CurrentGraph.reset();
 							Modal_Manager.close();
 						}}
 						spanClass="dark:text-error-dark text-error ml-3"

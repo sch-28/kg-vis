@@ -1,20 +1,18 @@
 <script lang="ts">
 	import { copy_to_clipboard, dark_mode, show_toast } from '../../../util';
-	import type { Graph, Node } from '../../../api/graph';
+	import { CurrentGraph, type Node } from '../../../api/graph';
 	import { Button } from 'flowbite-svelte';
 	import { Settings } from '../../../settings';
 	import { get } from 'svelte/store';
 	import isUrl from 'is-url';
 	import { SPARQL } from '../../../api/sparql';
 
-	export let graph: Graph;
-
 	let image_src: string = '';
 
 	// draw background and export canvas as image
 	$: {
-		graph;
-		const canvas = graph.container.querySelector('canvas');
+		$CurrentGraph;
+		const canvas = $CurrentGraph.container.querySelector('canvas');
 		if (canvas) {
 			try {
 				const background_canvas = document.createElement('canvas');
@@ -44,7 +42,7 @@ SELECT ?nodes
 WHERE 
 {
 	VALUES ?nodes{
-        ${graph.data.nodes
+        ${$CurrentGraph.data.nodes
 					.map((node: Node) => {
 						if (isUrl(node.id)) return `${SPARQL.shorten_uri(node.id)}`;
 						else

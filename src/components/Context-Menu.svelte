@@ -8,9 +8,10 @@
 		LockOpen,
 		ClipboardDocument,
 		Photo,
-		ArrowsPointingOut
+		ArrowsPointingOut,
+		Funnel
 	} from '@steeze-ui/heroicons';
-	import type { Graph, Node } from '../api/graph';
+	import { CurrentGraph, type Node } from '../api/graph';
 	import type { IconSource } from '@steeze-ui/svelte-icon/types';
 	import { copy_to_clipboard } from '../util';
 	import { Modal_Manager } from './modal/modal-store';
@@ -20,7 +21,6 @@
 	export let menu_position = { x: 0, y: 0 };
 	export let hidden = true;
 	export let selection: Node | undefined = undefined;
-	export let graph: Graph;
 	export let on_information: (node: Node) => void;
 
 	let wrapper: HTMLElement;
@@ -37,6 +37,11 @@
 			icon: InformationCircle,
 			label: 'Information',
 			handle: handle_information
+		},
+		{
+			icon: Funnel,
+			label: 'Filter',
+			handle: handle_filter
 		},
 		{
 			icon: MagnifyingGlass,
@@ -111,32 +116,38 @@
 	}
 
 	function handle_export() {
-		Modal_Manager.open(Export, { graph });
+		Modal_Manager.open(Export);
 		hidden = true;
+	}
+	function handle_filter() {
+		if (selection) {
+			$CurrentGraph.add_filter(selection);
+			CurrentGraph.update(u => $CurrentGraph);
+		}
 	}
 
 	function handle_fit_graph() {
-		graph.network?.fit();
+		$CurrentGraph.network?.fit();
 		hidden = true;
 	}
 
 	function handle_unlock_all() {
-		graph.lock_all_nodes(false);
+		$CurrentGraph.lock_all_nodes(false);
 		hidden = true;
 	}
 
 	function handle_lock_all() {
-		graph.lock_all_nodes(true);
+		$CurrentGraph.lock_all_nodes(true);
 		hidden = true;
 	}
 
 	function handle_delete_all() {
-		graph.reset();
+		$CurrentGraph.reset();
 		hidden = true;
 	}
 
 	function handle_graph_information() {
-		Modal_Manager.open(GraphInformation, { graph });
+		Modal_Manager.open(GraphInformation);
 		hidden = true;
 	}
 
@@ -156,14 +167,14 @@
 
 	function handle_delete() {
 		if (selection) {
-			graph.hide_node(selection);
+			$CurrentGraph.hide_node(selection);
 		}
 		hidden = true;
 	}
 
 	function handle_focus() {
 		if (selection) {
-			graph.network?.focus(selection.id, {
+			$CurrentGraph.network?.focus(selection.id, {
 				scale: 1,
 				animation: {
 					duration: 1000,
@@ -176,7 +187,10 @@
 
 	function handle_lock() {
 		if (selection) {
-			graph.toggle_node_lock(selection, graph.network?.getPosition(selection.id) ?? { x: 0, y: 0 });
+			$CurrentGraph.toggle_node_lock(
+				selection,
+				$CurrentGraph.network?.getPosition(selection.id) ?? { x: 0, y: 0 }
+			);
 		}
 		hidden = true;
 	}

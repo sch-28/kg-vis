@@ -1,36 +1,39 @@
 <script lang="ts">
 	import { CheckCircle, Cog6Tooth, MagnifyingGlass, PencilSquare } from '@steeze-ui/heroicons';
 	import { Icon } from '@steeze-ui/svelte-icon';
-	import type { Graph } from 'src/api/graph';
-	import { onMount } from 'svelte';
+	import { CurrentGraph } from '../api/graph';
 	import AddAction from './modal/modals/Add-Nodes.svelte';
 	import Settings from './modal/modals/Settings.svelte';
 	import PlusCircleOutline from 'svelte-material-icons/PlusCircleOutline.svelte';
 	import { Modal_Manager, type Component } from './modal/modal-store';
 	import GraphFilter from './Graph-Filter.svelte';
 
-	export let graph: Graph;
-
 	let open_add_nodes_on_boot: boolean = true;
 	let open_filter: boolean = false;
 
 	function open(action: Component) {
-		Modal_Manager.open(action, { graph });
+		Modal_Manager.open(action);
 	}
 
 	let physics_enabled: boolean = true;
 
 	function toggle_edit() {
 		physics_enabled = !physics_enabled;
-		graph.network?.setOptions({
+		$CurrentGraph.network?.setOptions({
 			physics: physics_enabled
 		});
 	}
 
 	$: {
-		if (graph && graph.nodes.length == 0 && open_add_nodes_on_boot) {
+		if ($CurrentGraph && $CurrentGraph.nodes.length == 0 && open_add_nodes_on_boot) {
 			open(AddAction);
 			open_add_nodes_on_boot = false;
+		}
+	}
+
+	$: {
+		if ($CurrentGraph && $CurrentGraph.node_filters.length > 0) {
+			open_filter = true;
 		}
 	}
 </script>
@@ -64,5 +67,5 @@
 		</button>
 	</div>
 
-	<GraphFilter {graph} open={open_filter} />
+	<GraphFilter open={open_filter} />
 </div>

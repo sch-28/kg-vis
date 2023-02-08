@@ -1,13 +1,12 @@
 <script lang="ts">
 	import { Button, Label, Range, Search, Toggle } from 'flowbite-svelte';
 	import { click_outside, dark_mode, fuzzy_search } from '../util';
-	import type { Graph, Node } from '../api/graph';
 	import { onMount } from 'svelte';
 	import { Icon } from '@steeze-ui/svelte-icon';
 	import { Plus, XMark } from '@steeze-ui/heroicons';
 	import ColorPicker from 'svelte-awesome-color-picker';
+	import { CurrentGraph, type Node } from '../api/graph';
 
-	export let graph: Graph;
 	export let open: boolean;
 
 	let search_container: HTMLDivElement;
@@ -17,9 +16,9 @@
 	let search_results_open: boolean = false;
 
 	$: {
-		if (graph && search.length > 0) {
+		if ($CurrentGraph && search.length > 0) {
 			search_results = fuzzy_search(
-				graph.nodes.filter((n) => n.visible),
+				$CurrentGraph.nodes.filter((n) => n.visible),
 				search,
 				['label', 'id']
 			);
@@ -38,9 +37,9 @@
 	});
 
 	function update_filter() {
-		graph.refresh_filters();
-		graph.refresh_nodes();
-		graph.network.redraw();
+		$CurrentGraph.refresh_filters();
+		$CurrentGraph.refresh_nodes();
+		$CurrentGraph.network.redraw();
 	}
 </script>
 
@@ -48,13 +47,13 @@
 	bind:this={search_container}
 	class="{open
 		? 'top-full opacity-100'
-		: 'top-0 opacity-0'} z-[49] pointer-events-none duration-200 transition-all absolute mt-4 left-1/2 -translate-x-1/2 w-full {graph
+		: 'top-0 opacity-0'} z-[49] pointer-events-none duration-200 transition-all absolute mt-4 left-1/2 -translate-x-1/2 w-full {$CurrentGraph
 		?.node_filters.length > 0
 		? 'grid grid-cols-2 gap-2'
 		: ''}"
 >
 	<div
-		class="flex flex-col {graph?.node_filters.length > 0
+		class="flex flex-col {$CurrentGraph?.node_filters.length > 0
 			? 'w-full'
 			: 'mx-auto w-56'} pointer-events-auto h-fit"
 	>
@@ -81,8 +80,8 @@
 				<button
 					class="min-w-0 text-left flex items-center px-2 min-h-[35px] group hover:bg-black/5 dark:hover:bg-black/30 transition-all duration-200 ease-in-out justify-between"
 					on:click={() => {
-						graph.network?.selectNodes([result.item.id]);
-						graph.network?.focus(result.item.id, { animation: true, scale: 1 });
+						$CurrentGraph.network?.selectNodes([result.item.id]);
+						$CurrentGraph.network?.focus(result.item.id, { animation: true, scale: 1 });
 					}}
 				>
 					<div class="truncate min-w-0" title={result.item.label}>
@@ -95,9 +94,9 @@
 							class="p-1 rounded-lg bg-transparent hover:bg-black/5 dark:hover:bg-black/30 transition-all duration-200 ease-in-out"
 							on:click={(e) => {
 								e.stopPropagation();
-								graph.add_filter(result.item);
+								$CurrentGraph.add_filter(result.item);
 								search_results_open = false;
-								graph = graph;
+								$CurrentGraph = $CurrentGraph;
 							}}
 						>
 							<Icon src={Plus} size={'20'} />
@@ -108,9 +107,9 @@
 		</div>
 	</div>
 
-	{#if graph && graph.node_filters.length > 0}
+	{#if $CurrentGraph && $CurrentGraph.node_filters.length > 0}
 		<div class="pointer-events-auto z-[49] duration-200 transition-all flex flex-col gap-2 h-fit">
-			{#each graph.node_filters as filter}
+			{#each $CurrentGraph.node_filters as filter}
 				<div
 					class="border shadow-lg rounded-lg dark:border-dark-muted dark:bg-dark-bg bg-white flex flex-col p-2 gap-1"
 				>
@@ -119,8 +118,8 @@
 						<button
 							class="ml-auto p-1 rounded-lg bg-transparent hover:bg-black/5 dark:hover:bg-black/30 transition-all duration-200 ease-in-out"
 							on:click={() => {
-								graph.remove_filter(filter.node);
-								graph = graph;
+								$CurrentGraph.remove_filter(filter.node);
+								$CurrentGraph = $CurrentGraph;
 							}}
 						>
 							<Icon src={XMark} size={'20'} />

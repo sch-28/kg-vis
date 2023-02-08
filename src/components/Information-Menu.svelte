@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { Heading, Hr } from 'flowbite-svelte';
 	import { Icon } from '@steeze-ui/svelte-icon';
-	import type { Graph, Node, Property } from '../api/graph';
+	import { CurrentGraph, type Node, type Property } from '../api/graph';
 	import LoadingCircle from './util/Loading-Circle.svelte';
 	import { paginate, DarkPaginationNav } from 'svelte-paginate';
 	import { ArrowTopRightOnSquare, Plus, XMark } from '@steeze-ui/heroicons';
@@ -10,7 +10,6 @@
 	import InformationMenuMore from './modal/modals/Information-Menu-More.svelte';
 
 	export let node: Node | undefined;
-	export let graph: Graph;
 
 	let node_description: string = '';
 
@@ -49,15 +48,17 @@
 			const promises = paginated_properties.map((p) => {
 				return new Promise<Node[]>((res) => {
 					if (!node) return res([]);
-					graph.load_related_nodes(node.id, p, false, undefined, false, false).then((nodes) => {
-						paginated_properties = paginated_properties;
-						return res(nodes);
-					});
+					$CurrentGraph
+						.load_related_nodes(node.id, p, false, undefined, false, false)
+						.then((nodes) => {
+							paginated_properties = paginated_properties;
+							return res(nodes);
+						});
 				});
 			});
 
 			const new_nodes = [...new Set((await Promise.all(promises)).flat())];
-			graph.load_relations(new_nodes, false, false);
+			$CurrentGraph.load_relations(new_nodes, false, false);
 
 			loading_related = false;
 		}
@@ -76,18 +77,18 @@
 			if (!node.is_fetched) {
 				loading = true;
 				if (node_description.length === 0)
-					graph.load_node(node.id).then(() => (node_description = node?.description || ''));
-				await graph.get_properties(node.id);
+					$CurrentGraph.load_node(node.id).then(() => (node_description = node?.description || ''));
+				await $CurrentGraph.get_properties(node.id);
 			}
 			loading = false;
 			properties = node?.properties;
 		}
 	}
 	function show_more_handler(property: Property) {
-		Modal_Manager.open(InformationMenuMore, { property, graph });
+		Modal_Manager.open(InformationMenuMore, { property });
 	}
 	function add_node(node: Node) {
-		graph.show_node(node);
+		$CurrentGraph.show_node(node);
 	}
 </script>
 

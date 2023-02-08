@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Property, Node, Graph, URI } from '../api/graph';
+	import { type Property, type Node, type Graph, type URI, CurrentGraph } from '../api/graph';
 	import { Icon } from '@steeze-ui/svelte-icon';
 	import {
 		MagnifyingGlass,
@@ -15,12 +15,10 @@
 	import { click_outside } from '../util';
 	import LoadingCircle from './util/Loading-Circle.svelte';
 	import { Settings } from '../settings';
-	import { SPARQL } from '../api/sparql';
 	import { Button } from 'flowbite-svelte';
 
 	export let selected_node: Node | undefined = undefined;
 	export let menu_position = { x: 0, y: 0 };
-	export let graph: Graph;
 	export let information_tab_visible: boolean = false;
 	export let loading: boolean = false;
 
@@ -213,16 +211,16 @@
 		selected_property_nodes = [];
 		search_string = '';
 		show_search = false;
-		selected_property_nodes = await graph.load_related_nodes(
+		selected_property_nodes = await $CurrentGraph.load_related_nodes(
 			uri,
 			property,
 			false,
-			graph.network?.DOMtoCanvas(menu_position)
+			$CurrentGraph.network?.DOMtoCanvas(menu_position)
 		);
 	}
 
 	function add_node(node: Node) {
-		graph.show_node(node);
+		$CurrentGraph.show_node(node);
 		selected_property_nodes = selected_property_nodes;
 	}
 
@@ -249,7 +247,7 @@
 	}
 
 	function add_selected() {
-		graph.show_nodes(selected_nodes);
+		$CurrentGraph.show_nodes(selected_nodes);
 		selected_node = undefined;
 	}
 
@@ -266,7 +264,7 @@
 		const promises = sorted_properties.map((p) => {
 			return new Promise<Node[]>((res) => {
 				if (!selected_node) return res([]);
-				graph
+				$CurrentGraph
 					.load_related_nodes(selected_node.id, p.property, false, undefined, false, false)
 					.then((nodes) => {
 						for (let node of nodes) {
@@ -281,7 +279,7 @@
 		});
 
 		const new_nodes = [...new Set((await Promise.all(promises)).flat())];
-		graph.load_relations(new_nodes, false, true);
+		$CurrentGraph.load_relations(new_nodes, false, true);
 	}
 </script>
 
