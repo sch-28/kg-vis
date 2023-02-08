@@ -103,7 +103,7 @@
 			sort_by: 'name',
 			sort_options: ['direction', 'name', 'count']
 		};
-
+		set_selected_item(-2);
 		sort_items();
 	}
 
@@ -183,6 +183,7 @@
 				sort_by: 'name',
 				sort_options: ['direction', 'name']
 			};
+			set_selected_item(-2);
 			loading = true;
 			state.items = await $CurrentGraph.load_related_nodes(
 				selected_node.id,
