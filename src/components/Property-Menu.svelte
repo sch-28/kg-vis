@@ -11,7 +11,7 @@
 		ListBullet,
 		ArrowLeft
 	} from '@steeze-ui/heroicons';
-	import { click_outside, fuzzy_search } from '../util';
+	import { click_outside, fuzzy_search, show_loading_toast } from '../util';
 	import LoadingCircle from './util/Loading-Circle.svelte';
 	import { Settings } from '../settings';
 	import { Button, Checkbox } from 'flowbite-svelte';
@@ -320,7 +320,24 @@
 		$CurrentGraph.load_relations(new_nodes, false, true);
 	}
 
-	function add_all() {}
+	async function add_all() {
+		if (state.current_context === 'node') return;
+		const node = selected_node;
+		if (!node) return;
+
+		selected_node = undefined;
+
+		const properties = state.sorted_items.map((p) => p.item);
+		const promises = properties.map((p) =>
+			$CurrentGraph.load_related_nodes(node.id, p, false, undefined, false, false)
+		);
+
+		const promise = Promise.all(promises);
+		show_loading_toast(promise, 'Related');
+		const new_nodes = [...new Set((await promise).flat())];
+		await $CurrentGraph.load_relations(new_nodes, false, true);
+		$CurrentGraph.show_nodes(new_nodes);
+	}
 
 	async function add_property(property: Property | Node) {
 		if (!selected_node || state.current_context === 'node') return;
@@ -481,12 +498,13 @@
 				<span class="truncate" title={'Add all related properties (max 100 of each property)'}>
 					Add all
 				</span>
-				<span
-					class="ml-auto w-6 bg-dark-muted text-light rounded-full inline-flex items-center justify-center -mb-0.5 text-xs font-semibold  p-1 "
+				<button
+					on:click={add_all}
+					class="transition-all duration-200 ease-in-out hover:bg-black/5 dark:hover:bg-black/30 ml-auto w-6 bg-dark-muted text-light rounded-full inline-flex items-center justify-center -mb-0.5 text-xs font-semibold  p-1 "
 					>{state.sorted_items.reduce(
 						(sum, p) => sum + p.item.in_count + p.item.out_count,
 						0
-					)}</span
+					)}</button
 				>
 			</button>
 		{:else}
@@ -609,7 +627,7 @@
 								e.stopPropagation();
 								add_property(state.sorted_items[i].item);
 							}}
-							class="ml-auto w-6 bg-dark-muted text-light rounded-full inline-flex items-center justify-center -mb-0.5 text-xs font-semibold  p-1 "
+							class="hover:bg-black/5 dark:hover:bg-black/30 ml-auto w-6 bg-dark-muted text-light rounded-full inline-flex items-center justify-center -mb-0.5 text-xs font-semibold  p-1 transition-all duration-200 ease-in-out"
 							>{state.sorted_items[i].item.in_count + state.sorted_items[i].item.out_count >
 							$Settings.size_limit * 2
 								? $Settings.size_limit
