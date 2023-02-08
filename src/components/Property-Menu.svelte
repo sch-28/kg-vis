@@ -273,7 +273,7 @@
 		selected_node = undefined;
 	}
 
-	async function add_all() {
+	async function show_all() {
 		if (state.current_context === 'node') return;
 
 		const properties = state.sorted_items.map((p) => p.item);
@@ -317,6 +317,24 @@
 
 		const new_nodes = [...new Set((await Promise.all(promises)).flat())];
 		$CurrentGraph.load_relations(new_nodes, false, true);
+	}
+
+	function add_all() {}
+
+	async function add_property(property: Property | Node) {
+		if (!selected_node || state.current_context === 'node') return;
+		property = property as Property;
+		const selected_node_id = selected_node.id;
+		selected_node = undefined;
+
+		const nodes = await $CurrentGraph.load_related_nodes(
+			selected_node_id,
+			property,
+			false,
+			$CurrentGraph.network?.DOMtoCanvas(menu_position)
+		);
+
+		$CurrentGraph.show_nodes(nodes);
 	}
 
 	function is_disabled(item: Node | Property) {
@@ -451,8 +469,8 @@
 		{#if state.current_context == 'property'}
 			<button
 				bind:this={add_all_button}
-				on:click={add_all}
-				class="min-h-[34px] mx-2 px-2 flex items-center rounded-lg  h-10 bg-transparent hover:bg-black/5 dark:hover:bg-black/30  {selected_node.properties.every(
+				on:click={show_all}
+				class="min-h-[34px] mx-2 px-2 flex items-center rounded-lg  h-10 bg-transparent focus:bg-black/5 dark:focus:bg-black/30 !outline-none hover:bg-black/5 dark:hover:bg-black/30  {selected_node.properties.every(
 					(p) => p.fetched && p.related.every((r) => r.visible)
 				)
 					? 'opacity-50 cursor-default'
@@ -474,7 +492,7 @@
 			<button
 				bind:this={add_all_button}
 				on:click={select_all}
-				class="min-h-[34px] mx-2 px-2 flex items-center rounded-lg  h-10 bg-transparent hover:bg-black/5 dark:hover:bg-black/30  {selected_node.properties.every(
+				class="focus:bg-black/5 dark:focus:bg-black/30 !outline-none min-h-[34px] mx-2 px-2 flex items-center rounded-lg  h-10 bg-transparent hover:bg-black/5 dark:hover:bg-black/30  {selected_node.properties.every(
 					(p) => p.fetched && p.related.every((r) => r.visible)
 				)
 					? 'opacity-50 cursor-default'
@@ -528,7 +546,7 @@
 				<button
 					bind:this={item.button}
 					on:click={() => item_clicked(item.item)}
-					class="truncate min-w-0 min-h-[35px] items-center flex px-2 rounded-lg bg-transparent hover:bg-black/5 dark:hover:bg-black/30  {is_disabled(
+					class="focus:bg-black/5 dark:focus:bg-black/30 !outline-none truncate min-w-0 min-h-[35px] items-center flex px-2 rounded-lg bg-transparent hover:bg-black/5 dark:hover:bg-black/30  {is_disabled(
 						item.item
 					)
 						? 'opacity-50 cursor-default'
@@ -585,12 +603,17 @@
 					{/if}
 
 					{#if state.current_context == 'property'}
-						<span
+						<button
+							on:click={(e) => {
+								e.stopPropagation();
+								add_property(state.sorted_items[i].item);
+							}}
 							class="ml-auto w-6 bg-dark-muted text-light rounded-full inline-flex items-center justify-center -mb-0.5 text-xs font-semibold  p-1 "
 							>{state.sorted_items[i].item.in_count + state.sorted_items[i].item.out_count >
 							$Settings.size_limit * 2
 								? $Settings.size_limit
-								: state.sorted_items[i].item.in_count + state.sorted_items[i].item.out_count}</span
+								: state.sorted_items[i].item.in_count +
+								  state.sorted_items[i].item.out_count}</button
 						>
 					{:else if state.current_context == 'node'}
 						<button
