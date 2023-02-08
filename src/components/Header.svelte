@@ -67,5 +67,5 @@
 		</button>
 	</div>
 
-	<GraphFilter open={open_filter} />
+	<GraphFilter bind:open={open_filter} />
 </div>

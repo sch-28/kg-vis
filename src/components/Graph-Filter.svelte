@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { Button, Label, Range, Search, Toggle } from 'flowbite-svelte';
 	import { click_outside, dark_mode, fuzzy_search } from '../util';
-	import { onMount } from 'svelte';
+	import { onDestroy, onMount } from 'svelte';
 	import { Icon } from '@steeze-ui/svelte-icon';
 	import { Plus, XMark } from '@steeze-ui/heroicons';
 	import ColorPicker from 'svelte-awesome-color-picker';
@@ -11,29 +11,106 @@
 
 	let search_container: HTMLDivElement;
 	let search_input: HTMLInputElement;
-	let search: string = '';
-	let search_results: ReturnType<typeof fuzzy_search<Node>> = [];
+	let search_text: string = '';
+	let search_results: {
+		button?: HTMLButtonElement;
+		result: ReturnType<typeof fuzzy_search<Node>>[number];
+	}[] = [];
 	let search_results_open: boolean = false;
+	let selected_result: number = -1;
+	let last_click: number = -1;
 
 	$: {
-		if ($CurrentGraph && search.length > 0) {
-			search_results = fuzzy_search(
-				$CurrentGraph.nodes.filter((n) => n.visible),
-				search,
-				['label', 'id']
-			);
+		if ($CurrentGraph && search_text.length > 0) {
+			search();
 		}
+	}
+
+	function search() {
+		search_results = fuzzy_search(
+			$CurrentGraph.nodes.filter((n) => n.visible),
+			search_text,
+			['label', 'id']
+		).map((item) => ({ button: undefined, result: item }));
 	}
 
 	$: {
 		if (open && search_input) {
+			focus_search();
+		}
+	}
+
+	function focus_search() {
+		if (search_input) {
 			search_input.focus();
 			search_results_open = true;
 		}
 	}
 
+	function search_keybindings(event: KeyboardEvent) {
+		if (event.code === 'KeyF' && event.ctrlKey) {
+			event.preventDefault();
+			open = !open || !search_results_open;
+			if (open) {
+				focus_search();
+			}
+		} else if (event.code === 'Escape' && open) {
+			event.preventDefault();
+			open = false;
+		} else if (event.code === 'ArrowDown' && search_results_open) {
+			event.preventDefault();
+			if (search_results.length > 0) {
+				if (selected_result < search_results.length - 1) {
+					selected_result++;
+				}
+				if (search_results[selected_result].button) {
+					search_results[selected_result].button?.focus();
+					search_results[selected_result].button?.scrollIntoView({
+						behavior: 'smooth',
+						block: 'nearest'
+					});
+				}
+			}
+		} else if (event.code === 'ArrowUp' && search_results_open) {
+			event.preventDefault();
+			if (search_results.length > 0) {
+				if (selected_result > 0) {
+					selected_result--;
+				} else if (selected_result === 0) {
+					selected_result = -1;
+					search_input.focus();
+				}
+				if (search_results[selected_result].button) {
+					search_results[selected_result].button?.focus();
+					search_results[selected_result].button?.scrollIntoView({
+						behavior: 'smooth',
+						block: 'nearest'
+					});
+				}
+			}
+		} else if (event.code === 'Enter' && search_results_open) {
+			event.preventDefault();
+			if (search_results.length > 0) {
+				if (search_results[selected_result].button) {
+					if (last_click === selected_result) {
+						search_results[selected_result].button?.querySelector('button')?.click();
+						last_click = -1;
+					} else {
+						search_results[selected_result].button?.click();
+						last_click = selected_result;
+					}
+				}
+			}
+		}
+	}
+
 	onMount(() => {
 		search_input = search_container.querySelector('input')!;
+		document.addEventListener('keydown', search_keybindings);
+	});
+
+	onDestroy(() => {
+		document.removeEventListener('keydown', search_keybindings);
 	});
 
 	function update_filter() {
@@ -63,11 +140,11 @@
 			}}
 			class="dark:!bg-dark-bg !bg-white border dark:!border-dark-muted shadow-lg rounded-lg"
 			size="md"
-			bind:value={search}
+			bind:value={search_text}
 			focus={true}
 		/>
 		<div
-			class="mt-1 flex-col border shadow-lg rounded-lg dark:border-dark-muted dark:bg-dark-bg bg-white z-50 w-full divide-y divide-gray-200 dark:divide-gray-700  transition-all duration-200 max-h-60 overflow-y-scroll min-w-0 {search_results_open &&
+			class="mt-1 flex-col border shadow-lg rounded-lg dark:border-dark-muted dark:bg-dark-bg bg-white z-50 w-full divide-y divide-gray-200 dark:divide-gray-700 max-h-60 overflow-y-scroll min-w-0 {search_results_open &&
 			search_results.length > 0
 				? 'flex'
 				: 'hidden'}"
@@ -76,16 +153,17 @@
 				search_results_open = false;
 			}}
 		>
-			{#each search_results as result}
+			{#each search_results as search}
 				<button
-					class="min-w-0 text-left flex items-center px-2 min-h-[35px] group hover:bg-black/5 dark:hover:bg-black/30 transition-all duration-200 ease-in-out justify-between"
+					bind:this={search.button}
+					class="min-w-0 text-left flex items-center px-2 min-h-[35px] group hover:bg-black/5 dark:hover:bg-black/30 justify-between focus:bg-black/5 dark:focus:bg-black/30 !outline-none"
 					on:click={() => {
-						$CurrentGraph.network?.selectNodes([result.item.id]);
-						$CurrentGraph.network?.focus(result.item.id, { animation: true, scale: 1 });
+						$CurrentGraph.network?.selectNodes([search.result.item.id]);
+						$CurrentGraph.network?.focus(search.result.item.id, { animation: true, scale: 1 });
 					}}
 				>
-					<div class="truncate min-w-0" title={result.item.label}>
-						{result.item.label}
+					<div class="truncate min-w-0" title={search.result.item.label}>
+						{search.result.item.label}
 					</div>
 					<div
 						class="group-hover:opacity-100 flex opacity-0 items-center justify-end transition-all duration-200 ease-in-out"
@@ -94,7 +172,7 @@
 							class="p-1 rounded-lg bg-transparent hover:bg-black/5 dark:hover:bg-black/30 transition-all duration-200 ease-in-out"
 							on:click={(e) => {
 								e.stopPropagation();
-								$CurrentGraph.add_filter(result.item);
+								$CurrentGraph.add_filter(search.result.item);
 								search_results_open = false;
 								$CurrentGraph = $CurrentGraph;
 							}}
