@@ -114,7 +114,9 @@
 					class="border shadow-lg rounded-lg dark:border-dark-muted dark:bg-dark-bg bg-white flex flex-col p-2 gap-1"
 				>
 					<span class="flex">
-						{filter.node.label}
+						<p class="truncate">
+							{filter.node.label}
+						</p>
 						<button
 							class="ml-auto p-1 rounded-lg bg-transparent hover:bg-black/5 dark:hover:bg-black/30 transition-all duration-200 ease-in-out"
 							on:click={() => {

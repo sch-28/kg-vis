@@ -256,7 +256,7 @@ WHERE
 	});
 </script>
 
-<div class="flex flex-col sm:w-[450px] w-80">
+<div class="flex flex-col sm:w-[475px] w-80">
 	<div class="flex justify-between items-center text-center mb-2">
 		<h1 class="text-lg font-bold">Add Nodes</h1>
 		<div>

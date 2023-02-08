@@ -62,7 +62,7 @@ WHERE
 </script>
 
 <h1 class="text-lg font-bold mb-2">Export</h1>
-<div class="flex gap-2 sm:w-[450px] w-80 flex-col h-full">
+<div class="flex gap-2 sm:w-[475px] w-80 flex-col h-full">
 	{#if image_src.length > 0}
 		<img src={image_src} alt="graph" class="" />
 	{:else}
