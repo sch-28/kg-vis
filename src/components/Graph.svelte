@@ -5,6 +5,7 @@
 	import ActionMenu from './Header.svelte';
 	import InformationMenu from './Information-Menu.svelte';
 	import GraphControls from './Graph-Controls.svelte';
+	import { onMount } from 'svelte';
 
 	interface Click_Event {
 		edges: [];
@@ -27,9 +28,9 @@
 	let loading_properties: boolean = false;
 	let loading_graph: boolean = false;
 
-	$: if (container) {
+	onMount(() => {
 		init();
-	}
+	});
 
 	function init() {
 		graph = new Graph(container);

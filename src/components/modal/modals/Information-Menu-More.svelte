@@ -23,7 +23,7 @@
 		<Badge rounded baseClass="ml-2">{property.related?.length ?? 0}</Badge>
 	</div>
 	<Hr divClass="my-2" />
-	<div class="max-h-96 w-[500px] overflow-y-auto flex flex-col gap-1">
+	<div class="max-h-96 sm:w-[500px] w-80 overflow-y-auto flex flex-col gap-1">
 		{#each property.related ?? [] as node}
 			<div
 				class="flex gap-2 items-center px-2 rounded-lg min-h-[35px] group hover:bg-black/5 dark:hover:bg-black/30 transition-all duration-200 ease-in-out"

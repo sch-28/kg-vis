@@ -1,10 +1,11 @@
 <script lang="ts">
-	import { Button, Search } from 'flowbite-svelte';
-	import { click_outside, fuzzy_search } from '../util';
+	import { Button, Label, Range, Search, Toggle } from 'flowbite-svelte';
+	import { click_outside, dark_mode, fuzzy_search } from '../util';
 	import type { Graph, Node } from '../api/graph';
-	import { onMount, type SvelteComponent } from 'svelte';
+	import { onMount } from 'svelte';
 	import { Icon } from '@steeze-ui/svelte-icon';
-	import { Plus } from '@steeze-ui/heroicons';
+	import { Plus, XMark } from '@steeze-ui/heroicons';
+	import ColorPicker from 'svelte-awesome-color-picker';
 
 	export let graph: Graph;
 	export let open: boolean;
@@ -17,30 +18,49 @@
 
 	$: {
 		if (graph && search.length > 0) {
-			search_results = fuzzy_search(graph.data.nodes.get(), search, ['label', 'id']);
+			search_results = fuzzy_search(
+				graph.nodes.filter((n) => n.visible),
+				search,
+				['label', 'id']
+			);
+		}
+	}
+
+	$: {
+		if (open && search_input) {
+			search_input.focus();
 			search_results_open = true;
 		}
 	}
 
-	$: open && search_input && search_input.focus();
-
 	onMount(() => {
 		search_input = search_container.querySelector('input')!;
 	});
+
+	function update_filter() {
+		graph.refresh_filters();
+		graph.refresh_nodes();
+		graph.network.redraw();
+	}
 </script>
 
 <div
 	bind:this={search_container}
 	class="{open
 		? 'top-full opacity-100'
-		: 'top-0 opacity-0'} z-[49] pointer-events-none duration-200 transition-all absolute mt-4 left-1/2 -translate-x-1/2 w-full"
+		: 'top-0 opacity-0'} z-[49] pointer-events-none duration-200 transition-all absolute mt-4 left-1/2 -translate-x-1/2 w-full {graph
+		?.node_filters.length > 0
+		? 'grid grid-cols-2 gap-2'
+		: ''}"
 >
-	<div class="flex flex-col w-6/12 mx-auto pointer-events-auto">
+	<div
+		class="flex flex-col {graph?.node_filters.length > 0
+			? 'w-full'
+			: 'mx-auto w-56'} pointer-events-auto h-fit"
+	>
 		<Search
 			on:click={() => {
-				if (search_results.length > 0) {
-					search_results_open = true;
-				}
+				search_results_open = true;
 			}}
 			class="dark:!bg-dark-bg !bg-white border dark:!border-dark-muted shadow-lg rounded-lg"
 			size="md"
@@ -48,7 +68,7 @@
 			focus={true}
 		/>
 		<div
-			class="mt-1 flex-col border shadow-lg rounded-lg dark:border-dark-muted dark:bg-dark-bg bg-white z-50 w-full divide-y divide-gray-200 dark:divide-gray-700  transition-all duration-200 max-h-60 overflow-y-scroll {search_results_open &&
+			class="mt-1 flex-col border shadow-lg rounded-lg dark:border-dark-muted dark:bg-dark-bg bg-white z-50 w-full divide-y divide-gray-200 dark:divide-gray-700  transition-all duration-200 max-h-60 overflow-y-scroll min-w-0 {search_results_open &&
 			search_results.length > 0
 				? 'flex'
 				: 'hidden'}"
@@ -59,23 +79,25 @@
 		>
 			{#each search_results as result}
 				<button
-					class="text-left flex items-center px-2 min-h-[35px] group hover:bg-black/5 dark:hover:bg-black/30 transition-all duration-200 ease-in-out"
+					class="min-w-0 text-left flex items-center px-2 min-h-[35px] group hover:bg-black/5 dark:hover:bg-black/30 transition-all duration-200 ease-in-out justify-between"
 					on:click={() => {
 						graph.network?.selectNodes([result.item.id]);
 						graph.network?.focus(result.item.id, { animation: true, scale: 1 });
 					}}
 				>
-					<div class="truncate w-10/12" title={result.item.label}>
+					<div class="truncate min-w-0" title={result.item.label}>
 						{result.item.label}
 					</div>
 					<div
-						class="w-2/12 group-hover:opacity-100 flex opacity-0 items-center justify-end transition-all duration-200 ease-in-out"
+						class="group-hover:opacity-100 flex opacity-0 items-center justify-end transition-all duration-200 ease-in-out"
 					>
 						<button
 							class="p-1 rounded-lg bg-transparent hover:bg-black/5 dark:hover:bg-black/30 transition-all duration-200 ease-in-out"
 							on:click={(e) => {
 								e.stopPropagation();
 								graph.add_filter(result.item);
+								search_results_open = false;
+								graph = graph;
 							}}
 						>
 							<Icon src={Plus} size={'20'} />
@@ -85,4 +107,59 @@
 			{/each}
 		</div>
 	</div>
+
+	{#if graph && graph.node_filters.length > 0}
+		<div class="pointer-events-auto z-[49] duration-200 transition-all flex flex-col gap-2 h-fit">
+			{#each graph.node_filters as filter}
+				<div
+					class="border shadow-lg rounded-lg dark:border-dark-muted dark:bg-dark-bg bg-white flex flex-col p-2 gap-1"
+				>
+					<span class="flex">
+						{filter.node.label}
+						<button
+							class="ml-auto p-1 rounded-lg bg-transparent hover:bg-black/5 dark:hover:bg-black/30 transition-all duration-200 ease-in-out"
+							on:click={() => {
+								graph.remove_filter(filter.node);
+								graph = graph;
+							}}
+						>
+							<Icon src={XMark} size={'20'} />
+						</button>
+					</span>
+
+					<div class="flex flex-col gap-1">
+						<Label>Range {filter.range}</Label>
+						<div class="flex items-baseline gap-1">
+							<Range
+								min={1}
+								max={5}
+								step={1}
+								bind:value={filter.range}
+								on:change={update_filter}
+								size="md"
+							/>
+						</div>
+					</div>
+					<div class="flex flex-col gap-1">
+						<Label>Visible</Label>
+						<Toggle
+							bind:checked={filter.visible}
+							on:change={() => {
+								//todo optimize, this is a hack to show the changes & appy colors
+								update_filter();
+								if (filter.visible) update_filter();
+							}}
+						/>
+					</div>
+					<div class="flex items-start justify-center flex-col gap-1 pb-2">
+						<Label>Color</Label>
+						<div class="flex gap-1 items-center">
+							<ColorPicker label="" bind:hex={filter.color} on:input={update_filter} />
+							<p>{filter.color}</p>
+						</div>
+					</div>
+				</div>
+			{/each}
+		</div>
+	{/if}
 </div>

@@ -13,7 +13,6 @@
 
 	export let graph: Graph;
 
-	let advanced_container: HTMLDivElement;
 	let error: string = '';
 	let loading: boolean = false;
 	let nodes: Node[] = [];
@@ -254,7 +253,7 @@ WHERE
 	});
 </script>
 
-<div class="flex flex-col w-[450px]">
+<div class="flex flex-col sm:w-[450px] w-80">
 	<div class="flex justify-between items-center text-center mb-2">
 		<h1 class="text-lg font-bold">Add Nodes</h1>
 		<div>
@@ -285,7 +284,6 @@ WHERE
 				? Math.min(sparql_query_area_height, 350) + 113
 				: 0
 		}px`}
-		bind:this={advanced_container}
 		class="h-0 overflow-hidden transition-all duration-200 flex gap-2 flex-col mb-2"
 	>
 		<div

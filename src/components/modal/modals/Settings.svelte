@@ -65,7 +65,7 @@
 </script>
 
 <h1 class="text-lg font-bold mb-2">Settings</h1>
-<div class="flex gap-4 w-[475px] h-[250px]">
+<div class="flex gap-4 sm:w-[450px] w-80 h-[250px]">
 	<div>
 		<Sidebar asideClass="w-48">
 			<SidebarWrapper divClass="">

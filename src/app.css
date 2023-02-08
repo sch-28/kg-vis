@@ -25,3 +25,11 @@ html.dark {
 	-webkit-line-clamp: 3;
 	-webkit-box-orient: vertical;
 }
+
+.color-picker .wrapper {
+	@apply border-gray-200 border shadow-lg rounded-lg dark:border-dark-muted dark:bg-dark-bg bg-white;
+}
+
+.color-picker .wrapper input,.color-picker .wrapper button{
+	@apply dark:bg-dark-muted;
+}

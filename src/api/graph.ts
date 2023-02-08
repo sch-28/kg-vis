@@ -7,62 +7,61 @@ import isUrl from 'is-url';
 import { dark_mode } from '../util';
 import * as vis from 'vis-network';
 
-const get_network_options = () =>
-	({
-		interaction: {
-			hideEdgesOnDrag: get(Settings).hide_edges_on_drag ?? false
+const get_network_options = () => ({
+	interaction: {
+		hideEdgesOnDrag: get(Settings).hide_edges_on_drag ?? false
+	},
+	nodes: {
+		color: dark_mode ? '#6a7e9d' : '#74a0e9',
+		shape: 'dot',
+		font: {
+			color: dark_mode ? 'white' : 'black'
 		},
-		nodes: {
-			color: dark_mode ? '#6a7e9d' : '#74a0e9',
-			shape: 'dot',
-			font: {
-				color: dark_mode ? 'white' : 'black'
-			},
-			borderWidth: 3,
-			chosen: {
-				node: true,
-				label: false
-			},
-			widthConstraint: {
-				maximum: 125
+		borderWidth: 3,
+		chosen: {
+			node: true,
+			label: false
+		},
+		widthConstraint: {
+			maximum: 125
+		}
+	},
+	edges: {
+		arrows: {
+			to: {
+				enabled: true,
+				type: 'arrow'
 			}
 		},
-		edges: {
-			arrows: {
-				to: {
-					enabled: true,
-					type: 'arrow'
-				}
-			},
-			widthConstraint: {
-				maximum: 125
-			},
-			font: {
-				strokeWidth: 0,
-				color: dark_mode ? 'white' : 'black',
-				background: dark_mode ? '#111827' : 'white'
-			},
-			color: {
-				color: dark_mode ? '#4a5e7d' : '#74a0e9',
-				highlight: dark_mode ? '#4a5e7d' : '#74a0e9'
-			},
-			smooth: {
-				type: get(Settings).smooth_edges ? 'dynamic' : 'continuous'
-			},
-			labelHighlightBold: false
+		widthConstraint: {
+			maximum: 125
 		},
-		physics: {
-			solver: 'forceAtlas2Based',
-			forceAtlas2Based: {
-				gravitationalConstant: -75,
-				springLength: 100,
-				springConstant: 0.02
-			},
-			maxVelocity: 50,
-			minVelocity: 3,
-			timestep: 0.35
-		}
-	} as Options);
+		font: {
+			strokeWidth: 0,
+			color: dark_mode ? 'white' : 'black',
+			background: dark_mode ? '#111827' : 'white'
+		},
+		color: {
+			color: dark_mode ? '#4a5e7d' : '#74a0e9',
+			highlight: dark_mode ? '#4a5e7d' : '#74a0e9'
+		},
+		smooth: {
+			type: get(Settings).smooth_edges ? 'dynamic' : 'continuous'
+		},
+		labelHighlightBold: false
+	},
+	physics: {
+		solver: 'forceAtlas2Based',
+		forceAtlas2Based: {
+			gravitationalConstant: -75,
+			springLength: 100,
+			springConstant: 0.02
+		},
+		maxVelocity: 50,
+		minVelocity: 3,
+		timestep: 0.35
+	}
+});
 
 export type URI = string;
 
@@ -94,6 +93,7 @@ export class Node {
 	label: string;
 	description: string;
 	visible: boolean;
+	temp_visible: boolean;
 	is_fetched: boolean;
 	fixed: boolean;
 	image: string | undefined;
@@ -129,6 +129,7 @@ export class Node {
 		this.id = uri;
 		this.label = label;
 		this.visible = visible;
+		this.temp_visible = true;
 		this.is_fetched = false;
 		this.type = type;
 		this.x = position.x;
@@ -211,7 +212,7 @@ export class Graph {
 		this.network = new vis.Network(
 			container,
 			{ nodes: data_view_nodes, edges: data_view_edges },
-			get_network_options()
+			get_network_options() as Options
 		);
 
 		if (start) {
@@ -221,35 +222,81 @@ export class Graph {
 
 	add_filter(node: Node, range?: number, color?: string, visible?: boolean) {
 		if (!range) range = 2;
-		/* if (!color) color = get_network_options().nodes?.color || dark_mode ? '#4a5e7d' : '#74a0e9'; */
-		if (!color) color = 'red';
+		if (!color) color = get_network_options().nodes.color;
 		if (!visible) visible = true;
 
 		this.node_filters.push({ node, range, color, visible });
-		this.data_view.nodes.refresh();
+		this.refresh_filters();
 		this.refresh_nodes();
+		this.data_view.nodes.refresh();
+		this.network.redraw();
 	}
 
-	node_filter(node: Node) {
-		for (const filter of this.node_filters) {
-			if (filter.node.id == node.id) {
-				node.color = filter.color;
-				return filter.visible;
-			} else {
-				for (let i = 0; i < filter.range; i++) {
-					const connected_nodes = this.network.getConnectedNodes(node.id);
-					if (connected_nodes.length == 0 || typeof connected_nodes[0] !== 'string') return true;
-					for (const connected_node of connected_nodes) {
-						if (connected_node == filter.node.id) {
-							node.color = filter.color;
-							return filter.visible;
-						}
+	remove_filter(node: Node) {
+		this.node_filters = this.node_filters.filter((f) => f.node.id != node.id);
+		this.refresh_filters();
+		this.refresh_nodes();
+		this.data_view.nodes.refresh();
+		this.network.redraw();
+	}
+
+	refresh_filters() {
+		const visible_nodes = this.nodes.filter((n) => n.visible);
+		for (const node of visible_nodes) {
+			node.color = get_network_options().nodes.color;
+			node.temp_visible = true;
+		}
+
+		for (const node of visible_nodes) {
+			for (const filter of this.node_filters) {
+				if (filter.node.id == node.id) {
+					node.color = filter.color;
+					if (!filter.visible && node.temp_visible) {
+						node.temp_visible = false;
+						const pos = this.network.getPosition(node.id);
+						node.x = pos.x;
+						node.y = pos.y;
+					} else {
+						node.temp_visible = true;
 					}
+
+					let connected_node_ids = this.network.getConnectedNodes(node.id);
+					connected_node_ids = (connected_node_ids as string[]).filter(
+						(id) => typeof id === 'string'
+					);
+
+					for (let i = 1; i < filter.range; i++) {
+						for (const connected_node_id of connected_node_ids) {
+							if (typeof connected_node_id !== 'string') continue;
+							const connected_node = this.nodes.find((n) => n.id === connected_node_id);
+							if (connected_node) {
+								connected_node.color = filter.color;
+								if (!filter.visible && connected_node.temp_visible) {
+									connected_node.temp_visible = false;
+									const pos = this.network.getPosition(connected_node.id);
+									connected_node.x = pos.x;
+									connected_node.y = pos.y;
+								} else {
+									connected_node.temp_visible = true;
+								}
+							}
+						}
+						connected_node_ids = connected_node_ids.flatMap((id) =>
+							(this.network.getConnectedNodes(id) as string[]).filter(
+								(id) => typeof id === 'string'
+							)
+						);
+					}
+					break;
 				}
 			}
 		}
-		return true;
 	}
+
+	node_filter(node: Node) {
+		return node.temp_visible;
+	}
+
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	edge_filter(edge: Edge) {
 		return true;
@@ -402,8 +449,11 @@ export class Graph {
 	refresh_nodes() {
 		const positions = this.network.getPositions();
 		for (const node of this.nodes) {
-			node.x = positions[node.id]?.x ?? 0;
-			node.y = positions[node.id]?.y ?? 0;
+			if (!node.temp_visible) {
+				continue;
+			}
+			node.x = positions[node.id]?.x ?? node.x ?? 0;
+			node.y = positions[node.id]?.y ?? node.y ?? 0;
 		}
 		this.data.nodes.update(this.nodes);
 		if (!this.simulation_running) {
