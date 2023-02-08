@@ -19,18 +19,18 @@
 	import { HelpOutline } from '@steeze-ui/material-design-icons';
 	import { Modal_Manager } from '../modal-store';
 
-	$: {
+	let selected_setting: 'endpoint' | 'graph' | 'other' = 'endpoint';
+
+	function update_labels() {
+		$CurrentGraph.update_edge_labels();
+	}
+
+	function update_hide_edges_on_drag() {
 		$CurrentGraph.network?.setOptions({
 			interaction: {
 				hideEdgesOnDrag: $Settings.hide_edges_on_drag
 			}
 		});
-	}
-
-	let selected_setting: 'endpoint' | 'graph' | 'other' = 'endpoint';
-
-	function update_labels() {
-		$CurrentGraph.update_edge_labels();
 	}
 
 	function update_edges() {
@@ -212,7 +212,9 @@
 				<Tooltip text="Will disable edge labels" />
 			</div>
 			<div class="flex items-center justify-between gap-2">
-				<Toggle bind:checked={$Settings.hide_edges_on_drag}>Hide edges on drag</Toggle>
+				<Toggle bind:checked={$Settings.hide_edges_on_drag} on:change={update_hide_edges_on_drag}
+					>Hide edges on drag</Toggle
+				>
 				<Tooltip
 					text="Hide edge lables only when dragging the view - this drastically improves performance "
 				/>
