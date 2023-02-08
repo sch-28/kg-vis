@@ -156,6 +156,7 @@ export class Edge {
 	to: URI;
 	label: string;
 	hidden_label: string;
+	color?: { color: string; highlight: string };
 
 	constructor(source: URI, uri: URI, target: URI, label: string) {
 		this.from = source;
@@ -229,7 +230,9 @@ export class Graph {
 		this.node_filters.push({ node, range, color, visible });
 		this.refresh_filters();
 		this.refresh_nodes();
+		this.refresh_edges();
 		this.data_view.nodes.refresh();
+		this.data_view.edges.refresh();
 		this.network.redraw();
 	}
 
@@ -237,15 +240,21 @@ export class Graph {
 		this.node_filters = this.node_filters.filter((f) => f.node.id != node.id);
 		this.refresh_filters();
 		this.refresh_nodes();
+		this.refresh_edges();
 		this.data_view.nodes.refresh();
+		this.data_view.edges.refresh();
 		this.network.redraw();
 	}
 
 	refresh_filters() {
 		const visible_nodes = this.nodes.filter((n) => n.visible);
+		const visible_edges = this.edges.filter((edge) => this.is_edge_visible(edge));
 		for (const node of visible_nodes) {
 			node.color = get_network_options().nodes.color;
 			node.temp_visible = true;
+		}
+		for (const edge of visible_edges) {
+			edge.color = get_network_options().edges.color;
 		}
 
 		for (const node of visible_nodes) {
@@ -260,7 +269,7 @@ export class Graph {
 					} else {
 						node.temp_visible = true;
 					}
-
+					
 					let connected_node_ids = this.network.getConnectedNodes(node.id);
 					connected_node_ids = (connected_node_ids as string[]).filter(
 						(id) => typeof id === 'string'
@@ -287,6 +296,11 @@ export class Graph {
 								(id) => typeof id === 'string'
 							)
 						);
+						this.network.getConnectedEdges(node.id).forEach((edge_id) => {
+							const data_edge = this.data.edges.get(edge_id);
+							const edge = this.get_edge(data_edge.from, data_edge.uri, data_edge.to);
+							if (edge) edge.color = { color: filter.color, highlight: filter.color };
+						});
 					}
 					break;
 				}
@@ -461,6 +475,17 @@ export class Graph {
 		if (!this.simulation_running) {
 			this.network.stopSimulation();
 		}
+	}
+
+	refresh_edges() {
+		this.data.edges.update(this.edges);
+		if (!this.simulation_running) {
+			this.network.stopSimulation();
+		}
+	}
+
+	get_edge(source: URI, uri: URI, target: URI) {
+		return this.edges.find((edge) => edge.from == source && edge.uri == uri && edge.to == target);
 	}
 
 	create_edge(source: URI, uri: URI, target: URI, label: string) {

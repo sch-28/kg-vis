@@ -121,6 +121,7 @@
 	function update_filter() {
 		$CurrentGraph.refresh_filters();
 		$CurrentGraph.refresh_nodes();
+		$CurrentGraph.refresh_edges();
 		$CurrentGraph.network.redraw();
 	}
 </script>
