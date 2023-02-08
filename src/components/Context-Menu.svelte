@@ -124,6 +124,7 @@
 			$CurrentGraph.add_filter(selection);
 			CurrentGraph.update(u => $CurrentGraph);
 		}
+		hidden = true;
 	}
 
 	function handle_fit_graph() {
