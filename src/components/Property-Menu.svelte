@@ -16,6 +16,7 @@
 	import { Settings } from '../settings';
 	import { Button, Checkbox } from 'flowbite-svelte';
 	import type Fuse from 'fuse.js';
+	import { onDestroy } from 'svelte';
 	export let selected_node: Node | undefined = undefined;
 	export let menu_position = { x: 0, y: 0 };
 	export let information_tab_visible: boolean = false;
@@ -44,26 +45,25 @@
 	};
 
 	type State = {
-		search_string: string;
-		show_search: boolean;
 		sort_direction: 1 | -1;
-		selected_item: number;
 	} & (PropertyState | NodeState);
 
 	let state: State = {
-		search_string: '',
-		show_search: false,
 		sort_direction: 1,
 		items: [],
-		selected_item: -1,
 		sorted_items: [],
 		current_context: 'property',
 		sort_by: 'name',
 		sort_options: ['direction', 'name', 'count']
 	};
 
+	let search_string: string = '';
+	let show_search: boolean = false;
+	let selected_item: number = -2;
+
 	let wrapper: HTMLElement;
 	let search_input: HTMLInputElement;
+	let add_all_button: HTMLButtonElement;
 	const menu_offset = 30;
 	const menu_gap = 16;
 
@@ -96,16 +96,15 @@
 
 	function reset() {
 		state = {
-			search_string: '',
-			show_search: false,
 			sort_direction: 1,
-			selected_item: -1,
 			items: selected_node?.properties ?? [],
 			sorted_items: [],
 			current_context: 'property',
 			sort_by: 'name',
 			sort_options: ['direction', 'name', 'count']
 		};
+
+		sort_items();
 	}
 
 	function change_sort_by(new_sort_by: typeof state.sort_by) {
@@ -115,13 +114,24 @@
 			state.sort_by = new_sort_by;
 			state.sort_direction = -1;
 		}
+
+		sort_items();
 	}
 
-	$: selected_node && state.items && sort_items();
+	$: {
+		search_string;
+		sort_items();
+	}
+
+	$: show_search && set_selected_item(-2);
+
+	function set_selected_item(index: number) {
+		selected_item = index;
+	}
 
 	function sort_items() {
-		if (state.search_string.length > 0) {
-			state.sorted_items = fuzzy_search<Property | Node>(state.items, state.search_string, [
+		if (search_string.length > 0) {
+			state.sorted_items = fuzzy_search<Property | Node>(state.items, search_string, [
 				'label',
 				'id'
 			]).map((item) => {
@@ -164,11 +174,8 @@
 
 		if (state.current_context === 'property') {
 			state = {
-				search_string: '',
-				show_search: false,
 				sort_direction: state.sort_direction,
 				items: [],
-				selected_item: -1,
 				sorted_items: [],
 				current_context: 'node',
 				selected_nodes: [],
@@ -184,6 +191,7 @@
 				$CurrentGraph.network?.DOMtoCanvas(menu_position)
 			);
 			loading = false;
+			sort_items();
 		} else {
 			item = item as Node;
 			if (is_disabled(item)) return;
@@ -197,56 +205,67 @@
 	}
 
 	function search(event: KeyboardEvent) {
-		if (
+		if (event.code === 'KeyF' && event.ctrlKey) {
+			event.preventDefault();
+			event.stopPropagation();
+			show_search = !show_search;
+
+			if (show_search)
+				setTimeout(() => {
+					if (show_search) search_input?.focus();
+				}, 0);
+		} else if (
 			event.key !== 'Escape' &&
+			event.key !== 'Enter' &&
 			event.key.length == 1 &&
-			(!state.show_search || document.activeElement !== search_input)
+			(!show_search || document.activeElement !== search_input)
 		) {
-			state.search_string += event.key;
-			state.show_search = true;
+			search_string += event.key;
+			show_search = true;
 			setTimeout(() => {
 				search_input?.focus();
 			}, 0);
-		} else if (state.show_search && event.key === 'Escape') {
-			state.show_search = false;
-			state.search_string = '';
-		} else if (event.code === 'ArrowDown' && state.show_search) {
+		} else if (show_search && event.key === 'Escape') {
+			show_search = false;
+			search_string = '';
+		} else if (event.code === 'ArrowDown') {
 			event.preventDefault();
-			if (state.sorted_items.length > 0) {
-				if (state.selected_item < state.sorted_items.length - 1) {
-					state.selected_item++;
-				}
-				if (state.sorted_items[state.selected_item].button) {
-					state.sorted_items[state.selected_item].button?.focus();
-					state.sorted_items[state.selected_item].button?.scrollIntoView({
-						behavior: 'smooth',
-						block: 'nearest'
-					});
-				}
+			select_item(1);
+		} else if (event.code === 'ArrowUp') {
+			event.preventDefault();
+			select_item(-1);
+		}
+	}
+
+	function select_item(dir: -1 | 1) {
+		if (state.sorted_items.length > 0) {
+			if (
+				selected_item + dir >= -2 &&
+				selected_item + dir < state.sorted_items.length
+			) {
+				selected_item += dir;
 			}
-		} else if (event.code === 'ArrowUp' && state.show_search) {
-			event.preventDefault();
-			if (state.sorted_items.length > 0) {
-				if (state.selected_item > 0) {
-					state.selected_item--;
-				} else if (state.selected_item === 0) {
-					state.selected_item = -1;
-					search_input.focus();
-				}
-				if (state.sorted_items[state.selected_item].button) {
-					state.sorted_items[state.selected_item].button?.focus();
-					state.sorted_items[state.selected_item].button?.scrollIntoView({
-						behavior: 'smooth',
-						block: 'nearest'
-					});
-				}
+			if (selected_item === -2) {
+				show_search = true;
+				setTimeout(() => {
+					if (show_search) search_input?.focus();
+				}, 0);
+			} else {
+				show_search = false;
 			}
-		} else if (event.code === 'Enter' && state.show_search) {
-			event.preventDefault();
-			if (state.sorted_items.length > 0) {
-				if (state.sorted_items[state.selected_item].button) {
-					state.sorted_items[state.selected_item].button?.click();
-				}
+
+			if (selected_item === -1) {
+				add_all_button?.focus();
+				add_all_button?.scrollIntoView({
+					behavior: 'smooth',
+					block: 'nearest'
+				});
+			} else if (state.sorted_items[selected_item]?.button) {
+				state.sorted_items[selected_item].button?.focus();
+				state.sorted_items[selected_item].button?.scrollIntoView({
+					behavior: 'smooth',
+					block: 'nearest'
+				});
 			}
 		}
 	}
@@ -263,11 +282,8 @@
 		const properties = state.sorted_items.filter((p) => !p.item.fetched).map((p) => p.item);
 
 		state = {
-			search_string: '',
-			show_search: false,
 			sort_direction: state.sort_direction,
 			items: [],
-			selected_item: -1,
 			sorted_items: [],
 			current_context: 'node',
 			selected_nodes: [],
@@ -340,15 +356,32 @@
 			}
 		}
 	}
+
+	onDestroy(() => {
+		document.removeEventListener('keydown', search, false);
+	});
 </script>
 
 {#if selected_node}
 	<div
+		id="property-menu"
 		class="absolute w-[380px] p-2 h-[326px] border dark:border-dark-muted dark:bg-dark-bg bg-white shadow-md z-40 rounded-2xl flex flex-col"
-		on:mouseover={() => document.addEventListener('keydown', search)}
-		on:focus={() => document.addEventListener('keydown', search)}
-		on:mouseout={() => document.removeEventListener('keydown', search, false)}
-		on:blur={() => document.removeEventListener('keydown', search, false)}
+		on:mouseover={() => {
+			document.addEventListener('keydown', search);
+			wrapper.setAttribute('focus', 'active');
+		}}
+		on:focus={() => {
+			document.addEventListener('keydown', search);
+			wrapper.setAttribute('focus', 'active');
+		}}
+		on:mouseout={() => {
+			document.removeEventListener('keydown', search, false);
+			wrapper.removeAttribute('focus');
+		}}
+		on:blur={() => {
+			document.removeEventListener('keydown', search, false);
+			wrapper.removeAttribute('focus');
+		}}
 		bind:this={wrapper}
 	>
 		<div class="text-lg font-bold mx-2 flex items-center gap-5 justify-between">
@@ -369,30 +402,29 @@
 			</h1>
 			<div class="flex items-center gap-3">
 				<button
-					class="w-6 h-10 relative transition-all {state.show_search ? 'w-36' : 'cursor-pointer'}"
+					class="w-6 h-10 relative transition-all {show_search ? 'w-36' : 'cursor-pointer'}"
 					on:click={() => {
-						state.show_search = true;
+						show_search = true;
 						setTimeout(() => search_input.focus(), 0);
 					}}
 					use:click_outside
-					on:click_outside={() =>
-						state.search_string.length == 0 ? (state.show_search = false) : null}
+					on:click_outside={() => (search_string.length == 0 ? (show_search = false) : null)}
 				>
-					<button on:click={() => (state.search_string = '')} class="contents">
+					<button on:click={() => (search_string = '')} class="contents">
 						<Icon
 							src={XMark}
 							theme="solid"
-							class="h-5 w-5  absolute z-10 bottom-1/2 translate-y-1/2 cursor-pointer right-2 {state.show_search &&
-							state.search_string.length > 0
+							class="h-5 w-5  absolute z-10 bottom-1/2 translate-y-1/2 cursor-pointer right-2 {show_search &&
+							search_string.length > 0
 								? 'visible'
 								: 'hidden'}"
 						/>
 					</button>
 					<input
 						bind:this={search_input}
-						bind:value={state.search_string}
+						bind:value={search_string}
 						type="text"
-						class="{state.show_search
+						class="{show_search
 							? 'dark:bg-slate-800  pl-8 visible pr-7 shadow-inset'
 							: 'hidden'}
 						w-full  rounded-lg 
@@ -407,7 +439,7 @@
 					<Icon
 						src={MagnifyingGlass}
 						theme="solid"
-						class="h-5 w-5 absolute z-10 bottom-1/2 translate-y-1/2 pointer-events-none cursor-pointer {state.show_search &&
+						class="h-5 w-5 absolute z-10 bottom-1/2 translate-y-1/2 pointer-events-none cursor-pointer {show_search &&
 							'left-2'}"
 					/>
 				</button>
@@ -423,6 +455,7 @@
 		</div>
 		{#if state.current_context == 'property'}
 			<button
+				bind:this={add_all_button}
 				on:click={add_all}
 				class="min-h-[34px] mx-2 px-2 flex items-center rounded-lg  h-10 bg-transparent hover:bg-black/5 dark:hover:bg-black/30 transition-all duration-200 ease-in-out {selected_node.properties.every(
 					(p) => p.fetched && p.related.every((r) => r.visible)
@@ -444,6 +477,7 @@
 			</button>
 		{:else}
 			<button
+				bind:this={add_all_button}
 				on:click={select_all}
 				class="min-h-[34px] mx-2 px-2 flex items-center rounded-lg  h-10 bg-transparent hover:bg-black/5 dark:hover:bg-black/30 transition-all duration-200 ease-in-out {selected_node.properties.every(
 					(p) => p.fetched && p.related.every((r) => r.visible)
@@ -497,6 +531,7 @@
 		<div class="flex flex-col overflow-y-auto max-h-[200px] h-[200px] ml-2 mr-1 ">
 			{#each state.sorted_items as item, i}
 				<button
+					bind:this={item.button}
 					on:click={() => item_clicked(item.item)}
 					class="truncate min-w-0 min-h-[35px] items-center flex px-2 rounded-lg bg-transparent hover:bg-black/5 dark:hover:bg-black/30 transition-all duration-200 ease-in-out {is_disabled(
 						item.item

@@ -6,6 +6,7 @@
 	import { Plus, XMark } from '@steeze-ui/heroicons';
 	import ColorPicker from 'svelte-awesome-color-picker';
 	import { CurrentGraph, type Node } from '../api/graph';
+	import Graph from './Graph.svelte';
 
 	export let open: boolean;
 
@@ -48,7 +49,11 @@
 	}
 
 	function search_keybindings(event: KeyboardEvent) {
-		if (event.code === 'KeyF' && event.ctrlKey) {
+		if (
+			event.code === 'KeyF' &&
+			event.ctrlKey &&
+			!(document.querySelector('#property-menu')?.hasAttribute('focus'))
+		) {
 			event.preventDefault();
 			open = !open || !search_results_open;
 			if (open) {
