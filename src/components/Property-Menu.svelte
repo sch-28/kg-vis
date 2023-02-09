@@ -513,17 +513,21 @@
 			<button
 				bind:this={add_all_button}
 				on:click={select_all}
-				class="focus:bg-black/5 dark:focus:bg-black/30 !outline-none min-h-[34px] mx-2 px-2 flex items-center rounded-lg  h-10 bg-transparent hover:bg-black/5 dark:hover:bg-black/30  {selected_node.properties.every(
-					(p) => p.fetched && p.related.every((r) => r.visible)
-				)
+				class="focus:bg-black/5 dark:focus:bg-black/30 !outline-none min-h-[34px] mx-2 px-2 flex items-center rounded-lg  h-10 bg-transparent hover:bg-black/5 dark:hover:bg-black/30  {state.sorted_items.filter(
+					(i) => !i.item.visible
+				).length == 0
 					? 'opacity-50 cursor-default'
 					: 'opacity-100 cursor-pointer'}"
 			>
 				<Checkbox
 					checked={state.sorted_items.length > 0 &&
 						state.sorted_items.length == state.selected_nodes.length}
-					on:click={(e) => e.preventDefault()}
-					class="focus:outline-none focus:ring-0 cursor-pointer mr-4"
+					on:click={(e) => {
+						select_all();
+						e.stopPropagation();
+					}}
+					disabled={state.sorted_items.filter((i) => !i.item.visible).length == 0}
+					class="focus:outline-none focus:ring-0 mr-4 cursor-[inherit]"
 				/>
 				<span class="truncate" title={'Add all related properties (max 100 of each property)'}>
 					Select All
@@ -566,7 +570,10 @@
 			{#each state.sorted_items as item, i}
 				<button
 					bind:this={item.button}
-					on:click={() => item_clicked(item.item)}
+					on:click={(e) => {
+						item_clicked(item.item);
+						e.stopPropagation();
+					}}
 					class="focus:bg-black/5 dark:focus:bg-black/30 !outline-none truncate min-w-0 min-h-[35px] items-center flex px-2 rounded-lg bg-transparent hover:bg-black/5 dark:hover:bg-black/30  {is_disabled(
 						item.item
 					)
@@ -592,8 +599,12 @@
 					{:else}
 						<Checkbox
 							checked={state.selected_nodes.includes(state.sorted_items[i].item)}
-							on:click={(e) => e.preventDefault()}
-							class="focus:outline-none focus:ring-0 cursor-pointer mr-2"
+							on:click={(e) => {
+								item_clicked(item.item);
+								e.stopPropagation();
+							}}
+							disabled={is_disabled(item.item)}
+							class="focus:outline-none focus:ring-0 mr-2 cursor-[inherit]"
 						/>
 					{/if}
 					{#if item.item.label}
@@ -640,7 +651,7 @@
 						<button
 							class="ml-auto p-1 rounded-lg bg-transparent {!state.sorted_items[i].item.visible
 								? 'hover:bg-black/5 dark:hover:bg-black/30'
-								: ''} transition-all duration-200 ease-in-out"
+								: 'cursor-default'} transition-all duration-200 ease-in-out"
 							on:click={() => add_node(state.sorted_items[i].item)}
 						>
 							<Icon src={Plus} size={'20'} />
