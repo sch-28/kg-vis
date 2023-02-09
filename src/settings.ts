@@ -85,7 +85,7 @@ export const Settings = storage<Settings>('settings', {
 	rate_limit: 5,
 	size_limit: 100,
 	fetch_image: true,
-	animations: true,
+	animations: false,
 	hide_edges_on_drag: false,
 	hide_edge_labels: false,
 	smooth_edges: true,
