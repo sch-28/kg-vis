@@ -4,7 +4,7 @@ import type { Network, Options } from 'vis-network';
 import { SPARQL } from './sparql';
 import { get, writable } from 'svelte/store';
 import isUrl from 'is-url';
-import { dark_mode } from '../util';
+import { blend_colors, dark_mode } from '../util';
 import * as vis from 'vis-network';
 
 const get_network_options = () => ({
@@ -292,7 +292,11 @@ export class Graph {
 			const nodes = this.get_filter_nodes(filter);
 			const node_ids = nodes.map((n) => n.id);
 			for (const node of nodes) {
-				node.color = filter.color;
+				if (node.color != get_network_options().nodes.color && node.color !== undefined) {
+					node.color = blend_colors(node.color, filter.color, 0.5);
+				} else {
+					node.color = filter.color;
+				}
 				if (!filter.visible && node.temp_visible) {
 					node.temp_visible = false;
 					const pos = this.network.getPosition(node.id);
@@ -307,7 +311,15 @@ export class Graph {
 					const data_edge = this.data.edges.get(edge_id);
 					const edge = this.get_edge(data_edge.from, data_edge.uri, data_edge.to);
 					if (edge && node_ids.includes(edge.from) && node_ids.includes(edge.to)) {
-						edge.color = { color: filter.color, highlight: filter.color };
+						if (
+							edge.color?.color != get_network_options().edges.color.color &&
+							edge.color !== undefined
+						) {
+							edge.color = {
+								color: blend_colors(edge.color.color, filter.color, 0.5),
+								highlight: blend_colors(edge.color.color, filter.color, 0.5)
+							};
+						}
 					}
 				});
 			}

@@ -27,8 +27,11 @@
 	let loading_properties: boolean = false;
 	let loading_graph: boolean = false;
 
+	let is_ready = false;
+
 	onMount(() => {
 		init();
+		is_ready = true;
 	});
 
 	function init() {
@@ -53,6 +56,7 @@
 				loading_graph = false;
 			});
 		}
+		console.log($CurrentGraph)
 	}
 
 	function show_context_menu(event: Click_Event) {
@@ -90,7 +94,7 @@
 </script>
 
 <div bind:this={container} class="w-full h-full" />
-{#if $CurrentGraph.container == container}
+{#if is_ready}
 	<InformationMenu bind:node={show_node_information} />
 	<PropertyMenu
 		{menu_position}
