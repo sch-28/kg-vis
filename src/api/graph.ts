@@ -139,7 +139,7 @@ export class Node {
 		if (image) {
 			this.update_image(image);
 		} else if (type === 'literal') {
-			this.color = '#31C48D';
+			this.shape = 'hexagon' as any // no idea why hexagon is not in the type
 		}
 	}
 
@@ -194,6 +194,8 @@ export class Graph {
 	node_filters: NodeFilter[];
 	simulation_running: boolean;
 
+	selected_color = "#277af7";
+
 	constructor(container: HTMLElement, start?: URI) {
 		this.container = container;
 		this.nodes = [];
@@ -241,7 +243,7 @@ export class Graph {
 	add_filter(node: Node, range?: number, color?: string, visible?: boolean) {
 		if (this.node_filters.find((f) => f.node.id == node.id)) return;
 		if (!range) range = 2;
-		if (!color) color = get_network_options().nodes.color;
+		if (!color) color = this.selected_color;
 		if (!visible) visible = true;
 
 		this.node_filters.push({ node, range, color, visible });
