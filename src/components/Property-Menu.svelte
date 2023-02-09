@@ -184,6 +184,8 @@
 				sort_options: ['direction', 'name']
 			};
 			set_selected_item(-2);
+			search_string = '';
+			show_search = false;
 			loading = true;
 			state.items = await $CurrentGraph.load_related_nodes(
 				selected_node.id,
