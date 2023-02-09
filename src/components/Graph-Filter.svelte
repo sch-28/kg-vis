@@ -1,11 +1,21 @@
 <script lang="ts">
-	import { Button, Label, Range, Search, Toggle } from 'flowbite-svelte';
+	import {
+		Button,
+		Chevron,
+		Dropdown,
+		DropdownItem,
+		Label,
+		Range,
+		Search,
+		Toggle,
+		ToolbarButton
+	} from 'flowbite-svelte';
 	import { click_outside, dark_mode, fuzzy_search } from '../util';
 	import { onDestroy, onMount } from 'svelte';
 	import { Icon } from '@steeze-ui/svelte-icon';
 	import { Plus, XMark } from '@steeze-ui/heroicons';
 	import ColorPicker from 'svelte-awesome-color-picker';
-	import { CurrentGraph, type Node } from '../api/graph';
+	import { CurrentGraph, type Node, type NodeFilter } from '../api/graph';
 	import Graph from './Graph.svelte';
 
 	export let open: boolean;
@@ -52,7 +62,7 @@
 		if (
 			event.code === 'KeyF' &&
 			event.ctrlKey &&
-			!(document.querySelector('#property-menu')?.hasAttribute('focus'))
+			!document.querySelector('#property-menu')?.hasAttribute('focus')
 		) {
 			event.preventDefault();
 			open = !open || !search_results_open;
@@ -120,9 +130,16 @@
 
 	function update_filter() {
 		$CurrentGraph.refresh_filters();
-		$CurrentGraph.refresh_nodes();
-		$CurrentGraph.refresh_edges();
-		$CurrentGraph.network.redraw();
+	}
+
+	function delete_filter(node: Node) {
+		$CurrentGraph.remove_filter(node);
+		$CurrentGraph = $CurrentGraph;
+	}
+
+	function prune(filter:NodeFilter){
+		$CurrentGraph.prune(filter);
+		console.log("prune filter")
 	}
 </script>
 
@@ -201,15 +218,31 @@
 						<p class="truncate">
 							{filter.node.label}
 						</p>
-						<button
-							class="ml-auto p-1 rounded-lg bg-transparent hover:bg-black/5 dark:hover:bg-black/30 transition-all duration-200 ease-in-out"
-							on:click={() => {
-								$CurrentGraph.remove_filter(filter.node);
-								$CurrentGraph = $CurrentGraph;
-							}}
-						>
-							<Icon src={XMark} size={'20'} />
-						</button>
+
+						<ToolbarButton class="ml-auto">
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								fill="none"
+								viewBox="0 0 24 24"
+								stroke-width="1.5"
+								stroke="currentColor"
+								class="w-5 h-5"
+								><path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									d="M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 12.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 18.75a.75.75 0 110-1.5.75.75 0 010 1.5z"
+								/></svg
+							>
+						</ToolbarButton>
+						<Dropdown frameClass="[&_ul]:py-0 !rounded-lg overflow-hidden ">
+							<DropdownItem>Copy SPARQL</DropdownItem>
+							<DropdownItem on:click={() => prune(filter)}>Prune other</DropdownItem>
+							<DropdownItem
+								on:click={() => delete_filter(filter.node)}
+								defaultClass="font-medium py-2 px-4 text-sm hover:bg-gray-100 dark:hover:bg-gray-600 w-full text-left text-error dark:text-error-dark"
+								>Delete filter</DropdownItem
+							>
+						</Dropdown>
 					</span>
 
 					<div class="flex flex-col gap-1">

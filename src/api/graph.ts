@@ -177,7 +177,7 @@ export class Edge {
 	}
 }
 
-type NodeFilter = {
+export type NodeFilter = {
 	node: Node;
 	range: number;
 	color: string;
@@ -220,6 +220,22 @@ export class Graph {
 		if (start) {
 			this.load_node(start).then(() => this.update_data());
 		}
+	}
+
+	prune(filter: NodeFilter) {
+		const nodes = this.get_filter_nodes(filter);
+
+		this.nodes = nodes;
+		for (const node of nodes) {
+			node.properties.map((p) => (p.fetched = false));
+		}
+		this.edges = this.edges.filter(
+			(e) => nodes.find((n) => n.id == e.from) && nodes.find((n) => n.id == e.to)
+		);
+		this.update_data();
+		this.network.once('stabilized', () => {
+			this.network.fit();
+		});
 	}
 
 	add_filter(node: Node, range?: number, color?: string, visible?: boolean) {
@@ -272,6 +288,7 @@ export class Graph {
 
 		for (const filter of this.node_filters) {
 			const nodes = this.get_filter_nodes(filter);
+			const node_ids = nodes.map((n) => n.id);
 			for (const node of nodes) {
 				node.color = filter.color;
 				if (!filter.visible && node.temp_visible) {
@@ -287,7 +304,9 @@ export class Graph {
 				this.network.getConnectedEdges(nodes[i].id).forEach((edge_id) => {
 					const data_edge = this.data.edges.get(edge_id);
 					const edge = this.get_edge(data_edge.from, data_edge.uri, data_edge.to);
-					if (edge) edge.color = { color: filter.color, highlight: filter.color };
+					if (edge && node_ids.includes(edge.from) && node_ids.includes(edge.to)) {
+						edge.color = { color: filter.color, highlight: filter.color };
+					}
 				});
 			}
 		}
@@ -379,7 +398,6 @@ export class Graph {
 		if (!get(Settings).animations && visible) {
 			this.network?.stabilize();
 		}
-
 		this.refresh_filters();
 
 		return this.data;
