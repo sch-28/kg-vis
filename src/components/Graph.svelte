@@ -31,17 +31,24 @@
 		init();
 	});
 
+	$: container && init();
+
 	function init() {
-		$CurrentGraph = new Graph(container);
-		$CurrentGraph.network.on('click', show_properties);
-		$CurrentGraph.network.on('oncontext', show_context_menu);
-		$CurrentGraph.network.on('startStabilizing', () => {
-			loading_graph = true;
-		});
-		$CurrentGraph.network.on('stabilized', () => {
-			$CurrentGraph.simulation_running = false;
-			loading_graph = false;
-		});
+		if (container && $CurrentGraph.container !== container) {
+			$CurrentGraph.network.destroy();
+			$CurrentGraph.container.remove();
+
+			$CurrentGraph = new Graph(container);
+			$CurrentGraph.network.on('click', show_properties);
+			$CurrentGraph.network.on('oncontext', show_context_menu);
+			$CurrentGraph.network.on('startStabilizing', () => {
+				loading_graph = true;
+			});
+			$CurrentGraph.network.on('stabilized', () => {
+				$CurrentGraph.simulation_running = false;
+				loading_graph = false;
+			});
+		}
 	}
 
 	function show_context_menu(event: Click_Event) {

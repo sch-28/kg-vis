@@ -207,14 +207,15 @@ export class Graph {
 		this.data_view = { nodes: data_view_nodes, edges: data_view_edges };
 
 		this.node_filters = [];
-		this.simulation_running = false;
+		this.simulation_running = true;
 
-		this.update_data();
 		this.network = new vis.Network(
 			container,
 			{ nodes: data_view_nodes, edges: data_view_edges },
 			get_network_options() as Options
 		);
+
+		this.update_data();
 
 		if (start) {
 			this.load_node(start).then(() => this.update_data());
@@ -229,21 +230,33 @@ export class Graph {
 
 		this.node_filters.push({ node, range, color, visible });
 		this.refresh_filters();
-		this.refresh_nodes();
-		this.refresh_edges();
-		this.data_view.nodes.refresh();
-		this.data_view.edges.refresh();
-		this.network.redraw();
 	}
 
 	remove_filter(node: Node) {
 		this.node_filters = this.node_filters.filter((f) => f.node.id != node.id);
 		this.refresh_filters();
-		this.refresh_nodes();
-		this.refresh_edges();
-		this.data_view.nodes.refresh();
-		this.data_view.edges.refresh();
-		this.network.redraw();
+	}
+
+	get_filter_nodes(filter: NodeFilter) {
+		let connected_nodes: Node[] = [filter.node];
+
+		let connected_node_ids = [filter.node.id];
+
+		for (let i = 1; i < filter.range; i++) {
+			connected_node_ids = connected_node_ids.flatMap((id) =>
+				(this.network.getConnectedNodes(id) as string[]).filter((id) => typeof id === 'string')
+			);
+			connected_nodes = connected_nodes.concat(
+				connected_node_ids
+					.map((id) => this.nodes.find((n) => n.id === id))
+					.filter((n) => n !== undefined) as Node[]
+			);
+		}
+
+		connected_nodes = connected_nodes.filter(
+			(n1, i, nodes) => nodes.findIndex((n2) => n2.id === n1.id) === i
+		);
+		return connected_nodes;
 	}
 
 	refresh_filters() {
@@ -257,55 +270,33 @@ export class Graph {
 			edge.color = get_network_options().edges.color;
 		}
 
-		for (const node of visible_nodes) {
-			for (const filter of this.node_filters) {
-				if (filter.node.id == node.id) {
-					node.color = filter.color;
-					if (!filter.visible && node.temp_visible) {
-						node.temp_visible = false;
-						const pos = this.network.getPosition(node.id);
-						node.x = pos.x;
-						node.y = pos.y;
-					} else {
-						node.temp_visible = true;
-					}
-					
-					let connected_node_ids = this.network.getConnectedNodes(node.id);
-					connected_node_ids = (connected_node_ids as string[]).filter(
-						(id) => typeof id === 'string'
-					);
-
-					for (let i = 1; i < filter.range; i++) {
-						for (const connected_node_id of connected_node_ids) {
-							if (typeof connected_node_id !== 'string') continue;
-							const connected_node = this.nodes.find((n) => n.id === connected_node_id);
-							if (connected_node) {
-								connected_node.color = filter.color;
-								if (!filter.visible && connected_node.temp_visible) {
-									connected_node.temp_visible = false;
-									const pos = this.network.getPosition(connected_node.id);
-									connected_node.x = pos.x;
-									connected_node.y = pos.y;
-								} else {
-									connected_node.temp_visible = true;
-								}
-							}
-						}
-						connected_node_ids = connected_node_ids.flatMap((id) =>
-							(this.network.getConnectedNodes(id) as string[]).filter(
-								(id) => typeof id === 'string'
-							)
-						);
-						this.network.getConnectedEdges(node.id).forEach((edge_id) => {
-							const data_edge = this.data.edges.get(edge_id);
-							const edge = this.get_edge(data_edge.from, data_edge.uri, data_edge.to);
-							if (edge) edge.color = { color: filter.color, highlight: filter.color };
-						});
-					}
-					break;
+		for (const filter of this.node_filters) {
+			const nodes = this.get_filter_nodes(filter);
+			for (const node of nodes) {
+				node.color = filter.color;
+				if (!filter.visible && node.temp_visible) {
+					node.temp_visible = false;
+					const pos = this.network.getPosition(node.id);
+					node.x = pos.x;
+					node.y = pos.y;
+				} else {
+					node.temp_visible = true;
 				}
 			}
+			for (let i = 1; i < nodes.length; i++) {
+				this.network.getConnectedEdges(nodes[i].id).forEach((edge_id) => {
+					const data_edge = this.data.edges.get(edge_id);
+					const edge = this.get_edge(data_edge.from, data_edge.uri, data_edge.to);
+					if (edge) edge.color = { color: filter.color, highlight: filter.color };
+				});
+			}
 		}
+
+		this.refresh_nodes();
+		this.refresh_edges();
+		this.data_view.nodes.refresh();
+		this.data_view.edges.refresh();
+		this.network.redraw();
 	}
 
 	node_filter(node: Node) {
@@ -341,7 +332,7 @@ export class Graph {
 
 	update_data(visible = true) {
 		if (!visible) return;
-
+		this.simulation_running = true;
 		const nodes = this.nodes.filter((node) => node.visible);
 		const edges = this.edges.filter((edge) => this.is_edge_visible(edge));
 
@@ -388,6 +379,8 @@ export class Graph {
 		if (!get(Settings).animations && visible) {
 			this.network?.stabilize();
 		}
+
+		this.refresh_filters();
 
 		return this.data;
 	}
@@ -689,5 +682,7 @@ export class Graph {
 		return new_nodes.concat(already_exists);
 	}
 }
+const defaultElement = document.createElement('div');
+defaultElement.setAttribute('default', 'true');
 
-export const CurrentGraph = writable<Graph>(new Graph(document.createElement('div')));
+export const CurrentGraph = writable<Graph>(new Graph(defaultElement));
