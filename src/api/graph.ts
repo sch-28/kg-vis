@@ -235,6 +235,8 @@ export class Graph {
 			(e) => nodes.find((n) => n.id == e.from) && nodes.find((n) => n.id == e.to)
 		);
 
+		this.node_filters = this.node_filters.filter((f) => f.node.id === filter.node.id);
+		
 		this.data.nodes.clear();
 		this.data.edges.clear();
 		this.update_data();

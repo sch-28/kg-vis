@@ -30,6 +30,7 @@
 	let is_ready = false;
 
 	onMount(() => {
+		is_ready = false;
 		init();
 		is_ready = true;
 	});
@@ -56,7 +57,6 @@
 				loading_graph = false;
 			});
 		}
-		console.log($CurrentGraph)
 	}
 
 	function show_context_menu(event: Click_Event) {
