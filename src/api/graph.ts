@@ -355,7 +355,7 @@ export class Graph {
 	}
 
 	node_filter(node: Node) {
-		return node.temp_visible;
+		return node.visible && node.temp_visible;
 	}
 
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars

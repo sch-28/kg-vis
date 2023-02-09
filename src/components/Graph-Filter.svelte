@@ -139,7 +139,6 @@
 
 	function prune(filter:NodeFilter){
 		$CurrentGraph.prune(filter);
-		console.log("prune filter")
 	}
 </script>
 
