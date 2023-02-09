@@ -6,6 +6,10 @@
 	import LoadingCircle from './util/Loading-Circle.svelte';
 
 	export let loading_graph: boolean = false;
+
+	function stabilize() {
+		$CurrentGraph.network.stabilize();
+	}
 </script>
 
 {#if loading_graph}
@@ -23,7 +27,7 @@
 					>Stop animation</Button
 				>
 				<Button
-					on:click={() => $CurrentGraph.network.stabilize()}
+					on:click={stabilize}
 					color="light"
 					btnClass="py-2 px-3 w-full text-left dark:hover:bg-black/30 hover:bg-black/10"
 					>Stabilize</Button
@@ -46,7 +50,7 @@
 					>Start animation</Button
 				>
 				<Button
-					on:click={() => $CurrentGraph.network.stabilize()}
+					on:click={stabilize}
 					color="light"
 					btnClass="rounded-b-lg py-2 px-3 w-full text-left dark:hover:bg-black/30 hover:bg-black/10"
 					>Stabilize</Button

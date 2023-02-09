@@ -31,8 +31,6 @@
 		init();
 	});
 
-	$: container && init();
-
 	function init() {
 		if (container && $CurrentGraph.container !== container) {
 			$CurrentGraph.network.destroy();
@@ -46,6 +44,12 @@
 			});
 			$CurrentGraph.network.on('stabilized', () => {
 				$CurrentGraph.simulation_running = false;
+				loading_graph = false;
+			});
+
+			$CurrentGraph.network.on('stabilizationIterationsDone', () => {
+				$CurrentGraph.simulation_running = false;
+				$CurrentGraph.network.stopSimulation();
 				loading_graph = false;
 			});
 		}
@@ -85,19 +89,21 @@
 	}
 </script>
 
-<InformationMenu bind:node={show_node_information} />
 <div bind:this={container} class="w-full h-full" />
-<PropertyMenu
-	{menu_position}
-	{selected_node}
-	loading={loading_properties}
-	information_tab_visible={show_node_information !== undefined}
-/>
-<ContextMenu
-	on_information={(node) => (show_node_information = node)}
-	{menu_position}
-	bind:hidden={hide_context_menu}
-	selection={context_selection}
-/>
-<ActionMenu />
-<GraphControls {loading_graph} />
+{#if $CurrentGraph.container == container}
+	<InformationMenu bind:node={show_node_information} />
+	<PropertyMenu
+		{menu_position}
+		{selected_node}
+		loading={loading_properties}
+		information_tab_visible={show_node_information !== undefined}
+	/>
+	<ContextMenu
+		on_information={(node) => (show_node_information = node)}
+		{menu_position}
+		bind:hidden={hide_context_menu}
+		selection={context_selection}
+	/>
+	<ActionMenu />
+	<GraphControls {loading_graph} />
+{/if}

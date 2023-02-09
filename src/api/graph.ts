@@ -139,7 +139,7 @@ export class Node {
 		if (image) {
 			this.update_image(image);
 		} else if (type === 'literal') {
-			this.shape = 'hexagon' as any // no idea why hexagon is not in the type
+			this.shape = 'hexagon' as any; // no idea why hexagon is not in the type
 		}
 	}
 
@@ -194,7 +194,7 @@ export class Graph {
 	node_filters: NodeFilter[];
 	simulation_running: boolean;
 
-	selected_color = "#277af7";
+	selected_color = '#277af7';
 
 	constructor(container: HTMLElement, start?: URI) {
 		this.container = container;
@@ -234,10 +234,10 @@ export class Graph {
 		this.edges = this.edges.filter(
 			(e) => nodes.find((n) => n.id == e.from) && nodes.find((n) => n.id == e.to)
 		);
+
+		this.data.nodes.clear();
+		this.data.edges.clear();
 		this.update_data();
-		this.network.once('stabilized', () => {
-			this.network.fit();
-		});
 	}
 
 	add_filter(node: Node, range?: number, color?: string, visible?: boolean) {
@@ -354,6 +354,8 @@ export class Graph {
 	update_data(visible = true) {
 		if (!visible) return;
 		this.simulation_running = true;
+		this.network?.startSimulation();
+
 		const nodes = this.nodes.filter((node) => node.visible);
 		const edges = this.edges.filter((edge) => this.is_edge_visible(edge));
 
