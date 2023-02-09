@@ -157,12 +157,32 @@ export class Edge {
 	label: string;
 	hidden_label: string;
 	color?: { color: string; highlight: string };
+	arrows: {
+		to: {
+			enabled: boolean;
+			type: 'arrow';
+		};
+		from: {
+			enabled: boolean;
+			type: 'arrow';
+		};
+	};
 
 	constructor(source: URI, uri: URI, target: URI, label: string) {
 		this.from = source;
 		this.uri = uri;
 		this.to = target;
 		this.hidden_label = label;
+		this.arrows = {
+			to: {
+				enabled: true,
+				type: 'arrow'
+			},
+			from: {
+				enabled: false,
+				type: 'arrow'
+			}
+		};
 		if (!get(Settings).hide_edge_labels) {
 			this.label = label;
 		} else this.label = '';
@@ -236,7 +256,7 @@ export class Graph {
 		);
 
 		this.node_filters = this.node_filters.filter((f) => f.node.id === filter.node.id);
-		
+
 		this.data.nodes.clear();
 		this.data.edges.clear();
 		this.update_data();
@@ -518,18 +538,13 @@ export class Graph {
 	}
 
 	create_edge(source: URI, uri: URI, target: URI, label: string) {
-		const old_edge = this.edges.find(
-			(edge) => edge.from == source && edge.uri == uri && edge.to == target
-		);
+		const old_edge =
+			this.edges.find((edge) => edge.from == source && edge.uri == uri && edge.to == target) ??
+			this.edges.find((edge) => edge.from == target && edge.uri == uri && edge.to == source);
 
 		if (old_edge) {
-			if (this.edges.find((edge) => edge.to == source && edge.uri == uri && edge.from == target)) {
-				return false;
-			} else {
-				const edge = new Edge(target, uri, source, label);
-				this.edges.push(edge);
-				return true;
-			}
+			old_edge.arrows.from.enabled = true;
+			return true;
 		}
 
 		const edge = new Edge(source, uri, target, label);
