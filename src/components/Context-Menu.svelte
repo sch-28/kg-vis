@@ -18,6 +18,7 @@
 	import GraphInformation from './modal/modals/Graph-Information.svelte';
 	import Export from './modal/modals/Export.svelte';
 	import { Hr } from 'flowbite-svelte';
+	import ConfirmDialog from './modal/modals/Confirm-Dialog.svelte';
 	export let menu_position = { x: 0, y: 0 };
 	export let hidden = true;
 	export let selection: Node | undefined = undefined;
@@ -122,7 +123,7 @@
 	function handle_filter() {
 		if (selection) {
 			$CurrentGraph.add_filter(selection);
-			CurrentGraph.update(u => $CurrentGraph);
+			CurrentGraph.update((u) => $CurrentGraph);
 		}
 		hidden = true;
 	}
@@ -143,8 +144,14 @@
 	}
 
 	function handle_delete_all() {
-		$CurrentGraph.reset();
 		hidden = true;
+		Modal_Manager.open(ConfirmDialog, {
+			message: `Are you sure you want to remove all nodes?`,
+			on_confirm: () => {
+				$CurrentGraph.reset();
+				hidden = true;
+			}
+		});
 	}
 
 	function handle_graph_information() {

@@ -18,6 +18,8 @@
 	import { CurrentGraph, type Node, type NodeFilter } from '../api/graph';
 	import Graph from './Graph.svelte';
 	import { noop } from 'svelte/internal';
+	import { Modal_Manager } from './modal/modal-store';
+	import ConfirmDialog from './modal/modals/Confirm-Dialog.svelte';
 
 	export let open: boolean;
 
@@ -140,8 +142,14 @@
 	}
 
 	function prune(filter: NodeFilter) {
-		$CurrentGraph.prune(filter);
 		selected_filter_dropdown = undefined;
+		$CurrentGraph.node_filters = $CurrentGraph.node_filters;
+		Modal_Manager.open(ConfirmDialog, {
+			message: `Are you sure you want to delete all nodes that are not in the ${filter.node.label} filter?`,
+			on_confirm: () => {
+				$CurrentGraph.prune(filter);
+			}
+		});
 	}
 
 	let selected_filter: NodeFilter | undefined = undefined;
