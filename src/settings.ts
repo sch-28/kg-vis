@@ -88,6 +88,6 @@ export const Settings = storage<Settings>('settings', {
 	animations: false,
 	hide_edges_on_drag: false,
 	hide_edge_labels: false,
-	smooth_edges: true,
+	smooth_edges: false,
 	smart_search: true
 });

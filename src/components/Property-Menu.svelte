@@ -66,6 +66,7 @@
 	let add_all_button: HTMLButtonElement;
 	const menu_offset = 30;
 	const menu_gap = 16;
+	let item_container: HTMLElement;
 
 	$: wrapper && menu_position && set_menu_position();
 
@@ -107,6 +108,7 @@
 		};
 		set_selected_item(-2);
 		sort_items();
+		item_container?.scrollTo(0, 0);
 	}
 
 	function change_sort_by(new_sort_by: typeof state.sort_by) {
@@ -118,6 +120,7 @@
 		}
 
 		sort_items();
+		item_container?.scrollTo(0, 0);
 	}
 
 	$: {
@@ -196,6 +199,7 @@
 				$CurrentGraph.network?.DOMtoCanvas(menu_position)
 			);
 			loading = false;
+			item_container?.scrollTo(0, 0);
 			sort_items();
 		} else {
 			item = item as Node;
@@ -568,7 +572,10 @@
 				</button>
 			{/each}
 		</div>
-		<div class="flex flex-col overflow-y-auto max-h-[200px] h-[200px] ml-2 mr-1 ">
+		<div
+			class="flex flex-col overflow-y-auto max-h-[200px] h-[200px] ml-2 mr-1 "
+			bind:this={item_container}
+		>
 			{#each state.sorted_items as item, i}
 				<button
 					bind:this={item.button}
