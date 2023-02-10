@@ -141,9 +141,11 @@
 
 	function prune(filter: NodeFilter) {
 		$CurrentGraph.prune(filter);
+		selected_filter_dropdown = undefined;
 	}
 
 	let selected_filter: NodeFilter | undefined = undefined;
+	let selected_filter_dropdown: NodeFilter | undefined = undefined;
 	let last_closed: NodeFilter | undefined = undefined;
 </script>
 
@@ -261,7 +263,10 @@
 								/></svg
 							>
 						</ToolbarButton>
-						<Dropdown frameClass="[&_ul]:py-0 !rounded-lg overflow-hidden ">
+						<Dropdown
+							frameClass="[&_ul]:py-0 !rounded-lg overflow-hidden"
+							open={selected_filter_dropdown === filter}
+						>
 							<DropdownItem>Copy SPARQL</DropdownItem>
 							<DropdownItem on:click={() => prune(filter)}>Prune other</DropdownItem>
 							<DropdownItem
