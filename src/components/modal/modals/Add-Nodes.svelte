@@ -251,8 +251,11 @@ WHERE
 		loading = false;
 	}
 
+	let search_input:HTMLInputElement;
+
 	onMount(() => {
 		update_height();
+		search_input.focus();
 	});
 </script>
 
@@ -320,6 +323,7 @@ WHERE
 						show_suggestsions = true;
 					}
 				}}
+				bind:this={search_input}
 				bind:value={entity_url}
 				type="text"
 				id="entity_url"
