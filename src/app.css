@@ -27,11 +27,28 @@ html.dark {
 }
 
 .color-picker .wrapper {
-	@apply border-gray-200 border shadow-lg rounded-lg dark:border-dark-muted dark:bg-dark-bg bg-white;
+	@apply border-gray-200 border shadow-lg rounded-lg dark:border-dark-muted dark:bg-dark-bg bg-white m-0 w-full;
 }
 
-.color-picker .wrapper input,.color-picker .wrapper button{
+.color-picker label{
+	@apply !hidden
+}
+
+.color-picker .wrapper .picker-wrapper {
+	@apply w-[165px] h-[165px];
+}
+
+.color-picker .wrapper input,
+.color-picker .wrapper button {
 	@apply dark:bg-dark-muted;
+}
+
+.color-picker .wrapper .slider-wrapper {
+	@apply h-[165px];
+}
+
+.color-picker .container {
+	@apply !hidden;
 }
 
 ::-webkit-scrollbar {

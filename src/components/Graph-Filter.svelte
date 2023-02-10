@@ -17,6 +17,7 @@
 	import ColorPicker from 'svelte-awesome-color-picker';
 	import { CurrentGraph, type Node, type NodeFilter } from '../api/graph';
 	import Graph from './Graph.svelte';
+	import { noop } from 'svelte/internal';
 
 	export let open: boolean;
 
@@ -130,6 +131,7 @@
 
 	function update_filter() {
 		$CurrentGraph.refresh_filters();
+		$CurrentGraph.node_filters = $CurrentGraph.node_filters;
 	}
 
 	function delete_filter(node: Node) {
@@ -137,9 +139,12 @@
 		$CurrentGraph = $CurrentGraph;
 	}
 
-	function prune(filter:NodeFilter){
+	function prune(filter: NodeFilter) {
 		$CurrentGraph.prune(filter);
 	}
+
+	let selected_filter: NodeFilter | undefined = undefined;
+	let last_closed: NodeFilter | undefined = undefined;
 </script>
 
 <div
@@ -152,7 +157,7 @@
 		: ''}"
 >
 	<div
-		class="flex flex-col {$CurrentGraph?.node_filters.length > 0
+		class="flex flex-col relative {$CurrentGraph?.node_filters.length > 0
 			? 'w-full'
 			: 'mx-auto w-56'} pointer-events-auto h-fit"
 	>
@@ -205,10 +210,33 @@
 				</button>
 			{/each}
 		</div>
+		{#if selected_filter !== undefined}
+			<div
+				class="absolute pointer-events-auto left-0 w-full"
+				use:click_outside
+				on:click_outside={() => {
+					last_closed = selected_filter;
+					selected_filter = undefined;
+					setTimeout(() => {
+						last_closed = undefined;
+					}, 0);
+				}}
+			>
+				<ColorPicker
+					isPopup={false}
+					label=""
+					bind:hex={selected_filter.color}
+					isOpen={true}
+					on:input={update_filter}
+				/>
+			</div>
+		{/if}
 	</div>
 
 	{#if $CurrentGraph && $CurrentGraph.node_filters.length > 0}
-		<div class="pointer-events-auto z-[49] duration-200 transition-all flex flex-col gap-2 h-fit">
+		<div
+			class="pointer-events-auto z-[49] duration-200 transition-all flex flex-col gap-2 h-fit max-h-[405px] overflow-auto"
+		>
 			{#each $CurrentGraph.node_filters as filter}
 				<div
 					class="border shadow-lg rounded-lg dark:border-dark-muted dark:bg-dark-bg bg-white flex flex-col p-2 gap-1"
@@ -268,10 +296,16 @@
 							}}
 						/>
 					</div>
-					<div class="flex items-start justify-center flex-col gap-1 pb-2">
+					<div class="flex items-start justify-center flex-col gap-1">
 						<Label>Color</Label>
 						<div class="flex gap-1 items-center">
-							<ColorPicker label="" bind:hex={filter.color} on:input={update_filter} />
+							<button
+								style="background-color: {filter.color};"
+								class="w-8 h-8 rounded-full mr-2"
+								on:click={() => {
+									if (!last_closed || last_closed.node !== filter.node) selected_filter = filter;
+								}}
+							/>
 							<p>{filter.color}</p>
 						</div>
 					</div>
