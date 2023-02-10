@@ -511,13 +511,13 @@ export class Graph {
 		this.refresh_nodes();
 	}
 
-	export_sparql() {
+	export_sparql(nodes:Node[]) {
 		return `
 	SELECT ?nodes
 	WHERE 
 	{
 		VALUES ?nodes{
-			${this.data.nodes
+			${nodes
 				.map((node: Node) => {
 					if (isUrl(node.id)) return `${SPARQL.shorten_uri(node.id)}`;
 					else

@@ -10,7 +10,7 @@
 		Toggle,
 		ToolbarButton
 	} from 'flowbite-svelte';
-	import { click_outside, dark_mode, fuzzy_search } from '../util';
+	import { click_outside, copy_to_clipboard, dark_mode, fuzzy_search } from '../util';
 	import { onDestroy, onMount } from 'svelte';
 	import { Icon } from '@steeze-ui/svelte-icon';
 	import { Plus, XMark } from '@steeze-ui/heroicons';
@@ -138,7 +138,7 @@
 
 	function delete_filter(node: Node) {
 		$CurrentGraph.remove_filter(node);
-		$CurrentGraph = $CurrentGraph;
+		$CurrentGraph.node_filters = $CurrentGraph.node_filters;
 	}
 
 	function prune(filter: NodeFilter) {
@@ -150,6 +150,12 @@
 				$CurrentGraph.prune(filter);
 			}
 		});
+	}
+
+	function filter_sparql(filter: NodeFilter) {
+		selected_filter_dropdown = undefined;
+		$CurrentGraph.node_filters = $CurrentGraph.node_filters;
+		copy_to_clipboard($CurrentGraph.export_sparql($CurrentGraph.get_filter_nodes(filter)));
 	}
 
 	let selected_filter: NodeFilter | undefined = undefined;
@@ -275,7 +281,7 @@
 							frameClass="[&_ul]:py-0 !rounded-lg overflow-hidden"
 							open={selected_filter_dropdown === filter}
 						>
-							<DropdownItem>Copy SPARQL</DropdownItem>
+							<DropdownItem on:click={() => filter_sparql(filter)}>Copy SPARQL</DropdownItem>
 							<DropdownItem on:click={() => prune(filter)}>Prune other</DropdownItem>
 							<DropdownItem
 								on:click={() => delete_filter(filter.node)}

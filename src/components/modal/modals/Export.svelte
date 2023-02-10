@@ -37,27 +37,7 @@
 	}
 
 	function export_sparql() {
-		copy_to_clipboard(`
-SELECT ?nodes
-WHERE 
-{
-	VALUES ?nodes{
-        ${$CurrentGraph.data.nodes
-					.map((node: Node) => {
-						if (isUrl(node.id)) return `${SPARQL.shorten_uri(node.id)}`;
-						else
-							return `"${node.id}"${
-								node.datatype
-									? '^^' + SPARQL.shorten_uri(node.datatype)
-									: node.language
-									? '@' + node.language
-									: ''
-							}`;
-					})
-					.join('\n')}
-    }
-}
-        `);
+		copy_to_clipboard($CurrentGraph.export_sparql($CurrentGraph.data.nodes.get() as Node[]));
 	}
 </script>
 
@@ -66,7 +46,10 @@ WHERE
 	{#if image_src.length > 0}
 		<img src={image_src} alt="graph" class="" />
 	{:else}
-		Could not export image because of iframe security :(
+		<p>
+			Could not export graph due to a tainted canvas. Disable images in the settings if you want to
+			export the graph as an image.
+		</p>
 	{/if}
 
 	<Button on:click={download}>Download Image</Button>

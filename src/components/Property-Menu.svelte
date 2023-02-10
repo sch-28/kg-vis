@@ -210,7 +210,6 @@
 	}
 
 	function search(event: KeyboardEvent) {
-		console.log('hi');
 		if (event.code === 'KeyF' && event.ctrlKey) {
 			event.preventDefault();
 			event.stopPropagation();
