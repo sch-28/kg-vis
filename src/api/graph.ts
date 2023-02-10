@@ -511,16 +511,41 @@ export class Graph {
 		this.refresh_nodes();
 	}
 
+	export_sparql() {
+		return `
+	SELECT ?nodes
+	WHERE 
+	{
+		VALUES ?nodes{
+			${this.data.nodes
+				.map((node: Node) => {
+					if (isUrl(node.id)) return `${SPARQL.shorten_uri(node.id)}`;
+					else
+						return `"${node.id}"${
+							node.datatype
+								? '^^' + SPARQL.shorten_uri(node.datatype)
+								: node.language
+								? '@' + node.language
+								: ''
+						}`;
+				})
+				.join('\n')}
+		}
+	}
+			`;
+	}
+
 	refresh_nodes() {
 		const positions = this.network.getPositions();
-		for (const node of this.nodes) {
+		const nodes = this.nodes.filter((node) => node.visible);
+		for (const node of nodes) {
 			if (!node.temp_visible) {
 				continue;
 			}
 			node.x = positions[node.id]?.x ?? node.x ?? 0;
 			node.y = positions[node.id]?.y ?? node.y ?? 0;
 		}
-		this.data.nodes.update(this.nodes);
+		this.data.nodes.update(nodes);
 		if (!this.simulation_running) {
 			this.network.stopSimulation();
 		}
