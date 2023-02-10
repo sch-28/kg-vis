@@ -171,8 +171,8 @@
 		if (information_tab_visible) {
 			window_width -= 400;
 		}
-		if (new_position.x + 178 > window_width) {
-			new_position.x = window_width - 178 - menu_gap;
+		if (new_position.x + wrapper.offsetWidth > window_width) {
+			new_position.x = window_width - wrapper.offsetWidth - menu_gap;
 		}
 		if (new_position.y + wrapper.offsetHeight / 2 > window.innerHeight) {
 			new_position.y = window.innerHeight - wrapper.offsetHeight - menu_gap;
@@ -224,33 +224,34 @@
 	}
 </script>
 
-<div
-	bind:this={wrapper}
-	{hidden}
-	class="border dark:border-dark-muted dark:bg-dark-bg bg-white shadow-md z-40 absolute p-2 rounded-lg"
->
-	<div class="context-menu">
-		{#each current_actions as action}
-			{#if action === 'split'}
-				<!-- <hr class="my-1" /> -->
-				<Hr divClass="my-1" />
-			{:else}
-				<button
-					class="context-menu-item dark:hover:bg-black/30 hover:bg-black/10 {action.danger
-						? 'text-error dark:text-error-dark'
-						: ''}"
-					on:click={action.handle}
-				>
-					<div class="icon">
-						<Icon src={action.icon} />
-					</div>
+{#if !hidden}
+	<div
+		bind:this={wrapper}
+		class="border dark:border-dark-muted dark:bg-dark-bg bg-white shadow-md z-40 absolute p-2 rounded-lg"
+	>
+		<div class="context-menu">
+			{#each current_actions as action}
+				{#if action === 'split'}
+					<!-- <hr class="my-1" /> -->
+					<Hr divClass="my-1" />
+				{:else}
+					<button
+						class="context-menu-item dark:hover:bg-black/30 hover:bg-black/10 {action.danger
+							? 'text-error dark:text-error-dark'
+							: ''}"
+						on:click={action.handle}
+					>
+						<div class="icon">
+							<Icon src={action.icon} />
+						</div>
 
-					{action.label}
-				</button>
-			{/if}
-		{/each}
+						{action.label}
+					</button>
+				{/if}
+			{/each}
+		</div>
 	</div>
-</div>
+{/if}
 
 <style lang="postcss">
 	.context-menu {
