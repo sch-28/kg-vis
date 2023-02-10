@@ -244,9 +244,7 @@ export class Graph {
 		}
 	}
 
-	prune(filter: NodeFilter) {
-		const nodes = this.get_filter_nodes(filter);
-
+	prune(nodes: Node[]) {
 		this.nodes = nodes;
 		for (const node of nodes) {
 			node.properties.map((p) => (p.fetched = false));
@@ -255,7 +253,7 @@ export class Graph {
 			(e) => nodes.find((n) => n.id == e.from) && nodes.find((n) => n.id == e.to)
 		);
 
-		this.node_filters = this.node_filters.filter((f) => f.node.id === filter.node.id);
+		this.node_filters = this.node_filters.filter((f) => nodes.includes(f.node));
 
 		this.data.nodes.clear();
 		this.data.edges.clear();
@@ -511,7 +509,7 @@ export class Graph {
 		this.refresh_nodes();
 	}
 
-	export_sparql(nodes:Node[]) {
+	export_sparql(nodes: Node[]) {
 		return `
 	SELECT ?nodes
 	WHERE 

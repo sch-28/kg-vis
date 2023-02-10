@@ -147,7 +147,19 @@
 		Modal_Manager.open(ConfirmDialog, {
 			message: `Are you sure you want to delete all nodes that are not in the ${filter.node.label} filter?`,
 			on_confirm: () => {
-				$CurrentGraph.prune(filter);
+				const filter_node_ids = $CurrentGraph.get_filter_nodes(filter).map((n) => n.id);
+				$CurrentGraph.prune($CurrentGraph.data.nodes.get().filter((n) => !filter_node_ids.includes(n.id)));
+			}
+		});
+	}
+
+	function prune_other(filter: NodeFilter) {
+		selected_filter_dropdown = undefined;
+		$CurrentGraph.node_filters = $CurrentGraph.node_filters;
+		Modal_Manager.open(ConfirmDialog, {
+			message: `Are you sure you want to delete all nodes that are not in the ${filter.node.label} filter?`,
+			on_confirm: () => {
+				$CurrentGraph.prune($CurrentGraph.get_filter_nodes(filter));
 			}
 		});
 	}
@@ -282,7 +294,8 @@
 							open={selected_filter_dropdown === filter}
 						>
 							<DropdownItem on:click={() => filter_sparql(filter)}>Copy SPARQL</DropdownItem>
-							<DropdownItem on:click={() => prune(filter)}>Prune other</DropdownItem>
+							<DropdownItem on:click={() => prune(filter)}>Prune</DropdownItem>
+							<DropdownItem on:click={() => prune_other(filter)}>Prune other</DropdownItem>
 							<DropdownItem
 								on:click={() => delete_filter(filter.node)}
 								defaultClass="font-medium py-2 px-4 text-sm hover:bg-gray-100 dark:hover:bg-gray-600 w-full text-left text-error dark:text-error-dark"
