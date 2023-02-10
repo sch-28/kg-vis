@@ -94,6 +94,8 @@
 
 	$: selected_node && reset();
 
+	$: !selected_node && document.removeEventListener('keydown', search, false);
+
 	function reset() {
 		state = {
 			sort_direction: 1,
@@ -208,6 +210,7 @@
 	}
 
 	function search(event: KeyboardEvent) {
+		console.log('hi');
 		if (event.code === 'KeyF' && event.ctrlKey) {
 			event.preventDefault();
 			event.stopPropagation();
