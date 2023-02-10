@@ -107,6 +107,7 @@
 		{menu_position}
 		bind:hidden={hide_context_menu}
 		selection={context_selection}
+		information_tab_visible={show_node_information !== undefined}
 	/>
 	<ActionMenu />
 	<GraphControls {loading_graph} />

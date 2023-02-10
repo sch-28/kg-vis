@@ -23,8 +23,10 @@
 	export let hidden = true;
 	export let selection: Node | undefined = undefined;
 	export let on_information: (node: Node) => void;
+	export let information_tab_visible: boolean = false;
 
 	let wrapper: HTMLElement;
+	const menu_gap = 16;
 
 	type Action = {
 		icon: IconSource;
@@ -107,10 +109,7 @@
 
 	let current_actions: (Action | 'split')[] = node_actions();
 
-	$: {
-		wrapper;
-		set_position(menu_position);
-	}
+	$: wrapper && menu_position && set_position();
 
 	$: {
 		current_actions = selection ? node_actions() : canvas_actions();
@@ -166,11 +165,25 @@
 		hidden = true;
 	}
 
-	function set_position(position: { x: number; y: number }) {
-		if (wrapper) {
-			wrapper.style.top = position.y + 'px';
-			wrapper.style.left = position.x + 'px';
+	function set_position() {
+		const new_position = { x: menu_position.x, y: menu_position.y };
+		let window_width = window.innerWidth;
+		if (information_tab_visible) {
+			window_width -= 400;
 		}
+		if (new_position.x + 178 > window_width) {
+			new_position.x = window_width - 178 - menu_gap;
+		}
+		if (new_position.y + wrapper.offsetHeight / 2 > window.innerHeight) {
+			new_position.y = window.innerHeight - wrapper.offsetHeight - menu_gap;
+		} else if (new_position.y - wrapper.offsetHeight / 2 < 0) {
+			new_position.y = menu_gap;
+		} else {
+			new_position.y -= wrapper.offsetHeight / 2;
+		}
+
+		wrapper.style.top = new_position.y + 'px';
+		wrapper.style.left = new_position.x + 'px';
 	}
 
 	function handle_delete() {
