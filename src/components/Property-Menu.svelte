@@ -11,12 +11,13 @@
 		ListBullet,
 		ArrowLeft
 	} from '@steeze-ui/heroicons';
-	import { click_outside, fuzzy_search, show_loading_toast } from '../util';
+	import { click_outside, fuzzy_search } from '../util';
 	import LoadingCircle from './util/Loading-Circle.svelte';
 	import { Settings } from '../settings';
 	import { Button, Checkbox } from 'flowbite-svelte';
 	import type Fuse from 'fuse.js';
 	import { onDestroy } from 'svelte';
+	import { LoaderManager } from './loader/graph-loader';
 	export let selected_node: Node | undefined = undefined;
 	export let menu_position = { x: 0, y: 0 };
 	export let information_tab_visible: boolean = false;
@@ -279,7 +280,7 @@
 	function add_selected() {
 		if (state.current_context === 'property') return;
 		$CurrentGraph.show_nodes(state.selected_nodes);
-		selected_node = undefined;
+		close();
 	}
 
 	async function show_all() {
@@ -309,7 +310,7 @@
 			return new Promise<Node[]>((res) => {
 				if (!selected_node) return res([]);
 				$CurrentGraph
-					.load_related_nodes(selected_node.id, p, false, undefined, false, false)
+					.load_related_nodes(selected_node.id, p, false, undefined, false)
 					.then((nodes) => {
 						if (state.current_context === 'node') {
 							for (let node of nodes) {
@@ -325,7 +326,7 @@
 		});
 
 		const new_nodes = [...new Set((await Promise.all(promises)).flat())];
-		$CurrentGraph.load_relations(new_nodes, false, true);
+		$CurrentGraph.load_relations(new_nodes, false);
 	}
 
 	async function add_all() {
@@ -333,25 +334,23 @@
 		const node = selected_node;
 		if (!node) return;
 
-		selected_node = undefined;
+		close();
 
 		const properties = state.sorted_items.map((p) => p.item);
 		const promises = properties.map((p) =>
-			$CurrentGraph.load_related_nodes(node.id, p, false, undefined, false, false)
+			$CurrentGraph.load_related_nodes(node.id, p, false, undefined, false)
 		);
-
 		const promise = Promise.all(promises);
-		show_loading_toast(promise, 'Related');
 		const new_nodes = [...new Set((await promise).flat())];
 		$CurrentGraph.show_nodes(new_nodes, false);
-		await $CurrentGraph.load_relations(new_nodes, true, true);
+		await $CurrentGraph.load_relations(new_nodes, true);
 	}
 
 	async function add_property(property: Property | Node) {
 		if (!selected_node || state.current_context === 'node') return;
 		property = property as Property;
 		const selected_node_id = selected_node.id;
-		selected_node = undefined;
+		close();
 
 		const nodes = await $CurrentGraph.load_related_nodes(
 			selected_node_id,
@@ -394,6 +393,11 @@
 				state = state;
 			}
 		}
+	}
+
+	function close() {
+		LoaderManager.open();
+		selected_node = undefined;
 	}
 
 	onDestroy(() => {

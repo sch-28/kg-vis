@@ -49,7 +49,7 @@
 				return new Promise<Node[]>((res) => {
 					if (!node) return res([]);
 					$CurrentGraph
-						.load_related_nodes(node.id, p, false, undefined, false, false)
+						.load_related_nodes(node.id, p, false, undefined)
 						.then((nodes) => {
 							paginated_properties = paginated_properties;
 							return res(nodes);
@@ -58,7 +58,7 @@
 			});
 
 			const new_nodes = [...new Set((await Promise.all(promises)).flat())];
-			$CurrentGraph.load_relations(new_nodes, false, false);
+			$CurrentGraph.load_relations(new_nodes, false);
 
 			loading_related = false;
 		}

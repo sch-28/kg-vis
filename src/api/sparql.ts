@@ -269,11 +269,7 @@ class SPARQL_Queries {
 	}
 
 	// used to fetch all related nodes for a given node and one of its property
-	public async fetch_related_nodes(subject: URI, property: URI, notify?: boolean) {
-		let resolve!: () => void;
-		const promise = new Promise<void>((res) => (resolve = res));
-		notify && show_loading_toast(promise, 'Related');
-
+	public async fetch_related_nodes(subject: URI, property: URI) {
 		const result = await this.query<{ object: BindingContent; objectLabel?: BindingContent }>(
 			`
 			SELECT DISTINCT ?object ?objectLabel ?objectDescription  WHERE {
@@ -288,7 +284,6 @@ class SPARQL_Queries {
 				}
 				} LIMIT ${this.size_limit}`
 		);
-		resolve();
 
 		const results = result
 			.map((r) => ({
@@ -463,13 +458,7 @@ class SPARQL_Queries {
 	public async fetch_multiple_relations(
 		subjects: BindingContent[],
 		other_nodes: BindingContent[],
-		notify: boolean = true
 	) {
-		let resolve!: () => void;
-
-		const promise = new Promise<void>((res) => (resolve = res));
-		notify && show_loading_toast(promise, 'Relations');
-
 		const relations = (await this.fetch_relations(subjects, other_nodes)).map((r) => {
 			const outgoing_property = r.dir.value === 'out';
 
@@ -491,8 +480,6 @@ class SPARQL_Queries {
 				/* relation.property_description = info.description; */
 			}
 		}
-
-		resolve();
 		return relations;
 	}
 

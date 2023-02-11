@@ -7,6 +7,7 @@
 	import GraphControls from './Graph-Controls.svelte';
 	import { onMount } from 'svelte';
 	import GraphLoader from './loader/Graph-Loader.svelte';
+	import { LoaderManager } from './loader/graph-loader';
 
 	interface ClickEvent {
 		edges: [];
@@ -45,18 +46,24 @@
 			$CurrentGraph.network.on('click', show_properties);
 			$CurrentGraph.network.on('oncontext', show_context_menu);
 			$CurrentGraph.network.on('startStabilizing', () => {
-				console.log('ho');
 				loading_graph = true;
+				LoaderManager.open();
+			});
+			$CurrentGraph.network.on('stabilized', () => {
+				LoaderManager.close();
 			});
 			$CurrentGraph.network.on('stabilizationIterationsDone', () => {
-				console.log('hi');
 				$CurrentGraph.simulation_running = false;
 				$CurrentGraph.network.setOptions({ physics: false });
 				loading_graph = false;
+				LoaderManager.close();
 			});
 
 			$CurrentGraph.network.on('stabilizationProgress', (params) => {
-				console.log(params);
+				LoaderManager.set_status(
+					'stabilizing',
+					Math.round((params.iterations / params.total) * 100)
+				);
 			});
 		}
 	}

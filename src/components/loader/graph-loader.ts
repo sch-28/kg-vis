@@ -1,18 +1,12 @@
 import { writable } from 'svelte/store';
 
-type LoaderLoading = {
-	loading: true;
-	state: LoadingState;
+export type Loader = {
+	visible: boolean;
+	state?: LoadingState;
 	progress?: number;
 };
 
-export type Loader =
-	| {
-			loading: false;
-	  }
-	| LoaderLoading;
-
-const CurrentLoader = writable<Loader>({ loading: false });
+const CurrentLoader = writable<Loader>({ visible: false });
 
 export const LoadingStates = ['related', 'relations', 'stabilizing'] as const;
 export type LoadingState = typeof LoadingStates[number];
@@ -21,13 +15,17 @@ export const LoadingStatesDescription: Record<LoadingState, string> = {
 	relations: 'Loading relations',
 	stabilizing: 'Stabilizing graph'
 };
-export abstract class GraphLoader {
+export abstract class LoaderManager {
 	static set_status(state: LoadingState, progress?: number) {
-		CurrentLoader.set({ loading: true, state, progress });
+		CurrentLoader.update((s) => ({ ...s, state, progress }));
 	}
 
 	static close() {
-		CurrentLoader.set({ loading: false });
+		CurrentLoader.set({ visible: false });
+	}
+
+	static open() {
+		CurrentLoader.update((s) => ({ ...s, visible: true }));
 	}
 
 	static get store() {

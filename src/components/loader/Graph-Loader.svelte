@@ -1,14 +1,14 @@
 <script lang="ts">
 	import LoadingCircle from '../util/Loading-Circle.svelte';
 	import {
-		GraphLoader,
+		LoaderManager,
 		LoadingStates,
 		LoadingStatesDescription,
 		type Loader
 	} from './graph-loader';
 
 	let loader: Loader;
-	GraphLoader.store.subscribe((new_loader) => {
+	LoaderManager.store.subscribe((new_loader) => {
 		loader = new_loader;
 		/* loader.loading = true;
 		if (loader.loading) {
@@ -18,7 +18,7 @@
 	});
 </script>
 
-{#if loader && loader.loading}
+{#if loader && loader.visible && loader.state}
 	<div
 		class="z-[51] fixed top-0 left-0 w-screen h-screen flex flex-col justify-center bg-gray-900 bg-opacity-50 dark:bg-opacity-75"
 	>
@@ -34,14 +34,12 @@
 						<div class="grid grid-cols-3 gap-2 w-80 items-center">
 							{#each LoadingStates as state}
 								<div
-									class="{state === loader.state
-										? 'h-[10px]'
-										: 'h-2'} bg-gray-300 dark:bg-dark-muted rounded-full overflow-hidden relative transition-all duration-300"
+									class="h-2 bg-gray-300 dark:bg-dark-muted rounded-full overflow-hidden relative transition-all duration-300"
 								>
 									<div
 										class="{state === loader.state
-											? 'bg-blue-500 dark:bg-blue-500 h-[10px]'
-											: 'bg-blue-500 dark:bg-blue-900 h-2'} transition-all duration-300"
+											? 'bg-blue-500 dark:bg-blue-500'
+											: 'bg-blue-500 dark:bg-blue-900'} h-full transition-all duration-300"
 										style="width: {loader.state === state && loader.progress
 											? loader.progress
 											: LoadingStates.indexOf(state) < LoadingStates.indexOf(loader.state)

@@ -6,6 +6,7 @@ import { get, writable } from 'svelte/store';
 import isUrl from 'is-url';
 import { blend_colors, dark_mode } from '../util';
 import * as vis from 'vis-network';
+import { LoaderManager } from '../components/loader/graph-loader';
 
 const get_network_options = () => ({
 	interaction: {
@@ -434,6 +435,7 @@ export class Graph {
 
 		if (visible) {
 			this.network?.stabilize();
+			LoaderManager.set_status('stabilizing', 0);
 		}
 		this.refresh_filters();
 
@@ -638,12 +640,13 @@ export class Graph {
 		return node;
 	}
 
-	async load_relations(new_nodes: Node[], visible: boolean = true, notify: boolean = true) {
+	async load_relations(new_nodes: Node[], visible: boolean = true) {
+		LoaderManager.set_status('relations', 0);
 		SPARQL.fetch_multiple_relations(
 			new_nodes.map(SPARQL.convert_node_to_binding_content),
 			this.nodes.map(SPARQL.convert_node_to_binding_content),
-			notify
 		).then((relations) => {
+			LoaderManager.set_status('relations', 100);
 			let update = false;
 			for (const relation of relations) {
 				this.create_edge(
@@ -686,7 +689,6 @@ export class Graph {
 			x: number;
 			y: number;
 		} = { x: 0, y: 0 },
-		notify = true,
 		fetch_related = true
 	) {
 		const node = this.find_or_create_node(uri, uri);
@@ -697,10 +699,12 @@ export class Graph {
 			node.properties.push(property);
 			existing_property = property;
 		}
-
-		const raw_new_nodes = (await SPARQL.fetch_related_nodes(uri, property.uri, notify)).sort(
+		LoaderManager.set_status('related', 0);
+		const raw_new_nodes = (await SPARQL.fetch_related_nodes(uri, property.uri)).sort(
 			(a, b) => a.label.localeCompare(b.label)
 		);
+		LoaderManager.set_status('related', 100);
+
 		const new_nodes: Node[] = [];
 		const already_exists: Node[] = [];
 
@@ -733,7 +737,7 @@ export class Graph {
 
 		// fetch all interconnections
 		if (get(Settings).fetch_related && fetch_related) {
-			this.load_relations(new_nodes, visible, notify);
+			this.load_relations(new_nodes, visible);
 		} else {
 			this.update_data(visible);
 		}
