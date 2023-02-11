@@ -528,8 +528,8 @@
 					: 'opacity-100 cursor-pointer'}"
 			>
 				<Checkbox
-					checked={state.sorted_items.length > 0 &&
-						state.sorted_items.length == state.selected_nodes.length}
+					checked={state.selected_nodes.length > 0 &&
+						state.sorted_items.filter((i) => !i.item.visible).length == state.selected_nodes.length}
 					on:click={(e) => {
 						select_all();
 						e.stopPropagation();
