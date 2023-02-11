@@ -6,6 +6,7 @@
 	import InformationMenu from './Information-Menu.svelte';
 	import GraphControls from './Graph-Controls.svelte';
 	import { onMount } from 'svelte';
+	import GraphLoader from './loader/Graph-Loader.svelte';
 
 	interface ClickEvent {
 		edges: [];
@@ -112,4 +113,5 @@
 	/>
 	<ActionMenu />
 	<GraphControls {loading_graph} />
+	<GraphLoader />
 {/if}
