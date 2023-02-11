@@ -331,7 +331,9 @@ export class Graph {
 			for (let i = 1; i < nodes.length; i++) {
 				this.network.getConnectedEdges(nodes[i].id).forEach((edge_id) => {
 					const data_edge = this.data.edges.get(edge_id);
-					const edge = this.get_edge(data_edge.from, data_edge.uri, data_edge.to);
+					const edge =
+						this.get_edge(data_edge.from, data_edge.uri, data_edge.to) ||
+						this.get_edge(data_edge.to, data_edge.uri, data_edge.from);
 					if (edge && node_ids.includes(edge.from) && node_ids.includes(edge.to)) {
 						if (
 							edge.color?.color != get_network_options().edges.color.color &&
@@ -340,6 +342,11 @@ export class Graph {
 							edge.color = {
 								color: blend_colors(edge.color.color, filter.color, 0.5),
 								highlight: blend_colors(edge.color.color, filter.color, 0.5)
+							};
+						} else {
+							edge.color = {
+								color: filter.color,
+								highlight: filter.color
 							};
 						}
 					}
@@ -644,7 +651,7 @@ export class Graph {
 		LoaderManager.set_status('relations', 0);
 		SPARQL.fetch_multiple_relations(
 			new_nodes.map(SPARQL.convert_node_to_binding_content),
-			this.nodes.map(SPARQL.convert_node_to_binding_content),
+			this.nodes.map(SPARQL.convert_node_to_binding_content)
 		).then((relations) => {
 			LoaderManager.set_status('relations', 100);
 			let update = false;
@@ -700,8 +707,8 @@ export class Graph {
 			existing_property = property;
 		}
 		LoaderManager.set_status('related', 0);
-		const raw_new_nodes = (await SPARQL.fetch_related_nodes(uri, property.uri)).sort(
-			(a, b) => a.label.localeCompare(b.label)
+		const raw_new_nodes = (await SPARQL.fetch_related_nodes(uri, property.uri)).sort((a, b) =>
+			a.label.localeCompare(b.label)
 		);
 		LoaderManager.set_status('related', 100);
 
