@@ -135,7 +135,7 @@ WHERE
 	}
 
 	async function add_nodes() {
-		$CurrentGraph.show_nodes(nodes);
+		$CurrentGraph.show_nodes(nodes, false);
 		$CurrentGraph.load_relations(nodes);
 
 		close();

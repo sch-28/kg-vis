@@ -343,8 +343,8 @@
 		const promise = Promise.all(promises);
 		show_loading_toast(promise, 'Related');
 		const new_nodes = [...new Set((await promise).flat())];
-		await $CurrentGraph.load_relations(new_nodes, false, true);
-		$CurrentGraph.show_nodes(new_nodes);
+		$CurrentGraph.show_nodes(new_nodes, false);
+		await $CurrentGraph.load_relations(new_nodes, true, true);
 	}
 
 	async function add_property(property: Property | Node) {
@@ -356,11 +356,9 @@
 		const nodes = await $CurrentGraph.load_related_nodes(
 			selected_node_id,
 			property,
-			false,
+			true,
 			$CurrentGraph.network?.DOMtoCanvas(menu_position)
 		);
-
-		$CurrentGraph.show_nodes(nodes);
 	}
 
 	function is_disabled(item: Node | Property) {

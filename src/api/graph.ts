@@ -57,9 +57,10 @@ const get_network_options = () => ({
 			springLength: 100,
 			springConstant: 0.02
 		},
-		maxVelocity: 50,
-		minVelocity: 3,
-		timestep: 0.35
+		stabilization: {
+			enabled: true,
+			iterations: 500
+		}
 	}
 });
 
@@ -386,7 +387,7 @@ export class Graph {
 	update_data(visible = true) {
 		if (!visible) return;
 		this.simulation_running = true;
-		this.network?.startSimulation();
+		this.network?.setOptions({ physics: { enabled: true } });
 
 		const nodes = this.nodes.filter((node) => node.visible);
 		const edges = this.edges.filter((edge) => this.is_edge_visible(edge));
@@ -431,7 +432,7 @@ export class Graph {
 			old_edges.remove(edge);
 		}
 
-		if (!get(Settings).animations && visible) {
+		if (visible) {
 			this.network?.stabilize();
 		}
 		this.refresh_filters();
@@ -489,9 +490,9 @@ export class Graph {
 		this.update_data();
 	}
 
-	show_nodes(nodes: Node[]) {
+	show_nodes(nodes: Node[], update = true) {
 		nodes.forEach((n) => (n.visible = true));
-		this.update_data();
+		update && this.update_data();
 	}
 
 	toggle_node_lock(node: Node, position: { x: number; y: number }) {
@@ -544,16 +545,10 @@ export class Graph {
 			node.y = positions[node.id]?.y ?? node.y ?? 0;
 		}
 		this.data.nodes.update(nodes);
-		if (!this.simulation_running) {
-			this.network.stopSimulation();
-		}
 	}
 
 	refresh_edges() {
 		this.data.edges.update(this.edges);
-		if (!this.simulation_running) {
-			this.network.stopSimulation();
-		}
 	}
 
 	get_edge(source: URI, uri: URI, target: URI) {
@@ -735,11 +730,12 @@ export class Graph {
 			}
 		}
 		existing_property.fetched = true;
-		this.update_data(visible);
 
 		// fetch all interconnections
 		if (get(Settings).fetch_related && fetch_related) {
 			this.load_relations(new_nodes, visible, notify);
+		} else {
+			this.update_data(visible);
 		}
 		if (get(Settings).fetch_image) {
 			SPARQL.fetch_images(new_nodes.map((n) => n.id)).then((images) => {

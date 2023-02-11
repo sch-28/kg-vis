@@ -148,7 +148,9 @@
 			message: `Are you sure you want to delete all nodes that are not in the ${filter.node.label} filter?`,
 			on_confirm: () => {
 				const filter_node_ids = $CurrentGraph.get_filter_nodes(filter).map((n) => n.id);
-				$CurrentGraph.prune($CurrentGraph.data.nodes.get().filter((n) => !filter_node_ids.includes(n.id)));
+				$CurrentGraph.prune(
+					$CurrentGraph.data.nodes.get().filter((n) => !filter_node_ids.includes(n.id))
+				);
 			}
 		});
 	}

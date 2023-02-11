@@ -20,7 +20,6 @@
 				<Button
 					on:click={() => {
 						$CurrentGraph.simulation_running = false;
-						$CurrentGraph.network.stopSimulation();
 					}}
 					color="light"
 					btnClass="rounded-b-lg py-2 px-3 w-full text-left dark:hover:bg-black/30 hover:bg-black/10"

@@ -15,15 +15,6 @@
 		Modal_Manager.open(action);
 	}
 
-	let physics_enabled: boolean = true;
-
-	function toggle_edit() {
-		physics_enabled = !physics_enabled;
-		$CurrentGraph.network?.setOptions({
-			physics: physics_enabled
-		});
-	}
-
 	$: {
 		if ($CurrentGraph && $CurrentGraph.nodes.length == 0 && open_add_nodes_on_boot) {
 			open(AddAction);
@@ -47,14 +38,6 @@
 				<PlusCircleOutline width="100%" height="100%" />
 			</div>
 			Add
-		</button>
-		<button
-			class="flex items-center gap-2 cursor-pointer min-w-[70px] justify-center"
-			on:click={toggle_edit}
-		>
-			<Icon src={physics_enabled ? PencilSquare : CheckCircle} class="w-6 h-6" />{physics_enabled
-				? 'Edit'
-				: 'Done'}
 		</button>
 		<button
 			class="flex items-center gap-2 cursor-pointer"

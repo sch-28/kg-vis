@@ -202,10 +202,6 @@
 				<Tooltip text="Should the graph fetch relations between nodes" />
 			</div>
 			<div class="flex items-center justify-between gap-2">
-				<Toggle bind:checked={$Settings.animations}>Animations</Toggle>
-				<Tooltip text="The graph will try to stabilize directly" />
-			</div>
-			<div class="flex items-center justify-between gap-2">
 				<Toggle bind:checked={$Settings.hide_edge_labels} on:change={update_labels}
 					>Hide edge labels</Toggle
 				>
