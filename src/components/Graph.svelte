@@ -7,7 +7,7 @@
 	import GraphControls from './Graph-Controls.svelte';
 	import { onMount } from 'svelte';
 
-	interface Click_Event {
+	interface ClickEvent {
 		edges: [];
 		event: any;
 		items: [];
@@ -44,11 +44,11 @@
 			$CurrentGraph.network.on('click', show_properties);
 			$CurrentGraph.network.on('oncontext', show_context_menu);
 			$CurrentGraph.network.on('startStabilizing', () => {
-				console.log("ho")
+				console.log('ho');
 				loading_graph = true;
 			});
 			$CurrentGraph.network.on('stabilizationIterationsDone', () => {
-				console.log("hi")
+				console.log('hi');
 				$CurrentGraph.simulation_running = false;
 				$CurrentGraph.network.setOptions({ physics: false });
 				loading_graph = false;
@@ -60,7 +60,7 @@
 		}
 	}
 
-	function show_context_menu(event: Click_Event) {
+	function show_context_menu(event: ClickEvent) {
 		event.event.preventDefault();
 		selected_node = undefined;
 		const uri = $CurrentGraph.network.getNodeAt(event.pointer.DOM) as URI;
@@ -70,7 +70,7 @@
 		menu_position = event.pointer.DOM;
 	}
 
-	function show_properties(event: Click_Event) {
+	function show_properties(event: ClickEvent) {
 		hide_context_menu = true;
 		if ($CurrentGraph.network.getSelectedNodes().length > 0) {
 			const uri = event.nodes[0];

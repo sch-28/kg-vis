@@ -17,7 +17,7 @@
 	import { CurrentGraph } from '../../../api/graph';
 	import Tooltip from '../../util/Tooltip.svelte';
 	import { HelpOutline } from '@steeze-ui/material-design-icons';
-	import { Modal_Manager } from '../modal-store';
+	import { ModalManager } from '../modal-store';
 
 	let selected_setting: 'endpoint' | 'graph' | 'other' = 'endpoint';
 
@@ -108,7 +108,7 @@
 						label="Reset Graph"
 						on:click={() => {
 							$CurrentGraph.reset();
-							Modal_Manager.close();
+							ModalManager.close();
 						}}
 						spanClass="dark:text-error-dark text-error ml-3"
 					>

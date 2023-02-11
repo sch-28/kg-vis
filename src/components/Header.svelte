@@ -5,14 +5,14 @@
 	import AddAction from './modal/modals/Add-Nodes.svelte';
 	import Settings from './modal/modals/Settings.svelte';
 	import PlusCircleOutline from 'svelte-material-icons/PlusCircleOutline.svelte';
-	import { Modal_Manager, type Component } from './modal/modal-store';
+	import { ModalManager, type Component } from './modal/modal-store';
 	import GraphFilter from './Graph-Filter.svelte';
 
 	let open_add_nodes_on_boot: boolean = true;
 	let open_filter: boolean = false;
 
 	function open(action: Component) {
-		Modal_Manager.open(action);
+		ModalManager.open(action);
 	}
 
 	$: {

@@ -2,11 +2,11 @@
 	import { ExclamationCircle } from '@steeze-ui/heroicons';
 	import { Icon } from '@steeze-ui/svelte-icon';
 	import { Button } from 'flowbite-svelte';
-	import { Modal_Manager } from '../modal-store';
+	import { ModalManager } from '../modal-store';
 
 	export let message: string = 'Are you sure you want to do this?';
 	export let on_confirm: (() => void) | undefined = undefined;
-	export let on_cancel: (() => void) | undefined = undefined ;
+	export let on_cancel: (() => void) | undefined = undefined;
 </script>
 
 <div class="text-center px-4 py-2 max-w-sm">
@@ -20,14 +20,14 @@
 		color="red"
 		class="mr-2"
 		on:click={() => {
-			Modal_Manager.close();
+			ModalManager.close();
 			on_confirm?.();
 		}}>Yes, I'm sure</Button
 	>
 	<Button
 		color="light"
 		on:click={() => {
-			Modal_Manager.close();
+			ModalManager.close();
 			on_cancel?.();
 		}}>No, cancel</Button
 	>

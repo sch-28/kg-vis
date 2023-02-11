@@ -4,19 +4,19 @@ import { get, writable } from 'svelte/store';
 
 export type Component = new (...args: any[]) => SvelteComponent;
 
-const Current_Modal = writable<Component | null>(null);
+const CurrentModal = writable<Component | null>(null);
 
-export abstract class Modal_Manager {
+export abstract class ModalManager {
 	static open(modal: Component, props: Record<string, any> = {}) {
-		if (get(Current_Modal) === modal) Current_Modal.set(null);
-		else Current_Modal.set(bind(modal as any, props) as unknown as Component);
+		if (get(CurrentModal) === modal) CurrentModal.set(null);
+		else CurrentModal.set(bind(modal as any, props) as unknown as Component);
 	}
 
 	static close() {
-		Current_Modal.set(null);
+		CurrentModal.set(null);
 	}
 
 	static get store() {
-		return Current_Modal;
+		return CurrentModal;
 	}
 }

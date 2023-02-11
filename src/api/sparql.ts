@@ -4,7 +4,7 @@ import isUrl from 'is-url';
 import { show_loading_toast } from '../util';
 import type { Node, Property, URI } from './graph';
 
-export interface Binding_Content {
+export interface BindingContent {
 	type: 'literal' | 'uri';
 	value: URI;
 	datatype?: URI;
@@ -12,7 +12,7 @@ export interface Binding_Content {
 }
 
 interface Binding {
-	[key: string]: Binding_Content;
+	[key: string]: BindingContent;
 }
 
 type Bindings = Binding[];
@@ -177,16 +177,16 @@ class SPARQL_Queries {
 	// used for smart-search. Allows free-text search
 	public async search(search_text: URI) {
 		let result: {
-			item?: Binding_Content;
-			itemLabel?: Binding_Content;
-			typeLabel?: Binding_Content;
+			item?: BindingContent;
+			itemLabel?: BindingContent;
+			typeLabel?: BindingContent;
 		}[] = [];
 
 		if (this.endpoint_type == 'wikidata')
 			result = await SPARQL.query<{
-				item: Binding_Content;
-				itemLabel: Binding_Content;
-				typeLabel: Binding_Content;
+				item: BindingContent;
+				itemLabel: BindingContent;
+				typeLabel: BindingContent;
 			}>(
 				`	SELECT ?item ?itemLabel ?typeLabel WHERE {
 				SERVICE wikibase:mwapi {
@@ -219,9 +219,9 @@ class SPARQL_Queries {
 					.join(' AND ');
 			}
 			result = await SPARQL.query<{
-				item: Binding_Content;
-				itemLabel: Binding_Content;
-				typeLabel: Binding_Content;
+				item: BindingContent;
+				itemLabel: BindingContent;
+				typeLabel: BindingContent;
 			}>(
 				`	SELECT DISTINCT ?item ?itemLabel ?typeLabel WHERE {
 				?item rdfs:label ?itemLabel . 
@@ -255,7 +255,7 @@ class SPARQL_Queries {
 	}
 
 	public async fetch_description(subject: URI) {
-		const result = await this.query<{ description: Binding_Content }>(`
+		const result = await this.query<{ description: BindingContent }>(`
 
 		SELECT DISTINCT ?description WHERE {
 			VALUES ?subject {
@@ -274,7 +274,7 @@ class SPARQL_Queries {
 		const promise = new Promise<void>((res) => (resolve = res));
 		notify && show_loading_toast(promise, 'Related');
 
-		const result = await this.query<{ object: Binding_Content; objectLabel?: Binding_Content }>(
+		const result = await this.query<{ object: BindingContent; objectLabel?: BindingContent }>(
 			`
 			SELECT DISTINCT ?object ?objectLabel ?objectDescription  WHERE {
 				{
@@ -306,7 +306,7 @@ class SPARQL_Queries {
 	public async fetch_image(subject: URI) {
 		if (!isUrl(subject)) return undefined;
 		const result = await this.query<{
-			image: Binding_Content;
+			image: BindingContent;
 		}>(
 			`
 			SELECT DISTINCT ?image WHERE {
@@ -327,8 +327,8 @@ class SPARQL_Queries {
 
 	public async fetch_images(subjects: URI[]) {
 		const result = await this.query<{
-			image: Binding_Content;
-			subject: Binding_Content;
+			image: BindingContent;
+			subject: BindingContent;
 		}>(
 			`
 			
@@ -352,8 +352,8 @@ class SPARQL_Queries {
 
 	public async fetch_property_labels(properties: URI[]) {
 		const result = await this.query<{
-			property: Binding_Content;
-			propertyLabel: Binding_Content;
+			property: BindingContent;
+			propertyLabel: BindingContent;
 		}>(
 			`
 			SELECT DISTINCT ?property ?propertyLabel  WHERE {
@@ -388,8 +388,8 @@ class SPARQL_Queries {
 
 	public async fetch_labels(subjects: URI[]) {
 		const result = await this.query<{
-			subject: Binding_Content;
-			subjectLabel: Binding_Content;
+			subject: BindingContent;
+			subjectLabel: BindingContent;
 		}>(
 			`
 			SELECT DISTINCT ?subject ?subjectLabel  WHERE {
@@ -422,9 +422,9 @@ class SPARQL_Queries {
 
 	public async fetch_info(subject: URI) {
 		const result = await this.query<{
-			label: Binding_Content;
-			description: Binding_Content;
-			typeLabel: Binding_Content;
+			label: BindingContent;
+			description: BindingContent;
+			typeLabel: BindingContent;
 		}>(
 			`
 			SELECT DISTINCT ?label ?description ?typeLabel WHERE {
@@ -461,8 +461,8 @@ class SPARQL_Queries {
 	}
 	// fetches relations between multiple nodes
 	public async fetch_multiple_relations(
-		subjects: Binding_Content[],
-		other_nodes: Binding_Content[],
+		subjects: BindingContent[],
+		other_nodes: BindingContent[],
 		notify: boolean = true
 	) {
 		let resolve!: () => void;
@@ -496,7 +496,7 @@ class SPARQL_Queries {
 		return relations;
 	}
 
-	public async fetch_relations(subjects: Binding_Content[], other_nodes: Binding_Content[]) {
+	public async fetch_relations(subjects: BindingContent[], other_nodes: BindingContent[]) {
 		let subjects_string = `VALUES ?subject {\n`;
 
 		for (let i = 0; i < subjects.length; i++) {
@@ -530,10 +530,10 @@ class SPARQL_Queries {
 		objects_string += '}';
 
 		const result = await this.query<{
-			subject: Binding_Content;
-			property: Binding_Content;
-			object: Binding_Content;
-			dir: Binding_Content;
+			subject: BindingContent;
+			property: BindingContent;
+			object: BindingContent;
+			dir: BindingContent;
 		}>(
 			`
         SELECT DISTINCT ?object ?property ?subject ?dir WHERE
@@ -556,9 +556,9 @@ class SPARQL_Queries {
 
 	public async fetch_property_count(subject: URI, property: URI): Promise<Property> {
 		const result = await this.query<{
-			propLabel: Binding_Content;
-			outCount: Binding_Content;
-			inCount: Binding_Content;
+			propLabel: BindingContent;
+			outCount: BindingContent;
+			inCount: BindingContent;
 		}>(
 			`
 			
@@ -611,7 +611,7 @@ class SPARQL_Queries {
 	}
 
 	public async fetch_properties(subject: URI) {
-		const result = await this.query<{ property: Binding_Content }>(
+		const result = await this.query<{ property: BindingContent }>(
 			`
 			
 			SELECT DISTINCT ?property  WHERE {
@@ -640,7 +640,7 @@ class SPARQL_Queries {
 		return results;
 	}
 
-	public convert_node_to_binding_content(node: Node): Binding_Content {
+	public convert_node_to_binding_content(node: Node): BindingContent {
 		return {
 			type: node.type,
 			value: node.id,

@@ -14,7 +14,7 @@
 	import { CurrentGraph, type Node } from '../api/graph';
 	import type { IconSource } from '@steeze-ui/svelte-icon/types';
 	import { copy_to_clipboard } from '../util';
-	import { Modal_Manager } from './modal/modal-store';
+	import { ModalManager } from './modal/modal-store';
 	import GraphInformation from './modal/modals/Graph-Information.svelte';
 	import Export from './modal/modals/Export.svelte';
 	import { Hr } from 'flowbite-svelte';
@@ -116,7 +116,7 @@
 	}
 
 	function handle_export() {
-		Modal_Manager.open(Export);
+		ModalManager.open(Export);
 		hidden = true;
 	}
 	function handle_filter() {
@@ -144,7 +144,7 @@
 
 	function handle_delete_all() {
 		hidden = true;
-		Modal_Manager.open(ConfirmDialog, {
+		ModalManager.open(ConfirmDialog, {
 			message: `Are you sure you want to remove all nodes?`,
 			on_confirm: () => {
 				$CurrentGraph.reset();
@@ -154,7 +154,7 @@
 	}
 
 	function handle_graph_information() {
-		Modal_Manager.open(GraphInformation);
+		ModalManager.open(GraphInformation);
 		hidden = true;
 	}
 

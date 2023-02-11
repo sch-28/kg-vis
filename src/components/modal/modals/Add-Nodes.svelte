@@ -2,14 +2,14 @@
 	import { ChevronDown, FolderOpen, XMark } from '@steeze-ui/heroicons';
 	import { Icon } from '@steeze-ui/svelte-icon';
 	import isUrl from 'is-url';
-	import { SPARQL, type Binding_Content } from '../../../api/sparql';
+	import { SPARQL, type BindingContent } from '../../../api/sparql';
 	import { CurrentGraph, type Node, type URI } from '../../../api/graph';
 	import { getContext, onMount } from 'svelte';
 	import LoadingCircle from '../../util/Loading-Circle.svelte';
 	import { Settings } from '../../../settings';
 	import { Button, Chevron, Dropdown, DropdownItem, Hr } from 'flowbite-svelte';
 	import { click_outside, scrollbar_width } from '../../../util';
-	import { Modal_Manager } from '../modal-store';
+	import { ModalManager } from '../modal-store';
 
 	let error: string = '';
 	let loading: boolean = false;
@@ -44,7 +44,7 @@ WHERE
 	}
 
 	function close() {
-		Modal_Manager.close();
+		ModalManager.close();
 	}
 
 	function submit_query() {
@@ -59,7 +59,7 @@ WHERE
 				}
 				const all_nodes = results
 					.flatMap((b) => Object.values(b))
-					.filter((content) => content) as Required<Binding_Content>[];
+					.filter((content) => content) as Required<BindingContent>[];
 				const literal_nodes = all_nodes
 					.filter((node) => node.type === 'literal')
 					.map((node) => {
@@ -251,7 +251,7 @@ WHERE
 		loading = false;
 	}
 
-	let search_input:HTMLInputElement;
+	let search_input: HTMLInputElement;
 
 	onMount(() => {
 		update_height();

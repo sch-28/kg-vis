@@ -6,7 +6,7 @@
 	import { paginate, DarkPaginationNav } from 'svelte-paginate';
 	import { ArrowTopRightOnSquare, Plus, XMark } from '@steeze-ui/heroicons';
 	import { setContext } from 'svelte';
-	import { Modal_Manager } from './modal/modal-store';
+	import { ModalManager } from './modal/modal-store';
 	import InformationMenuMore from './modal/modals/Information-Menu-More.svelte';
 
 	export let node: Node | undefined = undefined;
@@ -23,7 +23,7 @@
 	setContext('close', close_modal);
 
 	function close_modal() {
-		Modal_Manager.close();
+		ModalManager.close();
 	}
 
 	$: node && load_properties();
@@ -85,7 +85,7 @@
 		}
 	}
 	function show_more_handler(property: Property) {
-		Modal_Manager.open(InformationMenuMore, { property });
+		ModalManager.open(InformationMenuMore, { property });
 	}
 	function add_node(node: Node) {
 		$CurrentGraph.show_node(node);
