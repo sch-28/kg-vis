@@ -261,22 +261,25 @@ export class Graph {
 	}
 
 	undo() {
-		if (this.history_index > -1) {
+		if (this.history_index >= 0) {
 			const step = this.node_history[this.history_index];
 			const nodes = step.nodes;
 			nodes.map((n) => (n.visible = !step.visible));
-			this.update_data(true, true);
 			this.history_index--;
+			this.update_data(true, true);
+
+			this.refresh_filters();
 		}
 	}
 
 	redo() {
-		if (this.history_index < this.node_history.length) {
-			if (this.history_index < this.node_history.length - 1) this.history_index++;
+		if (this.history_index < this.node_history.length - 1) {
+			this.history_index++;
 			const step = this.node_history[this.history_index];
 			const nodes = step.nodes;
 			nodes.map((n) => (n.visible = step.visible));
 			this.update_data(true, true);
+			this.refresh_filters();
 		}
 	}
 
@@ -431,12 +434,15 @@ export class Graph {
 		const old_nodes = this.data.nodes;
 		const old_edges = this.data.edges;
 
-		let new_nodes: Node[] = [];
+		const new_nodes: Node[] = nodes.filter((n) => !old_nodes.get(n.id));
+
 		try {
-			new_nodes = old_nodes.add(nodes).map((node) => {
-				return nodes.find((n) => n.id == node) as Node;
-			});
 			old_edges.add(edges);
+		} catch {
+			// error in vis.js because of duplicate edges - ignore
+		}
+		try {
+			old_nodes.add(nodes);
 		} catch {
 			// error in vis.js because of duplicate nodes - ignore
 		}
@@ -457,7 +463,6 @@ export class Graph {
 
 		if (!is_history) {
 			this.node_history = this.node_history.slice(0, this.history_index + 1);
-
 			if (new_nodes.length > 0) {
 				this.node_history.push({ nodes: new_nodes, visible: true });
 				this.history_index = this.node_history.length - 1;
@@ -481,6 +486,10 @@ export class Graph {
 
 		this.network?.stabilize();
 		this.refresh_filters();
+
+		if (nodes.length == 0) {
+			LoaderManager.close();
+		}
 
 		return this.data;
 	}
