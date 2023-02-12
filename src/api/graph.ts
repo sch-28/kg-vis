@@ -747,6 +747,7 @@ export class Graph {
 		const node = this.find_or_create_node(uri, uri);
 		let existing_property = node.properties.find((p) => p.uri == property.uri);
 		if (existing_property?.fetched) {
+			if (visible) existing_property.related.forEach((n) => (n.visible = true));
 			return existing_property.related;
 		} else if (!existing_property) {
 			node.properties.push(property);
