@@ -593,8 +593,10 @@
 					{#if state.current_context == 'property'}
 						<div
 							title={`${
-								state.sorted_items[i].item.direction == 'out' ? `Target of` : `Source of`
-							} "${item.item.label}"`}
+								state.sorted_items[i].item.direction == 'out'
+									? `${selected_node.label} ${item.item.label} [others]`
+									: `[others] ${item.item.label} ${selected_node.label}`
+							}`}
 						>
 							<Icon
 								src={state.sorted_items[i].item.direction == 'out'
