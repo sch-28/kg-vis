@@ -753,7 +753,10 @@ export class Graph {
 			(p) => p.uri == property.uri && p.direction === property.direction
 		);
 		if (existing_property?.fetched) {
-			if (visible) existing_property.related.forEach((n) => (n.visible = true));
+			if (visible) {
+				existing_property.related.forEach((n) => (n.visible = true));
+				this.update_data();
+			}
 			return existing_property.related;
 		} else if (!existing_property) {
 			node.properties.push(property);
@@ -790,10 +793,11 @@ export class Graph {
 				already_exists.push(n);
 			}
 
+			property.direction === 'out' &&
+				this.create_edge(subject_uri, property.uri, object_uri, property.label ?? 'label');
+			property.direction === 'in' &&
+				this.create_edge(subject_uri, property.uri, object_uri, property.label ?? 'label');
 
-			property.direction === 'out' && this.create_edge(subject_uri, property.uri, object_uri, property.label ?? 'label');
-			property.direction === 'in' && this.create_edge(subject_uri, property.uri, object_uri, property.label ?? 'label');
-			
 			if (existing_property.related.find((node) => node.id == n.id) == undefined) {
 				existing_property.related.push(n);
 			}

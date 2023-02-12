@@ -352,14 +352,14 @@
 		if (!selected_node || state.current_context === 'node') return;
 		property = property as Property;
 		const selected_node_id = selected_node.id;
-		close();
 
-		const nodes = await $CurrentGraph.load_related_nodes(
+		$CurrentGraph.load_related_nodes(
 			selected_node_id,
 			property,
 			true,
 			$CurrentGraph.network?.DOMtoCanvas(menu_position)
 		);
+		close();
 	}
 
 	function is_disabled(item: Node | Property) {
