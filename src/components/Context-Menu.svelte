@@ -9,7 +9,8 @@
 		ClipboardDocument,
 		Photo,
 		ArrowsPointingOut,
-		Funnel
+		Funnel,
+		ArrowPathRoundedSquare
 	} from '@steeze-ui/heroicons';
 	import { CurrentGraph, type Node } from '../api/graph';
 	import type { IconSource } from '@steeze-ui/svelte-icon/types';
@@ -83,6 +84,11 @@
 			handle: handle_fit_graph
 		},
 		{
+			icon: ArrowPathRoundedSquare,
+			label: 'Stabilize',
+			handle: handle_stabilize
+		},
+		{
 			icon: Photo,
 			label: 'Export',
 			handle: handle_export
@@ -124,6 +130,10 @@
 			$CurrentGraph.add_filter(selection);
 			CurrentGraph.update((u) => $CurrentGraph);
 		}
+		hidden = true;
+	}
+	function handle_stabilize() {
+		$CurrentGraph.network?.stabilize();
 		hidden = true;
 	}
 

@@ -4,7 +4,6 @@
 	import { Graph, type URI, type Node, CurrentGraph } from '../api/graph';
 	import ActionMenu from './Header.svelte';
 	import InformationMenu from './Information-Menu.svelte';
-	import GraphControls from './Graph-Controls.svelte';
 	import { onMount } from 'svelte';
 	import GraphLoader from './loader/Graph-Loader.svelte';
 	import { LoaderManager } from './loader/graph-loader';
@@ -125,6 +124,5 @@
 		information_tab_visible={show_node_information !== undefined}
 	/>
 	<ActionMenu />
-	<GraphControls {loading_graph} />
 	<GraphLoader />
 {/if}
