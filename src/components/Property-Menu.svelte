@@ -153,14 +153,11 @@
 			if (state.sort_by == 'count' && state.current_context === 'property') {
 				a.item = a.item as Property;
 				b.item = b.item as Property;
-				return (
-					state.sort_direction *
-					(a.item.in_count + a.item.out_count <= b.item.in_count + b.item.out_count ? 1 : -1)
-				);
+				return state.sort_direction * (a.item.count <= b.item.count ? 1 : -1);
 			} else if (state.sort_by == 'direction' && state.current_context === 'property') {
 				a.item = a.item as Property;
 				b.item = b.item as Property;
-				return state.sort_direction * (a.item.in_count < b.item.in_count ? 1 : -1);
+				return state.sort_direction * (a.item.count < b.item.count ? 1 : -1);
 			} else if (state.sort_by === 'direction' && state.current_context === 'node') {
 				a.item = a.item as Node;
 				b.item = b.item as Node;
@@ -251,7 +248,7 @@
 		if (state.sorted_items.length > 0) {
 			if (selected_item + dir >= -2 && selected_item + dir < state.sorted_items.length) {
 				selected_item += dir;
-			}else if (selected_item + dir < -2) {
+			} else if (selected_item + dir < -2) {
 				selected_item = state.sorted_items.length - 1;
 			} else if (selected_item + dir >= state.sorted_items.length) {
 				selected_item = -2;
@@ -265,8 +262,6 @@
 			} else {
 				show_search = false;
 			}
-
-
 
 			if (selected_item === -1) {
 				add_all_button?.focus();
@@ -303,11 +298,11 @@
 			selected_nodes: [],
 			selected_property: {
 				label: 'All',
-				in_count: 0,
-				out_count: 0,
+				count: 0,
 				uri: '',
 				fetched: true,
-				related: []
+				related: [],
+				direction: 'out'
 			},
 			sort_by: 'name',
 			sort_options: ['direction', 'name']
@@ -518,10 +513,7 @@
 				<button
 					on:click={add_all}
 					class="transition-all duration-200 ease-in-out hover:bg-black/5 dark:hover:bg-black/30 hover:text-dark hover:dark:text-light ml-auto w-6 bg-dark-muted text-light rounded-full inline-flex items-center justify-center -mb-0.5 text-xs font-semibold  p-1 "
-					>{state.sorted_items.reduce(
-						(sum, p) => sum + p.item.in_count + p.item.out_count,
-						0
-					)}</button
+					>{state.sorted_items.reduce((sum, p) => sum + p.item.count, 0)}</button
 				>
 			</button>
 		{:else}
@@ -601,13 +593,11 @@
 					{#if state.current_context == 'property'}
 						<div
 							title={`${
-								state.sorted_items[i].item.in_count < state.sorted_items[i].item.out_count
-									? `Target of`
-									: `Source of`
+								state.sorted_items[i].item.direction == 'out' ? `Target of` : `Source of`
 							} "${item.item.label}"`}
 						>
 							<Icon
-								src={state.sorted_items[i].item.in_count < state.sorted_items[i].item.out_count
+								src={state.sorted_items[i].item.direction == 'out'
 									? ArrowRightOnRectangle
 									: ArrowLeftOnRectangle}
 								theme="solid"
@@ -659,11 +649,9 @@
 								add_property(state.sorted_items[i].item);
 							}}
 							class="hover:bg-black/5 dark:hover:bg-black/30 ml-auto w-6 hover:text-dark hover:dark:text-light bg-dark-muted text-light rounded-full inline-flex items-center justify-center -mb-0.5 text-xs font-semibold  p-1 transition-all duration-200 ease-in-out"
-							>{state.sorted_items[i].item.in_count + state.sorted_items[i].item.out_count >
-							$Settings.size_limit * 2
+							>{state.sorted_items[i].item.count > $Settings.size_limit * 2
 								? $Settings.size_limit
-								: state.sorted_items[i].item.in_count +
-								  state.sorted_items[i].item.out_count}</button
+								: state.sorted_items[i].item.count}</button
 						>
 					{:else if state.current_context == 'node'}
 						<button

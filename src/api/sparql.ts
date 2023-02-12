@@ -269,15 +269,17 @@ class SPARQL_Queries {
 	}
 
 	// used to fetch all related nodes for a given node and one of its property
-	public async fetch_related_nodes(subject: URI, property: URI) {
+	public async fetch_related_nodes(subject: URI, property: URI, direction: 'in' | 'out') {
 		const result = await this.query<{ object: BindingContent; objectLabel?: BindingContent }>(
 			`
 			SELECT DISTINCT ?object ?objectLabel ?objectDescription  WHERE {
-				{
-				  ?object ${this.shorten_uri(property)} ${this.shorten_uri(subject)} .
-				} UNION{
-					${this.shorten_uri(subject)} ${this.shorten_uri(property)} ?object
-				}
+				
+					${
+						direction === 'out'
+							? `${this.shorten_uri(subject)} ${this.shorten_uri(property)} ?object .`
+							: `?object ${this.shorten_uri(property)} ${this.shorten_uri(subject)} .`
+					}
+				
 				OPTIONAL {
 					?object rdfs:label ?objectLabel 
 					FILTER (lang(?objectLabel) = '${this.endpoint_lang}')
@@ -287,13 +289,14 @@ class SPARQL_Queries {
 
 		const results = result
 			.map((r) => ({
-				uri: r.object?.value ?? '',
+				subject: direction === 'out' ? subject : r.object?.value ?? '',
+				object: direction === 'out' ? r.object?.value ?? '' : subject,
 				type: r.object?.type ?? 'literal',
 				label: r.objectLabel?.value ?? r.object?.value ?? '',
 				datatype: r.object?.datatype ?? undefined,
 				language: r.object?.['xml:lang'] ?? undefined
 			}))
-			.filter((r) => r.uri !== '');
+			.filter((r) => r.subject !== '' || r.object !== '');
 
 		return results;
 	}
@@ -455,10 +458,7 @@ class SPARQL_Queries {
 		return { label: subject, description: '', type: '' };
 	}
 	// fetches relations between multiple nodes
-	public async fetch_multiple_relations(
-		subjects: BindingContent[],
-		other_nodes: BindingContent[],
-	) {
+	public async fetch_multiple_relations(subjects: BindingContent[], other_nodes: BindingContent[]) {
 		const relations = (await this.fetch_relations(subjects, other_nodes)).map((r) => {
 			const outgoing_property = r.dir.value === 'out';
 
@@ -541,33 +541,32 @@ class SPARQL_Queries {
 		return result.filter((r) => r.subject && r.object) as Required<typeof result[number]>[];
 	}
 
-	public async fetch_property_count(subject: URI, property: URI): Promise<Property> {
+	public async fetch_property_count(
+		subject: URI,
+		property: { uri: URI; dir: 'in' | 'out' }
+	): Promise<Property> {
 		const result = await this.query<{
 			propLabel: BindingContent;
-			outCount: BindingContent;
-			inCount: BindingContent;
+			count: BindingContent;
 		}>(
 			`
+			SELECT DISTINCT ?propLabel (COUNT(?object) AS ?count) WHERE {
+			{
+				SELECT DISTINCT ?object WHERE {
+				${
+					property.dir === 'out'
+						? `<${subject}> <${property.uri}> ?object.`
+						: `?object <${property.uri}> <${subject}>.`
+				}
+				} LIMIT ${this.size_limit}
+				
+			}
 			
-			SELECT DISTINCT ?propLabel (COUNT(?outObject) AS ?outCount) (COUNT(?inObject) AS ?inCount)    WHERE {
-			{
-				SELECT DISTINCT ?outObject WHERE {
-				<${subject}> <${property}> ?outObject.
-				}
-				LIMIT ${this.size_limit}
-			}
-			UNION
-			{
-				SELECT DISTINCT ?inObject WHERE {
-				?inObject <${property}> <${subject}>.
-				}
-				LIMIT ${this.size_limit}
-			}
 			OPTIONAL {
 				${
 					this.endpoint_type === 'wikidata'
-						? `?prop wikibase:directClaim <${property}> . ?prop rdfs:label ?propLabel .`
-						: `<${property}> rdf:type rdf:Property . <${property}> rdfs:label ?propLabel .`
+						? `?prop wikibase:directClaim <${property.uri}> . ?prop rdfs:label ?propLabel .`
+						: `<${property.uri}> rdf:type rdf:Property . <${property.uri}> rdfs:label ?propLabel .`
 				}
 			}
 			
@@ -578,34 +577,34 @@ class SPARQL_Queries {
 		if (result.length > 0) {
 			const res = result[0];
 			return {
-				label: res.propLabel?.value || property,
-				uri: property,
-				out_count: +(res.outCount?.value ?? 0),
-				in_count: +(res.inCount?.value ?? 0),
+				label: res.propLabel?.value || property.uri,
+				uri: property.uri,
+				count: +(res.count?.value ?? 0),
 				related: [],
-				fetched: false
+				fetched: false,
+				direction: property.dir
 			};
 		} else {
 			return {
-				label: property,
-				uri: property,
-				out_count: 0,
-				in_count: 0,
+				label: property.uri,
+				uri: property.uri,
+				count: 0,
 				related: [],
-				fetched: false
+				fetched: false,
+				direction: property.dir
 			};
 		}
 	}
 
 	public async fetch_properties(subject: URI) {
-		const result = await this.query<{ property: BindingContent }>(
+		const result = await this.query<{ property: BindingContent; dir: BindingContent }>(
 			`
 			
-			SELECT DISTINCT ?property  WHERE {
+			SELECT DISTINCT ?property ?dir WHERE {
 				{
-				  ?o ?property <${subject}> .
+					BIND("in" as ?dir).  ?o ?property <${subject}> .
 				} UNION{
-					<${subject}> ?property ?o
+					BIND("out" as ?dir). <${subject}> ?property ?o
 				}
 				${
 					this.endpoint_type === 'wikidata'
@@ -617,7 +616,7 @@ class SPARQL_Queries {
 
 		const results: Property[] = [];
 		const properties = (result.filter((c) => c.property) as Required<typeof result[number]>[]).map(
-			(c) => c.property.value
+			(c) => ({ uri: c.property.value, dir: c.dir.value as 'in' | 'out' })
 		);
 		const requests: Promise<Property>[] = [];
 		properties.forEach((prop) => requests.push(this.fetch_property_count(subject, prop)));

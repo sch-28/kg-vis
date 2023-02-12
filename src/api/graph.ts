@@ -86,16 +86,16 @@ export type Properties = {
 export class Property {
 	label: string | undefined;
 	uri: URI;
-	in_count: number;
-	out_count: number;
+	count: number;
+	direction: 'in' | 'out';
 	related: Node[] = [];
 	fetched: boolean;
 
-	constructor(uri: URI, in_count: number, out_count: number, label?: string, related?: Node[]) {
+	constructor(uri: URI, direction: 'in' | 'out', count: number, label?: string, related?: Node[]) {
 		this.label = label;
 		this.uri = uri;
-		this.in_count = in_count;
-		this.out_count = out_count;
+		this.count = count;
+		this.direction = direction;
 		if (related) {
 			this.related = related;
 		}
@@ -342,7 +342,10 @@ export class Graph {
 			const nodes = this.get_filter_nodes(filter);
 			const node_ids = nodes.map((n) => n.id);
 			for (const node of nodes) {
-				if (node.color != get_network_options().nodes.color && node.color !== undefined) {
+				if (
+					node.color?.background != get_network_options().nodes.color.background &&
+					node.color !== undefined
+				) {
 					node.color.background = blend_colors(node.color.background, filter.color, 0.5);
 					node.color.border = blend_colors(node.color.border, filter.color, 0.5);
 				} else if (node.color !== undefined) {
@@ -611,12 +614,13 @@ export class Graph {
 	}
 
 	create_edge(source: URI, uri: URI, target: URI, label: string) {
-		const old_edge =
-			this.edges.find((edge) => edge.from == source && edge.uri == uri && edge.to == target) ??
-			this.edges.find((edge) => edge.from == target && edge.uri == uri && edge.to == source);
-
-		if (old_edge) {
-			old_edge.arrows.from.enabled = true;
+		const existing_edge = this.get_edge(source, uri, target);
+		if (existing_edge) {
+			return false;
+		}
+		const reverse_edge = this.get_edge(target, uri, source);
+		if (reverse_edge) {
+			reverse_edge.arrows.to.enabled = true;
 			return true;
 		}
 
@@ -723,9 +727,9 @@ export class Graph {
 						uri: relation.property.value,
 						label: relation.property_label,
 						related: related ? [related] : [],
-						in_count: 0,
-						out_count: 1,
-						fetched: false
+						count: 1,
+						fetched: false,
+						direction: 'out'
 					});
 					if (node.visible && related?.visible) update = true;
 				}
@@ -745,7 +749,9 @@ export class Graph {
 		fetch_related = true
 	) {
 		const node = this.find_or_create_node(uri, uri);
-		let existing_property = node.properties.find((p) => p.uri == property.uri);
+		let existing_property = node.properties.find(
+			(p) => p.uri == property.uri && p.direction === property.direction
+		);
 		if (existing_property?.fetched) {
 			if (visible) existing_property.related.forEach((n) => (n.visible = true));
 			return existing_property.related;
@@ -754,17 +760,19 @@ export class Graph {
 			existing_property = property;
 		}
 		LoaderManager.set_status('related', 0);
-		const raw_new_nodes = (await SPARQL.fetch_related_nodes(uri, property.uri)).sort((a, b) =>
-			a.label.localeCompare(b.label)
-		);
+		const raw_new_nodes = (
+			await SPARQL.fetch_related_nodes(uri, property.uri, property.direction)
+		).sort((a, b) => a.label.localeCompare(b.label));
 		LoaderManager.set_status('related', 100);
 
 		const new_nodes: Node[] = [];
 		const already_exists: Node[] = [];
 
 		for (const new_node of raw_new_nodes) {
+			const subject_uri = new_node.subject;
+			const object_uri = new_node.object;
 			const n = this.find_or_create_node(
-				new_node.uri,
+				property.direction === 'out' ? object_uri : subject_uri,
 				new_node.label,
 				new_node.type,
 				visible,
@@ -782,7 +790,10 @@ export class Graph {
 				already_exists.push(n);
 			}
 
-			this.create_edge(uri, property.uri, new_node.uri, property.label ?? 'label');
+
+			property.direction === 'out' && this.create_edge(subject_uri, property.uri, object_uri, property.label ?? 'label');
+			property.direction === 'in' && this.create_edge(subject_uri, property.uri, object_uri, property.label ?? 'label');
+			
 			if (existing_property.related.find((node) => node.id == n.id) == undefined) {
 				existing_property.related.push(n);
 			}
