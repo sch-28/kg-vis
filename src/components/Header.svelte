@@ -43,7 +43,7 @@
 			class="flex items-center gap-2 cursor-pointer"
 			on:click={() => (open_filter = !open_filter)}
 		>
-			<Icon src={MagnifyingGlass} class="w-6 h-6" />Search
+			<Icon src={MagnifyingGlass} class="w-6 h-6" />Filter
 		</button>
 		<button class="flex items-center gap-2 cursor-pointer" on:click={() => open(Settings)}>
 			<Icon src={Cog6Tooth} class="w-6 h-6" />Settings
