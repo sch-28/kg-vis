@@ -32,6 +32,13 @@
 			}
 		});
 	}
+	function update_hide_edges_on_zoom() {
+		$CurrentGraph.network?.setOptions({
+			interaction: {
+				hideEdgesOnZoom: $Settings.hide_edges_on_zoom
+			}
+		});
+	}
 
 	function update_edges() {
 		$CurrentGraph.network?.setOptions({
@@ -213,6 +220,14 @@
 				>
 				<Tooltip
 					text="Hide edge lables only when dragging the view - this drastically improves performance "
+				/>
+			</div>
+			<div class="flex items-center justify-between gap-2">
+				<Toggle bind:checked={$Settings.hide_edges_on_zoom} on:change={update_hide_edges_on_zoom}
+					>Hide edges on zoom</Toggle
+				>
+				<Tooltip
+					text="Hide edge lables only when zooming - this drastically improves performance "
 				/>
 			</div>
 			<div class="flex items-center justify-between gap-2">

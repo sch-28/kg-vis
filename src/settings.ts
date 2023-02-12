@@ -70,6 +70,7 @@ export interface Settings {
 	size_limit: number;
 	fetch_image: boolean;
 	hide_edges_on_drag: boolean;
+	hide_edges_on_zoom: boolean,
 	hide_edge_labels: boolean;
 	smooth_edges: boolean;
 	smart_search: boolean;
@@ -85,6 +86,7 @@ export const Settings = storage<Settings>('settings', {
 	size_limit: 100,
 	fetch_image: true,
 	hide_edges_on_drag: false,
+	hide_edges_on_zoom: false,
 	hide_edge_labels: false,
 	smooth_edges: false,
 	smart_search: true

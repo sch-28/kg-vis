@@ -10,7 +10,8 @@ import { LoaderManager } from '../components/loader/graph-loader';
 
 const get_network_options = () => ({
 	interaction: {
-		hideEdgesOnDrag: get(Settings).hide_edges_on_drag ?? false
+		hideEdgesOnDrag: get(Settings).hide_edges_on_drag ?? false,
+		hideEdgesOnZoom: get(Settings).hide_edges_on_zoom ?? false
 	},
 	nodes: {
 		color: {
