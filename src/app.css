@@ -57,8 +57,7 @@ html.dark {
 }
 
 ::-webkit-scrollbar-thumb {
-	background-color: hsl(0 0% 98%);
-	border-radius: 1rem;
+	@apply bg-dark-muted dark:bg-gray-200 rounded-lg;
 }
 
 ::-webkit-scrollbar-track {
