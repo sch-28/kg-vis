@@ -7,6 +7,11 @@
 	import { onDestroy, onMount } from 'svelte';
 	import GraphLoader from './loader/Graph-Loader.svelte';
 	import { LoaderManager } from './loader/graph-loader';
+	import { copy_to_clipboard } from '../util';
+	import { ModalManager } from './modal/modal-store';
+	import AddNodes from './modal/modals/Add-Nodes.svelte';
+	import Export from './modal/modals/Export.svelte';
+	import Settings from './modal/modals/Settings.svelte';
 
 	interface ClickEvent {
 		edges: [];
@@ -50,7 +55,6 @@
 		$CurrentGraph.container.remove();
 
 		document.removeEventListener('keydown', handle_keydown);
-		document.removeEventListener('paste', handle_paste);
 	}
 
 	function init() {
@@ -76,7 +80,6 @@
 				);
 			});
 			document.addEventListener('keydown', handle_keydown);
-			document.addEventListener('paste', handle_paste);
 		}
 	}
 
@@ -90,19 +93,54 @@
 		} else if (event.key === 'Escape') {
 			hide_context_menu = true;
 			selected_node = undefined;
+			show_node_information = undefined;
 		} else if (event.key === 'Delete' || event.key === 'Backspace') {
+			if (!/input|textarea/i.test(document.activeElement?.tagName ?? '')) {
+				let node_id = $CurrentGraph.network.getSelectedNodes()[0];
+				const node = $CurrentGraph.get_node(node_id as string);
+				if (node && !selected_node) $CurrentGraph.hide_node(node);
+			}
+		} else if (event.key === 'c' && event.ctrlKey) {
+			if (!/input|textarea/i.test(document.activeElement?.tagName ?? '')) {
+				let node_id = $CurrentGraph.network.getSelectedNodes()[0];
+				const node = $CurrentGraph.get_node(node_id as string);
+				if (node && !selected_node && event) {
+					copy_to_clipboard(node.id);
+				}
+			}
+		} else if (event.key === 'i' && event.ctrlKey) {
+			// show node information
 			let node_id = $CurrentGraph.network.getSelectedNodes()[0];
 			const node = selected_node ?? $CurrentGraph.get_node(node_id as string);
-			if (node) $CurrentGraph.hide_node(node);
+			if (node) {
+				show_node_information = node;
+			}
+		} else if (event.key === 'n' && event.ctrlKey && event.altKey) {
+			ModalManager.open(AddNodes);
+		} else if (event.key === 's' && event.ctrlKey) {
+			event.preventDefault();
+			ModalManager.open(Export);
+		} else if (event.key === 's' && event.altKey) {
+			ModalManager.open(Settings);
+		} else if (event.key === 'S' && event.shiftKey) {
+			if (!/input|textarea/i.test(document.activeElement?.tagName ?? '')) {
+				$CurrentGraph.network?.stabilize();
+			}
+		} else if (event.key === 'S' && event.shiftKey) {
+			if (!/input|textarea/i.test(document.activeElement?.tagName ?? '')) {
+				$CurrentGraph.network?.stabilize();
+			}
+		} else if (event.key === 'F' && event.shiftKey) {
+			if (!/input|textarea/i.test(document.activeElement?.tagName ?? '')) {
+				event.preventDefault();
+				let node_id = $CurrentGraph.network.getSelectedNodes()[0];
+				const node = selected_node ?? $CurrentGraph.get_node(node_id as string);
+				if (node) {
+					$CurrentGraph.add_filter(node);
+					$CurrentGraph = $CurrentGraph;
+				}
+			}
 		}
-	}
-
-	async function handle_paste(event: ClipboardEvent) {
-		if (!$CurrentGraph || !event.clipboardData) return;
-		const new_node = await $CurrentGraph.load_node(event.clipboardData.getData('text/plain'));
-		new_node.visible = true;
-		await $CurrentGraph.load_relations([new_node]);
-		$CurrentGraph.update_data();
 	}
 
 	function show_context_menu(event: ClickEvent) {
