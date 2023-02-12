@@ -16,8 +16,6 @@
 	import { Plus, XMark } from '@steeze-ui/heroicons';
 	import ColorPicker from 'svelte-awesome-color-picker';
 	import { CurrentGraph, type Node, type NodeFilter } from '../api/graph';
-	import Graph from './Graph.svelte';
-	import { noop } from 'svelte/internal';
 	import { ModalManager } from './modal/modal-store';
 	import ConfirmDialog from './modal/modals/Confirm-Dialog.svelte';
 
@@ -149,7 +147,9 @@
 			on_confirm: () => {
 				const filter_node_ids = $CurrentGraph.get_filter_nodes(filter).map((n) => n.id);
 				$CurrentGraph.prune(
-					$CurrentGraph.data.nodes.get().filter((n) => !filter_node_ids.includes(n.id))
+					$CurrentGraph.nodes
+						.filter((n) => n.visible)
+						.filter((n) => !filter_node_ids.includes(n.id))
 				);
 			}
 		});

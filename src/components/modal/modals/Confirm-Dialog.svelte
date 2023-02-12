@@ -21,14 +21,18 @@
 		class="mr-2"
 		on:click={() => {
 			ModalManager.close();
-			on_confirm?.();
+			setTimeout(() => {
+				on_confirm?.();
+			});
 		}}>Yes, I'm sure</Button
 	>
 	<Button
 		color="light"
 		on:click={() => {
 			ModalManager.close();
-			on_cancel?.();
+			setTimeout(() => {
+				on_cancel?.();
+			});
 		}}>No, cancel</Button
 	>
 </div>

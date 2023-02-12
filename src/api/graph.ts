@@ -72,6 +72,7 @@ const get_network_options = () => ({
 			enabled: true,
 			iterations: 500
 		},
+		enabled: false
 	}
 });
 
@@ -230,9 +231,9 @@ export class Graph {
 	data_view: { nodes: DataView<Node>; edges: DataView<any> };
 	container: HTMLElement;
 	node_filters: NodeFilter[];
-	simulation_running: boolean;
-
 	selected_color = '#277af7';
+	node_history: { nodes: Node[]; visible: boolean }[] = [];
+	history_index = 0;
 
 	constructor(container: HTMLElement, start?: URI) {
 		this.container = container;
@@ -247,7 +248,6 @@ export class Graph {
 		this.data_view = { nodes: data_view_nodes, edges: data_view_edges };
 
 		this.node_filters = [];
-		this.simulation_running = true;
 
 		this.network = new vis.Network(
 			container,
@@ -255,26 +255,34 @@ export class Graph {
 			get_network_options() as Options
 		);
 
-		this.update_data();
-
 		if (start) {
 			this.load_node(start).then(() => this.update_data());
 		}
 	}
 
-	prune(nodes: Node[]) {
-		this.nodes = nodes;
-		for (const node of nodes) {
-			node.properties.map((p) => (p.fetched = false));
+	undo() {
+		if (this.history_index > -1) {
+			const step = this.node_history[this.history_index];
+			const nodes = step.nodes;
+			nodes.map((n) => (n.visible = !step.visible));
+			this.update_data(true, true);
+			this.history_index--;
 		}
-		this.edges = this.edges.filter(
-			(e) => nodes.find((n) => n.id == e.from) && nodes.find((n) => n.id == e.to)
-		);
+	}
 
-		this.node_filters = this.node_filters.filter((f) => nodes.includes(f.node));
+	redo() {
+		if (this.history_index < this.node_history.length) {
+			if (this.history_index < this.node_history.length - 1) this.history_index++;
+			const step = this.node_history[this.history_index];
+			const nodes = step.nodes;
+			nodes.map((n) => (n.visible = step.visible));
+			this.update_data(true, true);
+		}
+	}
 
-		this.data.nodes.clear();
-		this.data.edges.clear();
+	prune(nodes: Node[]) {
+		const delete_nodes = this.nodes.filter((n) => !nodes.includes(n));
+		delete_nodes.map((n) => (n.visible = false));
 		this.update_data();
 	}
 
@@ -410,10 +418,12 @@ export class Graph {
 		return false;
 	}
 
-	update_data(visible = true) {
+	async update_data(visible = true, is_history = false) {
 		if (!visible) return;
-		this.simulation_running = true;
-		this.network?.setOptions({ physics: { enabled: true } });
+		LoaderManager.set_status('stabilizing', 0);
+		LoaderManager.open();
+		await new Promise((resolve) => setTimeout(resolve)); // wait for loader to open
+		if (!this.network) return;
 
 		const nodes = this.nodes.filter((node) => node.visible);
 		const edges = this.edges.filter((edge) => this.is_edge_visible(edge));
@@ -421,19 +431,14 @@ export class Graph {
 		const old_nodes = this.data.nodes;
 		const old_edges = this.data.edges;
 
-		for (const node of nodes) {
-			try {
-				old_nodes.add(node);
-			} catch {
-				//pass
-			}
-		}
-		for (const edge of edges) {
-			try {
-				old_edges.add(edge);
-			} catch {
-				//pass
-			}
+		let new_nodes: Node[] = [];
+		try {
+			new_nodes = old_nodes.add(nodes).map((node) => {
+				return nodes.find((n) => n.id == node) as Node;
+			});
+			old_edges.add(edges);
+		} catch {
+			// error in vis.js because of duplicate nodes - ignore
 		}
 
 		const deleted_nodes: Node[] = [];
@@ -443,10 +448,6 @@ export class Graph {
 			}
 		});
 
-		for (const node of deleted_nodes) {
-			old_nodes.remove(node);
-		}
-
 		const deleted_edges: Edge[] = [];
 		old_edges.forEach((edge: Edge) => {
 			if (!edges.find((e) => e.compare(edge))) {
@@ -454,14 +455,31 @@ export class Graph {
 			}
 		});
 
-		for (const edge of deleted_edges) {
-			old_edges.remove(edge);
+		if (!is_history) {
+			this.node_history = this.node_history.slice(0, this.history_index + 1);
+
+			if (new_nodes.length > 0) {
+				this.node_history.push({ nodes: new_nodes, visible: true });
+				this.history_index = this.node_history.length - 1;
+			}
+			if (deleted_nodes.length > 0) {
+				const local_deleted_nodes = deleted_nodes.map((node) => {
+					return this.nodes.find((n) => n.id == node.id) as Node;
+				});
+				const positions = this.network.getPositions(local_deleted_nodes.map((node) => node.id));
+				local_deleted_nodes.forEach((node) => {
+					node.x = positions[node.id].x;
+					node.y = positions[node.id].y;
+				});
+				this.node_history.push({ nodes: local_deleted_nodes, visible: false });
+				this.history_index = this.node_history.length - 1;
+			}
 		}
 
-		if (visible) {
-			this.network?.stabilize();
-			LoaderManager.set_status('stabilizing', 0);
-		}
+		old_edges.remove(deleted_edges);
+		old_nodes.remove(deleted_nodes);
+
+		this.network?.stabilize();
 		this.refresh_filters();
 
 		return this.data;

@@ -4,7 +4,7 @@
 	import { Graph, type URI, type Node, CurrentGraph } from '../api/graph';
 	import ActionMenu from './Header.svelte';
 	import InformationMenu from './Information-Menu.svelte';
-	import { onMount } from 'svelte';
+	import { onDestroy, onMount } from 'svelte';
 	import GraphLoader from './loader/Graph-Loader.svelte';
 	import { LoaderManager } from './loader/graph-loader';
 
@@ -26,7 +26,6 @@
 	let context_selection: Node | undefined = undefined;
 	let show_node_information: Node | undefined = undefined;
 	let loading_properties: boolean = false;
-	let loading_graph: boolean = false;
 
 	let is_ready = false;
 
@@ -36,40 +35,56 @@
 		is_ready = true;
 	});
 
+	onDestroy(() => {
+		destory();
+	});
+
+	function destory() {
+		$CurrentGraph.network.off('stabilizationProgress');
+		$CurrentGraph.network.off('stabilizationIterationsDone');
+		$CurrentGraph.network.off('stabilized');
+		$CurrentGraph.network.off('startStabilizing');
+		$CurrentGraph.network.off('oncontext');
+		$CurrentGraph.network.off('click');
+		$CurrentGraph.network.destroy();
+		$CurrentGraph.container.remove();
+
+		document.removeEventListener('keydown', handle_keydown);
+	}
+
 	function init() {
 		if (container && $CurrentGraph.container !== container) {
-			$CurrentGraph.network.off('stabilizationProgress');
-			$CurrentGraph.network.off('stabilizationIterationsDone');
-			$CurrentGraph.network.off('stabilized');
-			$CurrentGraph.network.off('startStabilizing');
-			$CurrentGraph.network.off('oncontext');
-			$CurrentGraph.network.off('click');
-			$CurrentGraph.network.destroy();
-			$CurrentGraph.container.remove();
+			destory();
 
 			$CurrentGraph = new Graph(container);
 			$CurrentGraph.network.on('click', show_properties);
 			$CurrentGraph.network.on('oncontext', show_context_menu);
 			$CurrentGraph.network.on('startStabilizing', () => {
-				loading_graph = true;
 				LoaderManager.open();
 			});
 			$CurrentGraph.network.on('stabilized', () => {
 				LoaderManager.close();
 			});
 			$CurrentGraph.network.on('stabilizationIterationsDone', () => {
-				$CurrentGraph.simulation_running = false;
-				$CurrentGraph.network.setOptions({ physics: false });
-				loading_graph = false;
 				LoaderManager.close();
 			});
-
 			$CurrentGraph.network.on('stabilizationProgress', (params) => {
 				LoaderManager.set_status(
 					'stabilizing',
 					Math.round((params.iterations / params.total) * 100)
 				);
 			});
+			document.addEventListener('keydown', handle_keydown);
+		}
+	}
+
+	function handle_keydown(event: KeyboardEvent) {
+		if (!$CurrentGraph) return;
+
+		if (event.key === 'z' && event.ctrlKey) {
+			$CurrentGraph.undo();
+		} else if (event.key === 'y' && event.ctrlKey) {
+			$CurrentGraph.redo();
 		}
 	}
 
