@@ -13,7 +13,14 @@ const get_network_options = () => ({
 		hideEdgesOnDrag: get(Settings).hide_edges_on_drag ?? false
 	},
 	nodes: {
-		color: dark_mode ? '#6a7e9d' : '#74a0e9',
+		color: {
+			background: dark_mode ? '#6a7e9d' : '#74a0e9',
+			border: dark_mode ? '#4a5e7d' : '#578ee9',
+			highlight: {
+				background: dark_mode ? '#F3F9FF' : '#82D47C',
+				border: dark_mode ? '#4191F9' : '#00A58A'
+			}
+		},
 		shape: 'dot',
 		font: {
 			color: dark_mode ? 'white' : 'black'
@@ -44,7 +51,7 @@ const get_network_options = () => ({
 		},
 		color: {
 			color: dark_mode ? '#4a5e7d' : '#74a0e9',
-			highlight: dark_mode ? '#4a5e7d' : '#74a0e9'
+			highlight: dark_mode ? '#4191F9' : '#00A58A'
 		},
 		smooth: {
 			type: get(Settings).smooth_edges ? 'dynamic' : 'continuous'
@@ -90,7 +97,7 @@ export class Property {
 		this.fetched = false;
 	}
 }
-export class Node {
+export class Node implements vis.Node {
 	id: URI;
 	label: string;
 	description: string;
@@ -105,7 +112,10 @@ export class Node {
 	x: number;
 	y: number;
 	properties: Property[] = [];
-	color: string | undefined;
+	color?: ReturnType<typeof get_network_options>['nodes']['color'];
+	borderWidth: number;
+	borderWidthSelected: number;
+
 	shape:
 		| 'dot'
 		| 'image'
@@ -138,6 +148,8 @@ export class Node {
 		this.y = position.y;
 		this.fixed = fixed;
 		this.description = description;
+		this.borderWidth = 4;
+		this.borderWidthSelected = 4;
 		if (image) {
 			this.update_image(image);
 		} else if (type === 'literal') {
@@ -148,7 +160,8 @@ export class Node {
 	update_image(url: URI) {
 		this.image = url;
 		this.shape = 'circularImage';
-		this.color = 'transparent';
+		this.borderWidth = 8;
+		this.borderWidthSelected = 8;
 	}
 }
 
@@ -315,9 +328,11 @@ export class Graph {
 			const node_ids = nodes.map((n) => n.id);
 			for (const node of nodes) {
 				if (node.color != get_network_options().nodes.color && node.color !== undefined) {
-					node.color = blend_colors(node.color, filter.color, 0.5);
-				} else {
-					node.color = filter.color;
+					node.color.background = blend_colors(node.color.background, filter.color, 0.5);
+					node.color.border = blend_colors(node.color.border, filter.color, 0.5);
+				} else if (node.color !== undefined) {
+					node.color.background = filter.color;
+					node.color.border = filter.color;
 				}
 				if (!filter.visible && node.temp_visible) {
 					node.temp_visible = false;
@@ -341,12 +356,12 @@ export class Graph {
 						) {
 							edge.color = {
 								color: blend_colors(edge.color.color, filter.color, 0.5),
-								highlight: blend_colors(edge.color.color, filter.color, 0.5)
+								highlight: dark_mode ? '#4191F9' : '#00A58A'
 							};
 						} else {
 							edge.color = {
 								color: filter.color,
-								highlight: filter.color
+								highlight: dark_mode ? '#4191F9' : '#00A58A'
 							};
 						}
 					}
