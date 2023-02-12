@@ -75,35 +75,10 @@
 			open = false;
 		} else if (event.code === 'ArrowDown' && search_results_open) {
 			event.preventDefault();
-			if (search_results.length > 0) {
-				if (selected_result < search_results.length - 1) {
-					selected_result++;
-				}
-				if (search_results[selected_result].button) {
-					search_results[selected_result].button?.focus();
-					search_results[selected_result].button?.scrollIntoView({
-						behavior: 'smooth',
-						block: 'nearest'
-					});
-				}
-			}
+			select_result(1);
 		} else if (event.code === 'ArrowUp' && search_results_open) {
 			event.preventDefault();
-			if (search_results.length > 0) {
-				if (selected_result > 0) {
-					selected_result--;
-				} else if (selected_result === 0) {
-					selected_result = -1;
-					search_input.focus();
-				}
-				if (search_results[selected_result].button) {
-					search_results[selected_result].button?.focus();
-					search_results[selected_result].button?.scrollIntoView({
-						behavior: 'smooth',
-						block: 'nearest'
-					});
-				}
-			}
+			select_result(-1);
 		} else if (event.code === 'Enter' && search_results_open) {
 			event.preventDefault();
 			if (search_results.length > 0) {
@@ -116,6 +91,30 @@
 						last_click = selected_result;
 					}
 				}
+			}
+		}
+	}
+
+	function select_result(dir: -1 | 1) {
+		if (search_results.length > 0) {
+			if (selected_result + dir >= -2) {
+				selected_result += dir;
+			}
+
+			if (selected_result >= search_results.length) {
+				selected_result = -1;
+			} else if (selected_result === -2) {
+				selected_result = search_results.length - 1;
+			}
+
+			if (selected_result === -1) {
+				search_input.focus();
+			} else {
+				search_results[selected_result].button?.focus();
+				search_results[selected_result].button?.scrollIntoView({
+					behavior: 'smooth',
+					block: 'nearest'
+				});
 			}
 		}
 	}

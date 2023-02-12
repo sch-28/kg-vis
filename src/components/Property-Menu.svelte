@@ -251,7 +251,12 @@
 		if (state.sorted_items.length > 0) {
 			if (selected_item + dir >= -2 && selected_item + dir < state.sorted_items.length) {
 				selected_item += dir;
+			}else if (selected_item + dir < -2) {
+				selected_item = state.sorted_items.length - 1;
+			} else if (selected_item + dir >= state.sorted_items.length) {
+				selected_item = -2;
 			}
+
 			if (selected_item === -2) {
 				show_search = true;
 				setTimeout(() => {
@@ -260,6 +265,8 @@
 			} else {
 				show_search = false;
 			}
+
+
 
 			if (selected_item === -1) {
 				add_all_button?.focus();
