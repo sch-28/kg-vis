@@ -88,6 +88,7 @@ class SPARQL_Queries {
 	}
 
 	public shorten_uri(uri: URI) {
+		uri = uri.replaceAll('"', "'");
 		let shortened = false;
 		for (const prefix in PREFIXES) {
 			if (uri.includes(PREFIXES[prefix])) {
