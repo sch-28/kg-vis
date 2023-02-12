@@ -50,6 +50,7 @@
 		$CurrentGraph.container.remove();
 
 		document.removeEventListener('keydown', handle_keydown);
+		document.removeEventListener('paste', handle_paste);
 	}
 
 	function init() {
