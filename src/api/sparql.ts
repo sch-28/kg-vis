@@ -556,8 +556,8 @@ class SPARQL_Queries {
 				SELECT DISTINCT ?object WHERE {
 				${
 					property.dir === 'out'
-						? `<${subject}> <${property.uri}> ?object.`
-						: `?object <${property.uri}> <${subject}>.`
+						? `${this.shorten_uri(subject)} ${this.shorten_uri(property.uri)} ?object.`
+						: `?object ${this.shorten_uri(property.uri)} ${this.shorten_uri(subject)}.`
 				}
 				} LIMIT ${this.size_limit}
 				
@@ -566,8 +566,12 @@ class SPARQL_Queries {
 			OPTIONAL {
 				${
 					this.endpoint_type === 'wikidata'
-						? `?prop wikibase:directClaim <${property.uri}> . ?prop rdfs:label ?propLabel .`
-						: `<${property.uri}> rdf:type rdf:Property . <${property.uri}> rdfs:label ?propLabel .`
+						? `?prop wikibase:directClaim ${this.shorten_uri(
+								property.uri
+						  )} . ?prop rdfs:label ?propLabel .`
+						: `${this.shorten_uri(property.uri)} rdf:type rdf:Property . ${this.shorten_uri(
+								property.uri
+						  )} rdfs:label ?propLabel .`
 				}
 			}
 			
@@ -603,9 +607,9 @@ class SPARQL_Queries {
 			
 			SELECT DISTINCT ?property ?dir WHERE {
 				{
-					BIND("in" as ?dir).  ?o ?property <${subject}> .
+					BIND("in" as ?dir).  ?o ?property ${this.shorten_uri(subject)} .
 				} UNION{
-					BIND("out" as ?dir). <${subject}> ?property ?o
+					BIND("out" as ?dir). ${this.shorten_uri(subject)} ?property ?o
 				}
 				${
 					this.endpoint_type === 'wikidata'

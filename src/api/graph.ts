@@ -620,7 +620,7 @@ export class Graph {
 		}
 		const reverse_edge = this.get_edge(target, uri, source);
 		if (reverse_edge) {
-			reverse_edge.arrows.to.enabled = true;
+			reverse_edge.arrows.from.enabled = true;
 			return true;
 		}
 
@@ -713,7 +713,9 @@ export class Graph {
 					relation.property_label
 				);
 				const node = this.nodes.find((n) => n.id == relation.subject.value);
-				const node_property = node?.properties.find((p) => p.uri == relation.property.value);
+				const node_property = node?.properties.find(
+					(p) => p.uri == relation.property.value && p.direction == 'out'
+				);
 				const related = this.nodes.find((n) => n.id == relation.object.value);
 				if (node_property) {
 					if (related) {
