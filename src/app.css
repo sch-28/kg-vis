@@ -35,7 +35,7 @@ html.dark {
 }
 
 .color-picker .wrapper .picker-wrapper {
-	@apply w-[112px] h-[112px];
+	@apply w-[106px] h-[106px];
 }
 
 .color-picker .wrapper input,
@@ -44,7 +44,7 @@ html.dark {
 }
 
 .color-picker .wrapper .slider-wrapper {
-	@apply h-[112px];
+	@apply h-[106px];
 }
 
 .color-picker .container {
