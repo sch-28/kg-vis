@@ -1,10 +1,10 @@
 <script lang="ts">
-	import { ChevronDown, FolderOpen, XMark } from '@steeze-ui/heroicons';
+	import { ChevronDown, FolderOpen, Plus, XMark } from '@steeze-ui/heroicons';
 	import { Icon } from '@steeze-ui/svelte-icon';
 	import isUrl from 'is-url';
 	import { SPARQL, type BindingContent } from '../../../api/sparql';
 	import { CurrentGraph, type Node, type URI } from '../../../api/graph';
-	import { getContext, onMount } from 'svelte';
+	import { getContext, onDestroy, onMount } from 'svelte';
 	import LoadingCircle from '../../util/Loading-Circle.svelte';
 	import { Settings } from '../../../settings';
 	import { Button, Chevron, Dropdown, DropdownItem, Hr } from 'flowbite-svelte';
@@ -148,22 +148,10 @@ WHERE
 		uri: string;
 		height?: number;
 		suggestion_type: 'direct' | 'search';
+		button?: HTMLButtonElement;
 	};
 
-	let suggestions: Suggestion[] = [
-		{
-			label: 'test',
-			type: 'wikidata',
-			uri: 'https://www.wikidata.org/wiki/Q42',
-			suggestion_type: 'direct'
-		},
-		{
-			label: 'test2',
-			type: 'wikidata',
-			uri: 'https://www.wikidata.org/wiki/Q42',
-			suggestion_type: 'direct'
-		}
-	];
+	let suggestions: Suggestion[] = [];
 
 	let show_suggestsions = false;
 
@@ -252,11 +240,51 @@ WHERE
 	}
 
 	let search_input: HTMLInputElement;
+	let selected_suggestion: number = -1;
 
 	onMount(() => {
 		update_height();
 		search_input.focus();
+		document.addEventListener('keydown', handle_keydown);
 	});
+
+	onDestroy(() => {
+		document.removeEventListener('keydown', handle_keydown);
+	});
+
+	function handle_keydown(event: KeyboardEvent) {
+		if (event.key === 'Escape') {
+			close();
+		} else if (event.key === 'ArrowDown') {
+			if (suggestions.length > 0) {
+				select_suggestion(1);
+			}
+		} else if (event.key === 'ArrowUp') {
+			if (suggestions.length > 0) {
+				select_suggestion(-1);
+			}
+		}
+	}
+
+	function select_suggestion(dir: -1 | 1) {
+		if (suggestions.length > 0) {
+			if (selected_suggestion + dir >= -2) {
+				selected_suggestion += dir;
+			}
+
+			if (selected_suggestion >= suggestions.length) {
+				selected_suggestion = -1;
+			}else if(selected_suggestion  === -2){
+				selected_suggestion = suggestions.length - 1;
+			}
+
+			if (selected_suggestion === -1) {
+				search_input.focus();
+			} else {
+				suggestions[selected_suggestion].button?.focus();
+			}
+		}
+	}
 </script>
 
 <div class="flex flex-col sm:w-[475px] w-80">
@@ -338,21 +366,41 @@ WHERE
 					? 'opacity-100 mt-2'
 					: 'opacity-0'} flex flex-col border shadow-lg rounded-lg dark:border-dark-muted dark:bg-dark-bg bg-white z-50 w-full divide-y overflow-hidden transition-all duration-200 h-0"
 				style={`height: ${
-					show_suggestsions ? suggestions.reduce((sum, s) => sum + (s.height ?? 0), 0) : 0
+					show_suggestsions
+						? Math.ceil(suggestions.reduce((sum, s) => sum + (s.height ? s.height : 0), 0)) +
+						  (suggestions.length - 1) * 1.5
+						: 0
 				}px`}
 			>
 				{#if suggestions.length > 0}
 					{#each suggestions as suggestion}
 						<button
+							bind:this={suggestion.button}
 							on:click={() => {
 								show_suggestsions = false;
-								fetch_url(suggestion.uri);
+								fetch_url(suggestion.uri).then(() => {
+									add_nodes();
+								});
+								close();
 							}}
 							bind:offsetHeight={suggestion.height}
-							class="p-2 flex flex-col border-gray-200 dark:border-gray-700 hover:bg-black/5 dark:hover:bg-black/30"
+							class="focus:bg-black/5 dark:focus:bg-black/30 p-2 flex justify-center border-gray-200 dark:border-gray-700 hover:bg-black/5 dark:hover:bg-black/30 !outline-none min-h-[65px]"
 						>
-							<span class="font-medium">{suggestion.label}</span>
-							<span class="text-sm font-light">{suggestion.type}</span>
+							<div class="flex flex-col items-start">
+								<span class="font-medium">{suggestion.label}</span>
+								<span class="text-sm font-light">{suggestion.type}</span>
+							</div>
+							<button
+								on:click={(e) => {
+									e.stopPropagation();
+									show_suggestsions = false;
+									fetch_url(suggestion.uri);
+								}}
+								class="ml-auto my-auto mr-2  p-1 rounded-lg bg-transparent hover:bg-black/5 dark:hover:bg-black/30'
+								 transition-all duration-200 ease-in-out"
+							>
+								<Icon src={Plus} class="w-5 h-5" />
+							</button>
 						</button>
 					{/each}
 				{:else if !loading}
