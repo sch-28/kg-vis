@@ -30,6 +30,9 @@ const get_network_options = () => ({
 			node: true,
 			label: false
 		},
+		shapeProperties: {
+			interpolation: false
+		},
 		widthConstraint: {
 			maximum: 125
 		}
@@ -68,7 +71,7 @@ const get_network_options = () => ({
 		stabilization: {
 			enabled: true,
 			iterations: 500
-		}
+		},
 	}
 });
 

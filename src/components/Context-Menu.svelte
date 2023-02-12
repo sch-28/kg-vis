@@ -174,11 +174,11 @@
 		if (new_position.x + wrapper.offsetWidth > window_width) {
 			new_position.x = window_width - wrapper.offsetWidth - menu_gap;
 		}
-		if (new_position.y + wrapper.offsetHeight  > window.innerHeight) {
+		if (new_position.y + wrapper.offsetHeight > window.innerHeight) {
 			new_position.y = window.innerHeight - wrapper.offsetHeight - menu_gap;
-		} else if (new_position.y - wrapper.offsetHeight  < 0) {
+		} else if (new_position.y - wrapper.offsetHeight < 0) {
 			new_position.y = menu_gap;
-		} 
+		}
 
 		wrapper.style.top = new_position.y + 'px';
 		wrapper.style.left = new_position.x + 'px';

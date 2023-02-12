@@ -39,6 +39,12 @@
 
 	function init() {
 		if (container && $CurrentGraph.container !== container) {
+			$CurrentGraph.network.off('stabilizationProgress');
+			$CurrentGraph.network.off('stabilizationIterationsDone');
+			$CurrentGraph.network.off('stabilized');
+			$CurrentGraph.network.off('startStabilizing');
+			$CurrentGraph.network.off('oncontext');
+			$CurrentGraph.network.off('click');
 			$CurrentGraph.network.destroy();
 			$CurrentGraph.container.remove();
 
