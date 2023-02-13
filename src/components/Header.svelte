@@ -23,7 +23,7 @@
 	}
 
 	$: {
-		if ($CurrentGraph && $CurrentGraph.node_filters) {
+		if ($CurrentGraph && $CurrentGraph.node_filters.length > 0) {
 			handle_open_filter();
 		}
 	}
