@@ -1,5 +1,19 @@
-# Knowledge Graph Visualization
+<div align="center">
 
+# KG-Visualization
+
+[Introduction](#introduction) • [Features](#features) • [Installation](#installation) • [Keybindings](#keybindings) 
+
+![Status](https://img.shields.io/website?label=kg-vis&up_message=online&url=https%3A%2F%2Fsch-28.github.io%2Fkg-vis)
+![Latest commit](https://img.shields.io/github/last-commit/sch-28/kg-vis)
+![Build status: master](https://img.shields.io/github/actions/workflow/status/sch-28/kg-vis/deployment.yml)
+
+<a href="https://sch-28.github.io/kg-vis"><img src="https://github.com/sch-28/kg-vis/blob/main/.github/images/banner.png" ></a>
+
+
+</div>
+
+## Introduction
 This knowledge graph visualization tool aims to help you visualize and explore knowledge graphs directly in your browser. The goal is to provide an intuitive and user-friendly interface to explore knowledge graphs and discover relations.
 
 [DEMO](https://sch-28.github.io/kg-vis)
@@ -11,7 +25,7 @@ Kg-vis offers several key features that make it a powerful and effective solutio
 - **Filtering:** Focus on the nodes you need, and display only relevant data.
 - **SPARQL support:** Directly import data with a SPARQL query or export your built graph to SPARQL for further use.
 
-## Installing
+## Installation
 
 Install the dependencies with `npm install` and start a development server:
 
