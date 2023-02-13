@@ -10,6 +10,7 @@
 	import { Button, Chevron, Dropdown, DropdownItem, Hr } from 'flowbite-svelte';
 	import { click_outside, scrollbar_width } from '../../../util';
 	import { ModalManager } from '../modal-store';
+	import { LoaderManager } from '../../../components/loader/graph-loader';
 
 	let error: string = '';
 	let loading: boolean = false;
@@ -135,9 +136,9 @@ WHERE
 	}
 
 	async function add_nodes() {
+		LoaderManager.open();
 		$CurrentGraph.show_nodes(nodes, false);
 		$CurrentGraph.load_relations(nodes);
-
 		close();
 	}
 
