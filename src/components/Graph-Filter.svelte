@@ -241,7 +241,7 @@
 		</div>
 		{#if selected_filter !== undefined}
 			<div
-				class="absolute pointer-events-auto left-0 w-full"
+				class="absolute left-0 w-full"
 				use:click_outside
 				on:click_outside={() => {
 					last_closed = selected_filter;
@@ -264,7 +264,9 @@
 
 	{#if $CurrentGraph && $CurrentGraph.node_filters.length > 0}
 		<div
-			class="pointer-events-auto z-[49] duration-200 transition-all flex flex-col gap-2 h-fit max-h-[405px] overflow-auto"
+			class="{open
+			? 'pointer-events-auto'
+			: 'pointer-events-none'}  z-[49] flex flex-col gap-2 h-fit max-h-[405px] overflow-auto"
 		>
 			{#each $CurrentGraph.node_filters as filter}
 				<div
