@@ -186,7 +186,7 @@
 		}
 		if (new_position.y + wrapper.offsetHeight > window.innerHeight) {
 			new_position.y = window.innerHeight - wrapper.offsetHeight - menu_gap;
-		} else if (new_position.y - wrapper.offsetHeight < 0) {
+		} else if (new_position.y  < 0) {
 			new_position.y = menu_gap;
 		}
 
