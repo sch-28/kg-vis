@@ -244,8 +244,8 @@ WHERE
 
 	onMount(() => {
 		update_height();
-		search_input.focus();
 		document.addEventListener('keydown', handle_keydown);
+		setTimeout(() => search_input.focus(), 10)
 	});
 
 	onDestroy(() => {
