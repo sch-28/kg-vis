@@ -142,7 +142,7 @@
 		selected_filter_dropdown = undefined;
 		$CurrentGraph.node_filters = $CurrentGraph.node_filters;
 		ModalManager.open(ConfirmDialog, {
-			message: `Are you sure you want to delete all nodes that are not in the ${filter.node.label} filter?`,
+			message: `Are you sure you want to delete all nodes of the ${filter.node.label} filter?`,
 			on_confirm: () => {
 				const filter_node_ids = $CurrentGraph.get_filter_nodes(filter).map((n) => n.id);
 				$CurrentGraph.prune(
