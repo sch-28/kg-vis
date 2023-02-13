@@ -126,10 +126,6 @@
 			if (!/input|textarea/i.test(document.activeElement?.tagName ?? '')) {
 				$CurrentGraph.network?.stabilize();
 			}
-		} else if (event.key === 'S' && event.shiftKey) {
-			if (!/input|textarea/i.test(document.activeElement?.tagName ?? '')) {
-				$CurrentGraph.network?.stabilize();
-			}
 		} else if (event.key === 'F' && event.shiftKey) {
 			if (!/input|textarea/i.test(document.activeElement?.tagName ?? '')) {
 				event.preventDefault();
