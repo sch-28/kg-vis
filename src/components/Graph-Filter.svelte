@@ -82,7 +82,7 @@
 		} else if (event.code === 'Enter' && search_results_open) {
 			event.preventDefault();
 			if (search_results.length > 0) {
-				if (search_results[selected_result].button) {
+				if (search_results[selected_result]?.button) {
 					if (last_click === selected_result) {
 						search_results[selected_result].button?.querySelector('button')?.click();
 						last_click = -1;
