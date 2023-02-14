@@ -144,11 +144,14 @@
 
 	function handle_unlock_all() {
 		$CurrentGraph.lock_all_nodes(false);
+		$CurrentGraph = $CurrentGraph;
 		hidden = true;
 	}
 
 	function handle_lock_all() {
 		$CurrentGraph.lock_all_nodes(true);
+		$CurrentGraph = $CurrentGraph;
+
 		hidden = true;
 	}
 
@@ -186,7 +189,7 @@
 		}
 		if (new_position.y + wrapper.offsetHeight > window.innerHeight) {
 			new_position.y = window.innerHeight - wrapper.offsetHeight - menu_gap;
-		} else if (new_position.y  < 0) {
+		} else if (new_position.y < 0) {
 			new_position.y = menu_gap;
 		}
 
@@ -220,6 +223,7 @@
 				selection,
 				$CurrentGraph.network?.getPosition(selection.id) ?? { x: 0, y: 0 }
 			);
+			$CurrentGraph = $CurrentGraph;
 		}
 		hidden = true;
 	}

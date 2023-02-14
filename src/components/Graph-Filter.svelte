@@ -172,6 +172,10 @@
 		copy_to_clipboard($CurrentGraph.export_sparql($CurrentGraph.get_filter_nodes(filter)));
 	}
 
+	function handle_lock(filter: NodeFilter) {
+		$CurrentGraph.lock_all_nodes(!filter.node.fixed, $CurrentGraph.get_filter_nodes(filter));
+	}
+
 	let selected_filter: NodeFilter | undefined = undefined;
 	let selected_filter_dropdown: NodeFilter | undefined = undefined;
 	let last_closed: NodeFilter | undefined = undefined;
@@ -321,28 +325,33 @@
 							/>
 						</div>
 					</div>
-					<div class="flex flex-col gap-1">
-						<Label>Visible</Label>
-						<Toggle
-							bind:checked={filter.visible}
-							on:change={() => {
-								//todo optimize, this is a hack to show the changes & appy colors
-								update_filter();
-								if (filter.visible) update_filter();
-							}}
-						/>
-					</div>
-					<div class="flex items-start justify-center flex-col gap-1">
-						<Label>Color</Label>
-						<div class="flex gap-1 items-center">
-							<button
-								style="background-color: {filter.color};"
-								class="w-8 h-8 rounded-full mr-2"
-								on:click={() => {
-									if (!last_closed || last_closed.node !== filter.node) selected_filter = filter;
+					<div class="flex">
+						<div class="flex flex-col gap-1">
+							<Label>Visible</Label>
+							<Toggle
+								bind:checked={filter.visible}
+								on:change={() => {
+									//todo optimize, this is a hack to show the changes & appy colors
+									update_filter();
+									if (filter.visible) update_filter();
 								}}
 							/>
-							<p>{filter.color}</p>
+						</div>
+						<div class="flex flex-col gap-1">
+							<Label>Lock</Label>
+							<Toggle checked={filter.node.fixed} on:change={() => handle_lock(filter)} />
+						</div>
+						<div class="flex items-center justify-center flex-col gap-1">
+							<Label>Color</Label>
+							<div class="flex gap-1 items-center">
+								<button
+									style="background-color: {filter.color};"
+									class="w-6 h-6 rounded-full"
+									on:click={() => {
+										if (!last_closed || last_closed.node !== filter.node) selected_filter = filter;
+									}}
+								/>
+							</div>
 						</div>
 					</div>
 				</div>

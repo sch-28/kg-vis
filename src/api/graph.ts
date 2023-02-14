@@ -563,8 +563,8 @@ export class Graph {
 		this.update_node(node, position);
 	}
 
-	lock_all_nodes(lock = true) {
-		this.nodes.forEach((node) => (node.fixed = lock));
+	lock_all_nodes(lock = true, nodes: Node[] = this.nodes) {
+		nodes.forEach((node) => (node.fixed = lock));
 		this.refresh_nodes();
 	}
 
