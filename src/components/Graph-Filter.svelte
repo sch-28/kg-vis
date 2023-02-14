@@ -56,6 +56,7 @@
 		if (search_input) {
 			search_input.focus();
 			search_results_open = true;
+			selected_result = -1;
 		}
 	}
 
@@ -265,8 +266,8 @@
 	{#if $CurrentGraph && $CurrentGraph.node_filters.length > 0}
 		<div
 			class="{open
-			? 'pointer-events-auto'
-			: 'pointer-events-none'}  z-[49] flex flex-col gap-2 h-fit max-h-[405px] overflow-auto"
+				? 'pointer-events-auto'
+				: 'pointer-events-none'}  z-[49] flex flex-col gap-2 h-fit max-h-[405px] overflow-auto"
 		>
 			{#each $CurrentGraph.node_filters as filter}
 				<div
