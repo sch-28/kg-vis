@@ -106,7 +106,7 @@
 					</SidebarItem>
 				</SidebarGroup>
 				<SidebarGroup border>
-					<SidebarItem label="Documentation">
+					<SidebarItem label="Documentation" href="https://github.com/sch-28/kg-vis#readme" target="_blank">
 						<svelte:fragment slot="icon">
 							<Icon src={HelpOutline} class="w-6 h-6 fill-current" />
 						</svelte:fragment>
