@@ -176,6 +176,17 @@
 		$CurrentGraph.lock_all_nodes(!filter.node.fixed, $CurrentGraph.get_filter_nodes(filter));
 	}
 
+	function handle_node_click(node: Node) {
+		$CurrentGraph.network.selectNodes([node.id]);
+		$CurrentGraph.network.focus(node.id, {
+			scale: 1,
+			animation: {
+				duration: 500,
+				easingFunction: 'easeInOutQuad'
+			}
+		});
+	}
+
 	let selected_filter: NodeFilter | undefined = undefined;
 	let selected_filter_dropdown: NodeFilter | undefined = undefined;
 	let last_closed: NodeFilter | undefined = undefined;
@@ -218,10 +229,7 @@
 				<button
 					bind:this={search.button}
 					class="min-w-0 text-left flex items-center px-2 min-h-[35px] group hover:bg-black/5 dark:hover:bg-black/30 justify-between focus:bg-black/5 dark:focus:bg-black/30 !outline-none"
-					on:click={() => {
-						$CurrentGraph.network?.selectNodes([search.result.item.id]);
-						$CurrentGraph.network?.focus(search.result.item.id, { animation: true, scale: 1 });
-					}}
+					on:click={() => handle_node_click(search.result.item)}
 				>
 					<div class="truncate min-w-0" title={search.result.item.label}>
 						{search.result.item.label}
@@ -278,11 +286,11 @@
 					class="border shadow-lg rounded-lg dark:border-dark-muted dark:bg-dark-bg bg-white flex flex-col p-2 gap-1"
 				>
 					<span class="flex">
-						<p class="truncate">
-							{filter.node.label}
-						</p>
+						<Button color="light" class="flex items-center !px-2 !py-1 min-w-0" on:click={() => handle_node_click(filter.node)}>
+							<p class="truncate">{filter.node.label}</p>
+						</Button>
 
-						<ToolbarButton class="ml-auto">
+						<ToolbarButton class="ml-auto !py-0 !px-0.5">
 							<svg
 								xmlns="http://www.w3.org/2000/svg"
 								fill="none"
