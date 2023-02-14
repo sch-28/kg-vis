@@ -110,6 +110,9 @@
 		set_selected_item(-2);
 		sort_items();
 		item_container?.scrollTo(0, 0);
+		if (search_string.length > 0) {
+			show_search = true;
+		}
 	}
 
 	function change_sort_by(new_sort_by: typeof state.sort_by) {
