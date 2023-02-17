@@ -160,7 +160,7 @@
 			} else if (state.sort_by == 'direction' && state.current_context === 'property') {
 				a.item = a.item as Property;
 				b.item = b.item as Property;
-				return state.sort_direction * (a.item.count < b.item.count ? 1 : -1);
+				return state.sort_direction * (a.item.direction === 'out' ? 1 : -1);
 			} else if (state.sort_by === 'direction' && state.current_context === 'node') {
 				a.item = a.item as Node;
 				b.item = b.item as Node;
