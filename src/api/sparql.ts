@@ -87,7 +87,7 @@ class SPARQL_Queries {
 		return get(Settings).endpoint_lang ?? 'en';
 	}
 
-	public shorten_uri(uri: URI) {
+	public shorten_uri(uri: URI, transform: boolean = true) {
 		uri = uri.replaceAll('"', "'");
 		let shortened = false;
 		for (const prefix in PREFIXES) {
@@ -99,7 +99,7 @@ class SPARQL_Queries {
 				}
 			}
 		}
-		if (!shortened) {
+		if (!shortened && transform) {
 			uri = '<' + uri + '>';
 		}
 
@@ -247,7 +247,9 @@ class SPARQL_Queries {
 		for (const item of result) {
 			entities.push({
 				uri: item.item?.value ?? '',
-				label: item.itemLabel?.value ?? '',
+				label:
+					item.itemLabel?.value ??
+					(item.item && item.item?.value ? this.shorten_uri(item.item.value, false) : ''),
 				type: item.typeLabel?.value ?? ''
 			});
 		}
@@ -293,7 +295,11 @@ class SPARQL_Queries {
 				subject: direction === 'out' ? subject : r.object?.value ?? '',
 				object: direction === 'out' ? r.object?.value ?? '' : subject,
 				type: r.object?.type ?? 'literal',
-				label: r.objectLabel?.value ?? r.object?.value ?? '',
+				label:
+					r.objectLabel?.value ??
+					(r.object && r.object?.value && r.object?.type !== 'literal'
+						? this.shorten_uri(r.object.value, false)
+						: r.object?.value ?? ''),
 				datatype: r.object?.datatype ?? undefined,
 				language: r.object?.['xml:lang'] ?? undefined
 			}))
@@ -377,12 +383,14 @@ class SPARQL_Queries {
 			return result.map((r) => {
 				return {
 					uri: r.property?.value ?? '',
-					label: r.propertyLabel?.value ?? r.property?.value ?? ''
+					label:
+						r.propertyLabel?.value ??
+						(r.property && r.property?.value ? this.shorten_uri(r.property.value, false) : '')
 				};
 			});
 		}
 
-		return properties.map((p) => ({ uri: p, label: p }));
+		return properties.map((p) => ({ uri: p, label: this.shorten_uri(p, false) }));
 	}
 
 	public async fetch_labels(subjects: URI[]) {
@@ -411,7 +419,9 @@ class SPARQL_Queries {
 			return result.map((r) => {
 				return {
 					uri: r.subject?.value ?? '',
-					label: r.subjectLabel?.value ?? r.subject?.value ?? ''
+					label:
+						r.subjectLabel?.value ??
+						(r.subject && r.subject?.value ? this.shorten_uri(r.subject.value, false) : '')
 				};
 			});
 		}
@@ -450,13 +460,13 @@ class SPARQL_Queries {
 		);
 		if (result.length > 0) {
 			return {
-				label: result[0].label?.value ?? subject,
+				label: result[0].label?.value ?? this.shorten_uri(subject, false),
 				description: result[0].description?.value ?? '',
 				type: result[0].typeLabel?.value ?? ''
 			};
 		}
 
-		return { label: subject, description: '', type: '' };
+		return { label: this.shorten_uri(subject, false), description: '', type: '' };
 	}
 	// fetches relations between multiple nodes
 	public async fetch_multiple_relations(subjects: BindingContent[], other_nodes: BindingContent[]) {
@@ -582,7 +592,7 @@ class SPARQL_Queries {
 		if (result.length > 0) {
 			const res = result[0];
 			return {
-				label: res.propLabel?.value || property.uri,
+				label: res.propLabel?.value || this.shorten_uri(property.uri, false),
 				uri: property.uri,
 				count: +(res.count?.value ?? 0),
 				related: [],
@@ -591,7 +601,7 @@ class SPARQL_Queries {
 			};
 		} else {
 			return {
-				label: property.uri,
+				label: this.shorten_uri(property.uri, false),
 				uri: property.uri,
 				count: 0,
 				related: [],
