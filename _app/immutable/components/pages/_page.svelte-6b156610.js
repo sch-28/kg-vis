@@ -76,7 +76,7 @@ In order to be iterable, non-array objects must have a [Symbol.iterator]() metho
 			?subject schema:description ?description
 			FILTER (lang(?description) = '${this.endpoint_lang}')
 		} LIMIT 1`))[0])==null?void 0:r.description)==null?void 0:i.value)??""}async fetch_related_nodes(t,e,r){return(await this.query(`
-			SELECT DISTINCT ?object ?objectLabel ?objectDescription  WHERE {
+			SELECT DISTINCT ?object ?objectLabel WHERE {
 				
 					${r==="out"?`${this.shorten_uri(t)} ${this.shorten_uri(e)} ?object .`:`?object ${this.shorten_uri(e)} ${this.shorten_uri(t)} .`}
 				
