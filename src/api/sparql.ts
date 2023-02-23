@@ -275,7 +275,7 @@ class SPARQL_Queries {
 	public async fetch_related_nodes(subject: URI, property: URI, direction: 'in' | 'out') {
 		const result = await this.query<{ object: BindingContent; objectLabel?: BindingContent }>(
 			`
-			SELECT DISTINCT ?object ?objectLabel ?objectDescription  WHERE {
+			SELECT DISTINCT ?object ?objectLabel WHERE {
 				
 					${
 						direction === 'out'
