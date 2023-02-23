@@ -246,7 +246,7 @@ WHERE
 	onMount(() => {
 		update_height();
 		document.addEventListener('keydown', handle_keydown);
-		setTimeout(() => search_input.focus(), 10)
+		setTimeout(() => search_input?.focus(), 10);
 	});
 
 	onDestroy(() => {
@@ -275,7 +275,7 @@ WHERE
 
 			if (selected_suggestion >= suggestions.length) {
 				selected_suggestion = -1;
-			}else if(selected_suggestion  === -2){
+			} else if (selected_suggestion === -2) {
 				selected_suggestion = suggestions.length - 1;
 			}
 
