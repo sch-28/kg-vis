@@ -635,7 +635,16 @@ export class Graph {
 		if (properties.length > 0) {
 			const node = this.find_or_create_node(uri, uri);
 			node.is_fetched = true;
-			node.properties = properties;
+			for (const property of properties) {
+				const existing_property = node.properties.find(
+					(p) => p.uri === property.uri && p.direction === property.direction
+				);
+				if (existing_property) {
+					existing_property.count = property.count;
+				} else {
+					node.properties.push(property);
+				}
+			}
 		}
 	}
 
@@ -717,23 +726,21 @@ export class Graph {
 					(p) => p.uri == relation.property.value && p.direction == 'out'
 				);
 				const related = this.nodes.find((n) => n.id == relation.object.value);
-				if (node_property) {
-					if (related) {
-						if (node_property.related.find((node) => node.id == related.id) == undefined) {
-							node_property.related.push(related);
-							if (node?.visible && related.visible) update = true;
-						}
+				if (node_property && node && related) {
+					if (node_property.related.find((n) => n.id == related.id) == undefined) {
+						node_property.related.push(related);
+						if (node.visible && related.visible) update = true;
 					}
-				} else if (!node_property && node) {
+				} else if (!node_property && node && related) {
 					node.properties.push({
 						uri: relation.property.value,
 						label: relation.property_label,
-						related: related ? [related] : [],
+						related: [related],
 						count: 1,
 						fetched: false,
 						direction: 'out'
 					});
-					if (node.visible && related?.visible) update = true;
+					if (node.visible && related.visible) update = true;
 				}
 			}
 			this.update_data(update || visible);
