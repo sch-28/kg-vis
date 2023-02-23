@@ -6,5 +6,7 @@
 	const selected_theme = $page.url.searchParams.get('theme');
 	if (selected_theme !== null) change_theme(selected_theme === 'dark');
 </script>
-
+<svelte:head>
+	<title>KG Visualization</title>
+</svelte:head>
 <slot />
