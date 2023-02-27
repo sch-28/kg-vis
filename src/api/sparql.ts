@@ -95,9 +95,7 @@ class SPARQL_Queries {
 			if (uri.includes(PREFIXES[prefix])) {
 				const code = uri.split(PREFIXES[prefix])[1];
 				if (code.length > 0) {
-					// eslint-disable-next-line no-useless-escape
-					const REGEXP_SPECIAL_CHAR = /[\!\#\$\%\^\&\*\)\(\+\=\.\<\>\{\}\[\]\:\;\'\"\|\~\`\_\-]/g;
-					const escaped_code = code.replaceAll(REGEXP_SPECIAL_CHAR, '\\$&');
+					const escaped_code = this.escape_string(code, true);
 					uri = uri.replace(PREFIXES[prefix] + code, prefix + ':' + escaped_code);
 					shortened = true;
 				}
@@ -108,6 +106,16 @@ class SPARQL_Queries {
 		}
 
 		return uri;
+	}
+
+	public escape_string(str: string, all = false) {
+		// eslint-disable-next-line no-useless-escape
+		const REGEXP_SPECIAL_CHAR_ALL = /[\!\#\$\%\^\&\*\)\(\+\=\.\<\>\{\}\[\]\;\'\"\|\~\`\_\,\-/]/g;
+		// eslint-disable-next-line no-useless-escape
+		const REGEXP_SPECIAL_CHAR = /[\"]/g;
+
+		if (!all) return str.split("").map(s => s.replaceAll(REGEXP_SPECIAL_CHAR, '\\$&').replaceAll('\n', '\\n')).join("")
+		else return str.split("").map(s => s.replaceAll(REGEXP_SPECIAL_CHAR_ALL, '\\$&').replaceAll('\n', '\\n')).join("")
 	}
 
 	public get prefixes() {
@@ -505,11 +513,11 @@ class SPARQL_Queries {
 			const node = subjects[i];
 			if (isUrl(node.value)) subjects_string += `${this.shorten_uri(node.value)}\n`;
 			else
-				subjects_string += `"${node.value}"${
+				subjects_string += `"${this.escape_string(node.value, false)}"${
 					node.datatype
 						? '^^' + this.shorten_uri(node.datatype)
 						: node['xml:lang']
-						? '@' + node['xml:lang']
+						? '@' + this.escape_string(node['xml:lang'], true)
 						: ''
 				} \n`;
 		}
@@ -521,11 +529,11 @@ class SPARQL_Queries {
 			const node = other_nodes[i];
 			if (isUrl(node.value)) objects_string += `${this.shorten_uri(node.value)}\n`;
 			else
-				objects_string += `"${node.value}"${
+				objects_string += `"${this.escape_string(node.value, false)}"${
 					node.datatype
 						? '^^' + this.shorten_uri(node.datatype)
 						: node['xml:lang']
-						? '@' + node['xml:lang']
+						? '@' + this.escape_string(node['xml:lang'], true)
 						: ''
 				}\n`;
 		}
