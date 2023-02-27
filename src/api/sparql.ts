@@ -50,7 +50,9 @@ const PREFIXES: PREFIXES = {
 	dbowl: 'http://dbpedia.org/ontology/',
 	dbcat: 'http://dbpedia.org/resource/Category:',
 	db: 'http://dbpedia.org/',
-	dbp: 'http://dbpedia.org/property/'
+	dbp: 'http://dbpedia.org/property/',
+	dbo: 'http://dbpedia.org/ontology/',
+	dbr: 'http://dbpedia.org/resource/'
 };
 
 class SPARQL_Queries {
@@ -88,13 +90,15 @@ class SPARQL_Queries {
 	}
 
 	public shorten_uri(uri: URI, transform: boolean = true) {
-		uri = uri.replaceAll('"', "'");
 		let shortened = false;
 		for (const prefix in PREFIXES) {
 			if (uri.includes(PREFIXES[prefix])) {
 				const code = uri.split(PREFIXES[prefix])[1];
 				if (code.length > 0) {
-					uri = uri.replace(PREFIXES[prefix] + code, prefix + ':' + code);
+					// eslint-disable-next-line no-useless-escape
+					const REGEXP_SPECIAL_CHAR = /[\!\#\$\%\^\&\*\)\(\+\=\.\<\>\{\}\[\]\:\;\'\"\|\~\`\_\-]/g;
+					const escaped_code = code.replaceAll(REGEXP_SPECIAL_CHAR, '\\$&');
+					uri = uri.replace(PREFIXES[prefix] + code, prefix + ':' + escaped_code);
 					shortened = true;
 				}
 			}
