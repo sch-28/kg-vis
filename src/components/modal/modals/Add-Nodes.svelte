@@ -18,27 +18,35 @@
 	let sparql_query_area: HTMLTextAreaElement;
 	let sparql_query: string = '';
 	let dropdown_open: boolean = false;
-	const query_examples: { name: string; query: string }[] = [
+	const query_examples: { name: string; wd_query: string; db_query: string }[] = [
 		{
 			name: 'Dogs',
-			query: `SELECT ?dog 
+			wd_query: `SELECT ?dog 
 WHERE 
 {
 	?dog wdt:P31 wd:Q144. 
+} LIMIT 100`,
+			db_query: `SELECT ?dog
+WHERE {
+	?dog dbp:species dbr:Dog.
 } LIMIT 100`
 		},
 		{
 			name: 'Cats',
-			query: `SELECT ?cat 
+			wd_query: `SELECT ?cat 
 WHERE 
 {
 	?cat wdt:P31 wd:Q146. 
+} LIMIT 100`,
+			db_query: `SELECT ?cat
+WHERE {
+	?cat dbp:species dbr:Cat.
 } LIMIT 100`
 		}
 	];
 
-	function select_query_example(example: { name: string; query: string }) {
-		sparql_query = example.query;
+	function select_query_example(example: { name: string; wd_query: string; db_query: string }) {
+		sparql_query = $Settings.endpoint_type === 'wikidata' ? example.wd_query : example.db_query;
 		$Settings.advanced_settings = true;
 		dropdown_open = false;
 		setTimeout(update_height, 0);
