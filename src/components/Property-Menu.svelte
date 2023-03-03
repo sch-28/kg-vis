@@ -18,6 +18,10 @@
 	import type Fuse from 'fuse.js';
 	import { onDestroy } from 'svelte';
 	import { LoaderManager } from './loader/graph-loader';
+	import Moveable from 'svelte-moveable';
+	import { bottom, right } from '@popperjs/core';
+	import { Height } from '@steeze-ui/material-design-icons';
+
 	export let selected_node: Node | undefined = undefined;
 	export let menu_position = { x: 0, y: 0 };
 	export let information_tab_visible: boolean = false;
@@ -69,6 +73,11 @@
 	const menu_gap = 16;
 	let item_container: HTMLElement;
 
+	let frame = {
+		translate: [0, 0]
+	};
+	let moveable: Moveable;
+
 	$: wrapper && menu_position && set_menu_position();
 
 	function set_menu_position() {
@@ -113,6 +122,7 @@
 		if (search_string.length > 0) {
 			show_search = true;
 		}
+		moveable?.updateRect();
 	}
 
 	function change_sort_by(new_sort_by: typeof state.sort_by) {
@@ -413,7 +423,7 @@
 {#if selected_node}
 	<div
 		id="property-menu"
-		class="absolute w-[380px] p-2 h-[326px] border dark:border-dark-muted dark:bg-dark-bg bg-white shadow-md z-40 rounded-2xl flex flex-col"
+		class="target absolute w-[380px] p-2 h-[326px] border dark:border-dark-muted dark:bg-dark-bg bg-white shadow-md z-40 rounded-2xl flex flex-col"
 		on:mouseover={() => {
 			document.addEventListener('keydown', search);
 			wrapper.setAttribute('focus', 'active');
@@ -576,10 +586,7 @@
 				</button>
 			{/each}
 		</div>
-		<div
-			class="flex flex-col overflow-y-auto max-h-[200px] h-[200px] ml-2 mr-1 "
-			bind:this={item_container}
-		>
+		<div class="flex flex-col overflow-y-auto h-full ml-2 mr-1 " bind:this={item_container}>
 			{#each state.sorted_items as item, i}
 				<button
 					bind:this={item.button}
@@ -682,4 +689,53 @@
 			>
 		{/if}
 	</div>
+	<Moveable
+		bind:this={moveable}
+		target={wrapper}
+		resizable={true}
+		keepRatio={false}
+		throttleResize={1}
+		edge={true}
+		zoom={1}
+		origin={false}
+		padding={{ left: -5, top: -5, right: -5, bottom: -5 }}
+		on:resizeStart={({ detail: e }) => {
+			e.setOrigin(['%', '%']);
+			e.dragStart && e.dragStart.set(frame.translate);
+		}}
+		on:resize={({ detail: e }) => {
+			const beforeTranslate = e.drag.beforeTranslate;
+
+			if (e.width < 210) e.width = 210;
+			if (e.height < 200) e.height = 200;
+
+			frame.translate = beforeTranslate;
+			e.target.style.width = `${e.width}px`;
+			e.target.style.height = `${e.height}px`;
+			e.target.style.transform = `translate(${beforeTranslate[0]}px, ${beforeTranslate[1]}px)`;
+		}}
+	/>
 {/if}
+
+<style>
+	#property-menu:after {
+		content: '';
+		position: absolute;
+		bottom: 6px;
+		right: 5px;
+		border-top: 1px solid;
+		height:4px;
+		width: 6px;
+		transform: rotate(-45deg);
+	}
+	#property-menu:before {
+		content: '';
+		position: absolute;
+		bottom: 6px;
+		right: 3px;
+		border-bottom: 1px solid;
+		height:4px;
+		width: 10px;
+		transform: rotate(-45deg);
+	}
+</style>

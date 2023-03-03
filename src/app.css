@@ -30,8 +30,8 @@ html.dark {
 	@apply border-gray-200 border shadow-lg rounded-lg dark:border-dark-muted dark:bg-dark-bg bg-white m-0 w-full;
 }
 
-.color-picker label{
-	@apply !hidden
+.color-picker label {
+	@apply !hidden;
 }
 
 .color-picker .wrapper .picker-wrapper {
@@ -65,4 +65,19 @@ html.dark {
 }
 ::-webkit-scrollbar-track {
 	background-color: transparent;
+}
+
+.moveable-control {
+	width: 25px !important;
+	height: 25px !important;
+	margin-top: -12.5px !important;
+	margin-left: -12.5px !important;
+	background: transparent !important;
+	border: 0 !important;
+}
+
+.moveable-line {
+	border-width: 5px !important;
+	border-color: transparent !important;
+	background: transparent !important;
 }
